@@ -8,7 +8,7 @@ const distDir = path.join(__dirname, 'dist');
 const postsDir = path.join(pagesDir, 'posts');
 const distPostsDir = path.join(distDir, 'posts');
 const indexFilePath = path.join(distDir, 'index.html');
-const postsFilePath = path.join(distDir, 'posts.html');
+const postsFilePath = path.join(distDir, 'blog.html');
 
 // Ensure dist directories exist
 fs.ensureDirSync(distDir);
@@ -32,7 +32,22 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
     if (path.extname(file) === '.md') {
       const markdownContent = await fs.readFile(filePath, 'utf-8');
       const htmlContent = marked(markdownContent);
-      const wrappedContent = `<turbo-frame id="content">\n${htmlContent}\n</turbo-frame>`;
+
+      // Initialize wrappedContent
+      let wrappedContent;
+
+      if (isPost) {
+        // Get file creation date for posts
+        const stats = await fs.stat(filePath);
+        const createdDate = new Date(stats.birthtime).toLocaleDateString(undefined, { weekday:"short", month:"long", day:"numeric", year: "numeric"}); // Format the date
+        const humanReadableTitle = path.basename(file, '.md').replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); // Human-readable title
+
+        // Build the wrapped content for posts
+        wrappedContent = `<turbo-frame id="content">\n<h1>${humanReadableTitle}</h1>\n<p>posted on ${createdDate}, by DAZ</p>\n${htmlContent}\n</turbo-frame>`;
+      } else {
+        // For non-post pages, wrap content without title and date
+        wrappedContent = `<turbo-frame id="content">\n${htmlContent}\n</turbo-frame>`;
+      }
 
       // Save the resulting HTML in the correct directory
       await fs.writeFile(outputFilePath, wrappedContent);
@@ -40,7 +55,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
 
       // Create link for the index
       const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
-      const link = `<li><a href="/${linkPath}" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md')}</a></li>`;
+      const link = `<li><a href="/${linkPath}" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
       links.push(link);
     }
   }

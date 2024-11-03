@@ -1,7 +1,3 @@
-# Another Post
-
-Wow I've written another post.
-
 ## List of things to do
 
 * Learn Elixir
