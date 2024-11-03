@@ -1,0 +1,117 @@
+const fs = require('fs-extra');
+const path = require('path');
+const { marked } = require('marked');
+
+// Paths for source and destination directories
+const pagesDir = path.join(__dirname, 'pages');
+const distDir = path.join(__dirname, 'dist');
+const postsDir = path.join(pagesDir, 'posts');
+const distPostsDir = path.join(distDir, 'posts');
+const indexFilePath = path.join(distDir, 'index.html');
+const postsFilePath = path.join(distDir, 'posts.html');
+
+// Ensure dist directories exist
+fs.ensureDirSync(distDir);
+fs.ensureDirSync(distPostsDir);  // Ensure dist/posts directory exists
+
+// Function to convert markdown files to turbo-frame-wrapped HTML
+const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false) => {
+  if (!(await fs.pathExists(sourceDir))) {
+    console.log(`Skipping ${sourceDir} - directory does not exist.`);
+    return [];
+  }
+
+  const files = await fs.readdir(sourceDir);
+  let links = [];
+
+  for (const file of files) {
+    const filePath = path.join(sourceDir, file);
+    const outputFilePath = path.join(outputDir, `${path.basename(file, '.md')}.html`);
+
+    // Check if it's a Markdown file
+    if (path.extname(file) === '.md') {
+      const markdownContent = await fs.readFile(filePath, 'utf-8');
+      const htmlContent = marked(markdownContent);
+      const wrappedContent = `<turbo-frame id="content">\n${htmlContent}\n</turbo-frame>`;
+
+      // Save the resulting HTML in the correct directory
+      await fs.writeFile(outputFilePath, wrappedContent);
+      console.log(`Converted ${file} to ${outputFilePath}`);
+
+      // Create link for the index
+      const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
+      const link = `<li><a href="/${linkPath}" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md')}</a></li>`;
+      links.push(link);
+    }
+  }
+
+  return links;
+};
+
+// Main function to handle conversion and index generation
+const generateSite = async () => {
+  // Convert markdown in pages directory and generate links
+  const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir);
+  
+  // Convert markdown in posts directory and generate links if the directory exists
+  const postLinks = await convertMarkdownToTurboFrame(postsDir, distPostsDir, true);
+
+  // Generate the index.html file
+  const indexContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+  <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
+  <title>Swifty Demo</title>
+</head>
+<body>
+  <header>
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            ${pageLinks.join('\n')}
+            ${postLinks.length > 0 ? '<li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>' : ''}
+        </ul>
+    </nav>
+    <h1>Swifty</h1>
+  </header>
+  <main>
+    <turbo-frame id="content">
+      Hello World From Swifty!
+    </turbo-frame>
+  </main>
+  <footer>
+    Run <code>npx http-server dist</code> to start the server.
+    Go to "localhost:8080" to see the homepage
+  </footer>
+</body>
+</html>
+`;
+
+  // Write the index file to the dist directory
+  await fs.writeFile(indexFilePath, indexContent);
+  console.log(`Index file created at ${indexFilePath}`);
+
+  // Generate the posts.html file with a list of links to all posts if any posts exist
+  if (postLinks.length > 0) {
+    const postsContent = `
+<turbo-frame id="content">
+  <h1>Posts</h1>
+  <ul>
+    ${postLinks.join('\n')}
+  </ul>
+</turbo-frame>
+    `;
+    await fs.writeFile(postsFilePath, postsContent);
+    console.log(`Posts file created at ${postsFilePath}`);
+  }
+};
+
+// Run the site generation
+generateSite()
+  .then(() => console.log('All files converted and index created'))
+  .catch((err) => console.error('Error during conversion:', err));
