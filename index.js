@@ -86,7 +86,7 @@ const generateSite = async () => {
   (function() {
     const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
-
+    console.log(path)
     // Map the current path to the corresponding HTML file
     const pagePath = path === "/" ? "/index.html" : path + ".html";
     turboFrame.setAttribute("src", pagePath);
