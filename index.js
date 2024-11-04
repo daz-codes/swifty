@@ -89,7 +89,7 @@ const generateSite = async () => {
         <ul>
             <li><a href="/">Home</a></li>
             ${pageLinks.join('\n')}
-            ${postLinks.length > 0 ? '<li><a href="/posts" data-turbo-frame="content" data-turbo-action="replace">Blog</a></li>' : ''}
+            ${postLinks.length > 0 ? '<li><a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Blog</a></li>' : ''}
         </ul>
     </nav>
     <h1>Swifty</h1>
@@ -114,9 +114,12 @@ const generateSite = async () => {
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });
-  document.addEventListener("turbo:load", () => {
-  Turbo.session.drive = true;
-  });
+  document.addEventListener("turbo:click", (event) => {
+  const contentFrame = document.getElementById("content");
+  if (contentFrame) {
+    contentFrame.removeAttribute("src");
+  }
+});
 </script>
 </body>
 </html>
