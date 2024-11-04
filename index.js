@@ -23,7 +23,6 @@ const generateIndexContent = (pageLinks, postLinks) => {
   </header>
   <main>
     <turbo-frame id="content">
-      Hello World From Swifty!
     </turbo-frame>
   </main>
   <footer>
