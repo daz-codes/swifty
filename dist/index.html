@@ -29,5 +29,17 @@
     Run <code>npx http-server dist</code> to start the server.
     Go to "localhost:8080" to see the homepage
   </footer>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const turboFrame = document.querySelector("turbo-frame#content");
+    const path = window.location.pathname;
+
+    // Map the current path to the corresponding HTML file
+    const pagePath = path === "/" ? "/index.html" : path + ".html";
+
+    // Set the src attribute to load the content based on the URL
+    turboFrame.setAttribute("src", pagePath);
+  });
+</script>
 </body>
 </html>
