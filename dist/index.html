@@ -40,11 +40,16 @@
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });
-  document.addEventListener("turbo:click", (event) => {
-  const contentFrame = document.getElementById("content");
-  if (contentFrame) {
-    contentFrame.removeAttribute("src");
-  }
+  document.addEventListener("turbo:load", () => {
+  const turboFrame = document.querySelector("turbo-frame#content");
+  const path = window.location.pathname;
+
+  // Map the current path to the corresponding HTML file
+  const pagePath = path === "/" ? "/index.html" : path + ".html";
+  console.log(path, pagePath);
+
+  // Set the src attribute to load the content based on the URL
+  turboFrame.setAttribute("src", pagePath);
 });
 </script>
 </body>
