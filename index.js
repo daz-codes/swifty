@@ -82,16 +82,6 @@ const generateSite = async () => {
   <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
   <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
   <title>Swifty Demo</title>
-  <script>
-  (function() {
-    const turboFrame = document.querySelector("turbo-frame#content");
-    const path = window.location.pathname;
-    console.log(path)
-    // Map the current path to the corresponding HTML file
-    const pagePath = path === "/" ? "/index.html" : path + ".html";
-    turboFrame.setAttribute("src", pagePath);
-  })();
-</script>
 </head>
 <body>
   <header>
@@ -108,7 +98,22 @@ const generateSite = async () => {
     <turbo-frame id="content">
       Hello World From Swifty!
     </turbo-frame>
-    <script>
+  </main>
+  <footer>
+    Run <code>npx http-server dist</code> to start the server.
+    Go to "localhost:8080" to see the homepage
+  </footer>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const turboFrame = document.querySelector("turbo-frame#content");
+    const path = window.location.pathname;
+
+    // Map the current path to the corresponding HTML file
+    const pagePath = path === "/" ? "/index.html" : path + ".html";
+    console.log(path,pagePath)
+    // Set the src attribute to load the content based on the URL
+    turboFrame.setAttribute("src", pagePath);
+  });
   document.addEventListener("turbo:frame-load", (event) => {
     const frameSrc = event.target.getAttribute("src");
 
@@ -120,11 +125,6 @@ const generateSite = async () => {
     }
   });
   </script>
-  </main>
-  <footer>
-    Run <code>npx http-server dist</code> to start the server.
-    Go to "localhost:8080" to see the homepage
-  </footer>
 </body>
 </html>
 `;
