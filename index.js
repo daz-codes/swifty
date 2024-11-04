@@ -104,16 +104,6 @@ const generateSite = async () => {
     Go to "localhost:8080" to see the homepage
   </footer>
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const turboFrame = document.querySelector("turbo-frame#content");
-    const path = window.location.pathname;
-
-    // Map the current path to the corresponding HTML file
-    const pagePath = path === "/" ? "/index.html" : path + ".html";
-    console.log(path,pagePath)
-    // Set the src attribute to load the content based on the URL
-    turboFrame.setAttribute("src", pagePath);
-  });
   document.addEventListener("turbo:frame-load", (event) => {
     const frameSrc = event.target.getAttribute("src");
 
