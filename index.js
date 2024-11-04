@@ -108,12 +108,7 @@ const generateSite = async () => {
     <turbo-frame id="content">
       Hello World From Swifty!
     </turbo-frame>
-  </main>
-  <footer>
-    Run <code>npx http-server dist</code> to start the server.
-    Go to "localhost:8080" to see the homepage
-  </footer>
-  <script>
+    <script>
   document.addEventListener("turbo:frame-load", (event) => {
     const frameSrc = event.target.getAttribute("src");
 
@@ -125,6 +120,11 @@ const generateSite = async () => {
     }
   });
   </script>
+  </main>
+  <footer>
+    Run <code>npx http-server dist</code> to start the server.
+    Go to "localhost:8080" to see the homepage
+  </footer>
 </body>
 </html>
 `;
