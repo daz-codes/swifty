@@ -47,6 +47,7 @@
         if (frameSrc && frameSrc.endsWith(".html")) {
           // Update the address bar without 'index.html' at the root
           const newPath = frameSrc === "index.html" ? "/" : frameSrc.replace(".html", "");
+          console.log(frameSrc,newPath)
           window.history.pushState({}, "", newPath);
         }
       });
