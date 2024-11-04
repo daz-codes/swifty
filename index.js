@@ -114,6 +114,7 @@ const generateSite = async () => {
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });
+  </script>
 </body>
 </html>
 `;
