@@ -55,7 +55,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
 
       // Create link for the index
       const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
-      const link = `<li><a href="/${linkPath}" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
+      const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
       links.push(link);
     }
   }
@@ -89,7 +89,7 @@ const generateSite = async () => {
         <ul>
             <li><a href="/">Home</a></li>
             ${pageLinks.join('\n')}
-            ${postLinks.length > 0 ? '<li><a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Blog</a></li>' : ''}
+            ${postLinks.length > 0 ? '<li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Blog</a></li>' : ''}
         </ul>
     </nav>
     <h1>Swifty</h1>
@@ -114,18 +114,6 @@ const generateSite = async () => {
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });
-  document.addEventListener("turbo:load", () => {
-  const turboFrame = document.querySelector("turbo-frame#content");
-  const path = window.location.pathname;
-
-  // Map the current path to the corresponding HTML file
-  const pagePath = path === "/" ? "/index.html" : path + ".html";
-  console.log(path, pagePath);
-
-  // Set the src attribute to load the content based on the URL
-  turboFrame.setAttribute("src", pagePath);
-});
-</script>
 </body>
 </html>
 `;
