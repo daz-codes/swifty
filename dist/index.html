@@ -40,6 +40,16 @@
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });
+  document.addEventListener("turbo:frame-load", (event) => {
+    const frameSrc = event.target.getAttribute("src");
+
+    // Only proceed if the frame source ends with .html
+    if (frameSrc && frameSrc.endsWith(".html")) {
+      // Strip .html and update the browser's address bar without reloading
+      const newPath = frameSrc.replace(".html", "");
+      window.history.pushState({}, "", newPath);
+    }
+  });
   </script>
 </body>
 </html>
