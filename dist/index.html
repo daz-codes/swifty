@@ -29,27 +29,28 @@
     Go to "localhost:8080" to see the homepage
   </footer>
 
-  <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
-  <script>
-    (function() {
-      const turboFrame = document.querySelector("turbo-frame#content");
-      const path = window.location.pathname;
-
-      // Map the current path to the corresponding HTML file
-      const pagePath = path === "/" ? "/index.html" : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
-    })();
-    document.addEventListener("turbo:frame-load", (event) => {
-      const frameSrc = event.target.getAttribute("src");
-
-      // Only proceed if the frame source ends with .html
-      if (frameSrc && frameSrc.endsWith(".html")) {
-        // Strip .html and update the browser's address bar without reloading
-        const newPath = frameSrc === "index.html" ? frameSrc.replace("index.html", "") : frameSrc.replace(".html", "");
-        window.history.pushState({}, "", newPath);
-      }
-    });
-  </script>
-</body>
+    <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
+    <script>
+      (function() {
+        const turboFrame = document.querySelector("turbo-frame#content");
+        const path = window.location.pathname;
+  
+        // Set the src attribute based on the path, avoiding 'index.html' for root
+        const pagePath = path === "/" ? "/index.html" : path + ".html";
+        turboFrame.setAttribute("src", pagePath);
+      })();
+  
+      document.addEventListener("turbo:frame-load", (event) => {
+        const frameSrc = event.target.getAttribute("src");
+  
+        // Only proceed if the frame source ends with .html
+        if (frameSrc && frameSrc.endsWith(".html")) {
+          // Update the address bar without 'index.html' at the root
+          const newPath = frameSrc === "index.html" ? "/" : frameSrc.replace(".html", "");
+          window.history.pushState({}, "", newPath);
+        }
+      });
+    </script>
+  </body>
 </html>
   
