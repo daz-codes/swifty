@@ -8,7 +8,7 @@ const distDir = path.join(__dirname, 'dist');
 const postsDir = path.join(pagesDir, 'posts');
 const distPostsDir = path.join(distDir, 'posts');
 const indexFilePath = path.join(distDir, 'index.html');
-const postsFilePath = path.join(distDir, 'blog.html');
+const postsFilePath = path.join(distDir, 'posts.html');
 
 // Ensure dist directories exist
 fs.ensureDirSync(distDir);
@@ -89,7 +89,7 @@ const generateSite = async () => {
         <ul>
             <li><a href="/">Home</a></li>
             ${pageLinks.join('\n')}
-            ${postLinks.length > 0 ? '<li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>' : ''}
+            ${postLinks.length > 0 ? '<li><a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Blog</a></li>' : ''}
         </ul>
     </nav>
     <h1>Swifty</h1>
@@ -110,7 +110,7 @@ const generateSite = async () => {
 
     // Map the current path to the corresponding HTML file
     const pagePath = path === "/" ? "/index.html" : path + ".html";
-
+    console.log(path,pagePath)
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });

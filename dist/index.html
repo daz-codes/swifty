@@ -15,7 +15,7 @@
         <ul>
             <li><a href="/">Home</a></li>
             <li><a href="/about" data-turbo-frame="content" data-turbo-action="advance">about</a></li>
-            <li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>
+            <li><a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Blog</a></li>
         </ul>
     </nav>
     <h1>Swifty</h1>
@@ -36,7 +36,7 @@
 
     // Map the current path to the corresponding HTML file
     const pagePath = path === "/" ? "/index.html" : path + ".html";
-
+    console.log(path,pagePath)
     // Set the src attribute to load the content based on the URL
     turboFrame.setAttribute("src", pagePath);
   });
