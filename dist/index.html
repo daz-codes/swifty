@@ -46,7 +46,7 @@
         // Only proceed if the frame source ends with .html
         if (frameSrc && frameSrc.endsWith(".html")) {
           // Update the address bar without 'index.html' at the root
-          const newPath = frameSrc === "index.html" ? "/" : frameSrc.replace(".html", "");
+          const newPath = frameSrc.endsWith("index.html") ? "/" : frameSrc.replace(".html", "");
           console.log(frameSrc,newPath)
           window.history.pushState({}, "", newPath);
         }
