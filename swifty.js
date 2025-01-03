@@ -13,7 +13,7 @@ const postsFilePath = path.join(distDir, 'posts.html');
 
 // Ensure dist directories exist
 fs.ensureDirSync(distDir);
-fs.ensureDirSync(distPostsDir);  // Ensure dist/posts directory exists
+fs.ensureDirSync(distPostsDir); // Ensure dist/posts directory exists
 
 // Function to convert markdown files to turbo-frame-wrapped HTML
 const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false) => {
@@ -40,7 +40,12 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
       if (isPost) {
         // Get file creation date for posts
         const stats = await fs.stat(filePath);
-        const createdDate = new Date(stats.birthtime).toLocaleDateString(undefined, { weekday:"short", month:"long", day:"numeric", year: "numeric"}); // Format the date
+        const createdDate = new Date(stats.birthtime).toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }); // Format the date
         const humanReadableTitle = path.basename(file, '.md').replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); // Human-readable title
 
         // Build the wrapped content for posts
@@ -54,10 +59,12 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
       await fs.writeFile(outputFilePath, wrappedContent);
       console.log(`Converted ${file} to ${outputFilePath}`);
 
-      // Create link for the index
-      const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
-      const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
-      links.push(link);
+      // Create link for the index, excluding "index" itself
+      if (file !== 'index.md') {
+        const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
+        const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
+        links.push(link);
+      }
     }
   }
 
@@ -68,7 +75,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
 const generateSite = async () => {
   // Convert markdown in pages directory and generate links
   const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir);
-  
+
   // Convert markdown in posts directory and generate links if the directory exists
   const postLinks = await convertMarkdownToTurboFrame(postsDir, distPostsDir, true);
 
@@ -76,26 +83,18 @@ const generateSite = async () => {
   const indexContent = generateIndexContent(pageLinks, postLinks); // Call the imported function
 
   // Append Turbo script and other script tags
-  const fullIndexContent = indexContent.replace('</body>', `
+  const fullIndexContent = indexContent.replace(
+    '</body>',
+    `
     <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
     <script>
       (function() {
         const turboFrame = document.querySelector("turbo-frame#content");
         const path = window.location.pathname;
 
-        // Set the src attribute based on the path
-        const pagePath = path === "/" ? "/index.html" : path + ".html";
+        // Set the src attribute based on the path, avoiding 'index.html' for root
+        const pagePath = path === "/" ? "/index.html" : path.endsWith(".html") ? path : path + ".html";
         turboFrame.setAttribute("src", pagePath);
-
-        // For root, also preload index.html content immediately
-        if (path === "/") {
-          fetch(pagePath)
-            .then(response => response.text())
-            .then(html => {
-              turboFrame.innerHTML = html; // Populate the frame for root path
-            })
-            .catch(err => console.error("Failed to load index content:", err));
-        }
       })();
 
       document.addEventListener("turbo:frame-load", (event) => {
@@ -105,12 +104,12 @@ const generateSite = async () => {
         if (frameSrc && frameSrc.endsWith(".html")) {
           // Update the address bar without 'index.html' at the root
           const newPath = frameSrc.endsWith("index.html") ? "/" : frameSrc.replace(".html", "");
-          console.log(frameSrc, newPath);
           window.history.pushState({}, "", newPath);
         }
       });
     </script>
-  </body>`);
+  </body>`
+  );
 
   // Write the index file to the dist directory
   await fs.writeFile(indexFilePath, fullIndexContent);
