@@ -33,20 +33,30 @@
       (function() {
         const turboFrame = document.querySelector("turbo-frame#content");
         const path = window.location.pathname;
-  
-        // Set the src attribute based on the path, avoiding 'index.html' for root
+
+        // Set the src attribute based on the path
         const pagePath = path === "/" ? "/index.html" : path + ".html";
         turboFrame.setAttribute("src", pagePath);
+
+        // For root, also preload index.html content immediately
+        if (path === "/") {
+          fetch(pagePath)
+            .then(response => response.text())
+            .then(html => {
+              turboFrame.innerHTML = html; // Populate the frame for root path
+            })
+            .catch(err => console.error("Failed to load index content:", err));
+        }
       })();
-  
+
       document.addEventListener("turbo:frame-load", (event) => {
         const frameSrc = event.target.getAttribute("src");
-  
+
         // Only proceed if the frame source ends with .html
         if (frameSrc && frameSrc.endsWith(".html")) {
           // Update the address bar without 'index.html' at the root
           const newPath = frameSrc.endsWith("index.html") ? "/" : frameSrc.replace(".html", "");
-          console.log(frameSrc,newPath)
+          console.log(frameSrc, newPath);
           window.history.pushState({}, "", newPath);
         }
       });
