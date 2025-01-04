@@ -14,9 +14,9 @@ const generateIndexContent = (pageLinks, postLinks) => {
   <header>
     <nav>
         <ul>
-            <li><a href="/home.html" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>
+            <li><a href="/home" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>
             ${pageLinks.join('\n')}
-            ${postLinks.length > 0 ? '<li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>' : ''}
+            ${postLinks.length > 0 ? '<li><a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>' : ''}
         </ul>
     </nav>
     <h1>Swifty</h1>
@@ -26,8 +26,8 @@ const generateIndexContent = (pageLinks, postLinks) => {
     </turbo-frame>
   </main>
   <footer>
-    Run <code>npx http-server dist</code> to start the server.
-    Go to "localhost:8080" to see the homepage
+    Run <code>npm run build</code> to build the pages in the dist folder.
+    Run <code>npm start</code> to start a local server.
   </footer>
 </body>
 </html>

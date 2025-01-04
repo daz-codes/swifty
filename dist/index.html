@@ -12,9 +12,9 @@
   <header>
     <nav>
         <ul>
-            <li><a href="/home.html" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>
-            <li><a href="/about.html" data-turbo-frame="content" data-turbo-action="advance">about</a></li>
-            <li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>
+            <li><a href="/home" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>
+            <li><a href="/about" data-turbo-frame="content" data-turbo-action="advance">about</a></li>
+            <li><a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>
         </ul>
     </nav>
     <h1>Swifty</h1>
@@ -24,8 +24,8 @@
     </turbo-frame>
   </main>
   <footer>
-    Run <code>npx http-server dist</code> to start the server.
-    Go to "localhost:8080" to see the homepage
+    Run <code>npm run build</code> to build the pages in the dist folder.
+    Run <code>npm start</code> to start a local server.
   </footer>
 
     <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
@@ -36,18 +36,14 @@
 
         // Set the src attribute for the turbo frame
         if (path === "/") {
-          turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
-        } else {
-          const pagePath = path.endsWith(".html") ? path : path + ".html";
-          turboFrame.setAttribute("src", pagePath);
+          turboFrame.setAttribute("src", "/home"); // Load home.html for the root path
         }
       })();
 
       document.addEventListener("turbo:frame-load", (event) => {
         const frameSrc = event.target.getAttribute("src");
-
         // Update the address bar without appending '/home' for the root
-        if (frameSrc && frameSrc.endsWith("home.html")) {
+        if (frameSrc && frameSrc.endsWith("home")) {
           window.history.pushState({}, "", "/");
         } else if (frameSrc && frameSrc.endsWith(".html")) {
           const newPath = frameSrc.replace(".html", "");

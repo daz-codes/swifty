@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node swifty.js"
+    "build": "node swifty.js",
+    "start": "serve dist"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +14,7 @@
   "dependencies": {
     "fs-extra": "^11.2.0",
     "marked": "^14.1.3",
+    "serve": "^14.2.4",
     "sirv": "^3.0.0"
   }
 }
