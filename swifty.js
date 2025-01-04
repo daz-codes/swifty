@@ -58,7 +58,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
       await fs.writeFile(outputFilePath, wrappedContent);
       console.log(`Converted ${file} to ${outputFilePath}`);
 
-      // Create link for the index, excluding "index" itself
+      // Create link for the index, excluding "home.md"
       if (file !== 'home.md') {
         const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
         const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
@@ -91,18 +91,23 @@ const generateSite = async () => {
         const turboFrame = document.querySelector("turbo-frame#content");
         const path = window.location.pathname;
 
-        // Set the src attribute based on the path, avoiding 'index.html' for root
-        const pagePath = path === "/" ? "/home.html" : path.endsWith(".html") ? path : path + ".html";
-        turboFrame.setAttribute("src", pagePath);
+        // Set the src attribute for the turbo frame
+        if (path === "/") {
+          turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
+        } else {
+          const pagePath = path.endsWith(".html") ? path : path + ".html";
+          turboFrame.setAttribute("src", pagePath);
+        }
       })();
 
       document.addEventListener("turbo:frame-load", (event) => {
         const frameSrc = event.target.getAttribute("src");
 
-        // Only proceed if the frame source ends with .html
-        if (frameSrc && frameSrc.endsWith(".html")) {
-          // Update the address bar without 'index.html' at the root
-          const newPath = frameSrc.endsWith("index.html") ? "/" : frameSrc.replace(".html", "");
+        // Update the address bar without appending '/home' for the root
+        if (frameSrc && frameSrc.endsWith("home.html")) {
+          window.history.pushState({}, "", "/");
+        } else if (frameSrc && frameSrc.endsWith(".html")) {
+          const newPath = frameSrc.replace(".html", "");
           window.history.pushState({}, "", newPath);
         }
       });
