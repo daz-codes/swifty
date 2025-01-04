@@ -49,7 +49,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
         const humanReadableTitle = path.basename(file, '.md').replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); // Human-readable title
 
         // Build the wrapped content for posts
-        wrappedContent = `<turbo-frame id="content">\n<a href="/posts">All Posts</a><h1>${humanReadableTitle}</h1>\n<p>posted on ${createdDate}, by DAZ</p>\n${htmlContent}\n</turbo-frame>`;
+        wrappedContent = `<turbo-frame id="content">\n<a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">All Posts</a><h1>${humanReadableTitle}</h1>\n<p>posted on ${createdDate}, by DAZ</p>\n${htmlContent}\n</turbo-frame>`;
       } else {
         // For non-post pages, wrap content without title and date
         wrappedContent = `<turbo-frame id="content">\n${htmlContent}\n</turbo-frame>`;
