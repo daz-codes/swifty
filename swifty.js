@@ -54,13 +54,12 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
         // For non-post pages, wrap content without title and date
         wrappedContent = `<turbo-frame id="content">\n${htmlContent}\n</turbo-frame>`;
       }
-
       // Save the resulting HTML in the correct directory
       await fs.writeFile(outputFilePath, wrappedContent);
       console.log(`Converted ${file} to ${outputFilePath}`);
 
       // Create link for the index, excluding "index" itself
-      if (file !== 'index.md') {
+      if (file !== 'home.md') {
         const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
         const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
         links.push(link);
@@ -93,7 +92,7 @@ const generateSite = async () => {
         const path = window.location.pathname;
 
         // Set the src attribute based on the path, avoiding 'index.html' for root
-        const pagePath = path === "/" ? "/index.html" : path.endsWith(".html") ? path : path + ".html";
+        const pagePath = path === "/" ? "/home.html" : path.endsWith(".html") ? path : path + ".html";
         turboFrame.setAttribute("src", pagePath);
       })();
 

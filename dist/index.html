@@ -35,7 +35,7 @@
         const path = window.location.pathname;
 
         // Set the src attribute based on the path, avoiding 'index.html' for root
-        const pagePath = path === "/" ? "/index.html" : path.endsWith(".html") ? path : path + ".html";
+        const pagePath = path === "/" ? "/home.html" : path.endsWith(".html") ? path : path + ".html";
         turboFrame.setAttribute("src", pagePath);
       })();
 
