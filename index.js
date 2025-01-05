@@ -1,5 +1,5 @@
 // index.js
-const generateIndexContent = (pageLinks, postLinks) => {
+const generateIndexContent = (title, pageLinks, postLinks) => {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -8,7 +8,7 @@ const generateIndexContent = (pageLinks, postLinks) => {
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
-  <title>Swifty Demo</title>
+  <title>${title}</title>
 </head>
 <body>
   <header>
@@ -19,7 +19,7 @@ const generateIndexContent = (pageLinks, postLinks) => {
             ${postLinks.length > 0 ? '<li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>' : ''}
         </ul>
     </nav>
-    <h1>Swifty</h1>
+    <h1>${title}</h1>
   </header>
   <main>
     <turbo-frame id="content">
