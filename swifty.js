@@ -61,7 +61,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
       // Create link for the index, excluding "home.md"
       if (file !== 'home.md') {
         const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
-        const link = `<li><a href="/${linkPath}" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
+        const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
         links.push(link);
       }
     }
@@ -93,14 +93,18 @@ const generateSite = async () => {
 
         // Set the src attribute for the turbo frame
         if (path === "/") {
-          turboFrame.setAttribute("src", "/home"); // Load home.html for the root path
+          turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
+        } else {
+          const pagePath = path.endsWith(".html") ? path : path + ".html";
+          turboFrame.setAttribute("src", pagePath);
         }
       })();
 
       document.addEventListener("turbo:frame-load", (event) => {
         const frameSrc = event.target.getAttribute("src");
+        console.log("frameSrc: ",frameSrc)
         // Update the address bar without appending '/home' for the root
-        if (frameSrc && frameSrc.endsWith("home")) {
+        if (frameSrc && frameSrc.endsWith("home.html")) {
           window.history.pushState({}, "", "/");
         } else if (frameSrc && frameSrc.endsWith(".html")) {
           const newPath = frameSrc.replace(".html", "");

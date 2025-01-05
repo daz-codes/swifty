@@ -33,7 +33,6 @@
       (function() {
         const turboFrame = document.querySelector("turbo-frame#content");
         const path = window.location.pathname;
-
         // Set the src attribute for the turbo frame
         if (path === "/") {
           turboFrame.setAttribute("src", "/home"); // Load home.html for the root path
@@ -45,9 +44,6 @@
         // Update the address bar without appending '/home' for the root
         if (frameSrc && frameSrc.endsWith("home")) {
           window.history.pushState({}, "", "/");
-        } else if (frameSrc && frameSrc.endsWith(".html")) {
-          const newPath = frameSrc.replace(".html", "");
-          window.history.pushState({}, "", newPath);
         }
       });
     </script>
