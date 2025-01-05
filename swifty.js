@@ -198,6 +198,20 @@ const generateSite = async () => {
   </footer>
   <script type="module">
     import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+    <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
+    <script>
+      (function() {
+        const turboFrame = document.querySelector("turbo-frame#content");
+        const path = window.location.pathname;
+
+        // Set the src attribute for the turbo frame
+        if (path === "/") {
+          turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
+        } else {
+          const pagePath = path.endsWith(".html") ? path : path + ".html";
+          turboFrame.setAttribute("src", pagePath);
+        }
+      })();
 
     document.addEventListener("turbo:frame-load", (event) => {
       const frameSrc = event.target.getAttribute("src");
