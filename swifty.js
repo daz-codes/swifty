@@ -83,6 +83,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       // Get values from the merged config
       const author = folderConfig.author || null;
       const showDate = folderConfig.dates === true;  // If dates is explicitly set to "true", show date
+      const showHeading = folderConfig.showHeading !== false;  // Check if showHeading is explicitly false
       const backlink = parentTitle
         ? `<p><a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
             parentTitle
@@ -94,10 +95,13 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       ? `<p>Posted by ${author}${showDate ? ` on ${createdDate}` : ''}</p>`
       : '';
 
+      // Only include <h1> if showHeading is true
+      const heading = showHeading ? `<h1>${humanReadableTitle}</h1>` : '';
+
       const wrappedContent = `
 <turbo-frame id="content">
   ${backlink}
-  <h1>${humanReadableTitle}</h1>
+  ${heading}
   ${infoLine}
   ${htmlContent}
 </turbo-frame>
@@ -155,48 +159,21 @@ const generateNavigation = (links) => {
   `;
 };
 
-// Main function to handle conversion and site generation
-const generateSite = async () => {
-  // Start with default config
-  const siteConfig = await readMergedConfig(pagesDir);
+// Function to read and render the index template
+const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
+  // Read the template from pages folder
+  const templatePath = path.join(pagesDir, 'index.html');
+  let templateContent = await fs.readFile(templatePath, 'utf-8');
 
-  const siteTitle = siteConfig.title || defaultConfig.title;
+  // Replace placeholders with dynamic values
+  templateContent = templateContent
+    .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
+    .replaceAll('{{nav}}', generateNavigation(pageLinks))
+    .replaceAll('{{homeHtmlContent}}', homeHtmlContent);
 
-  // Convert markdown in pages directory
-  const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
-
-  // Generate navigation
-  const navigation = generateNavigation(pageLinks);
-
-  // Read home.md file and generate home page content
-  const homeFilePath = path.join(pagesDir, 'home.md');
-  const homeContent = await fs.readFile(homeFilePath, 'utf-8');
-  const homeHtmlContent = marked(homeContent);
-
-  // Generate index.html
-  const indexFilePath = path.join(distDir, 'index.html');
-  const indexContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
-  <title>${siteTitle}</title>
-</head>
-<body>
-  <header>
-  ${navigation}
-      <h1>${siteTitle}</h1>
-  </header>
-    <main>
-  <turbo-frame id="content">${homeHtmlContent}</turbo-frame>
-  </main>
-    <footer>
-    Run <code>npm run build</code> to build the pages in the dist folder.
-    Run <code>npm start</code> to start a local server.
-  </footer>
-  <script type="module">
+  // Add the missing script to the template
+  const turboScript = `
+<script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
   // Ensure the turbo-frame loads the correct content based on the current URL
@@ -226,9 +203,34 @@ const generateSite = async () => {
     }
   });
 </script>
-</body>
-</html>
   `;
+
+  // Inject the script at the end of the template
+  templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
+
+  return templateContent;
+};
+
+// Main function to handle conversion and site generation
+const generateSite = async () => {
+  // Start with default config
+  const siteConfig = await readMergedConfig(pagesDir);
+
+  const siteTitle = siteConfig.title || defaultConfig.title;
+
+  // Convert markdown in pages directory
+  const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
+
+  // Read home.md file and generate home page content
+  const homeFilePath = path.join(pagesDir, 'home.md');
+  const homeContent = await fs.readFile(homeFilePath, 'utf-8');
+  const homeHtmlContent = marked(homeContent);
+
+  // Render the index template with dynamic content
+  const indexFilePath = path.join(distDir, 'index.html');
+  const indexContent = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
+
+  // Write the rendered index.html to dist
   await fs.writeFile(indexFilePath, indexContent);
 };
 
@@ -236,3 +238,4 @@ const generateSite = async () => {
 generateSite()
   .then(() => console.log('Site generated successfully'))
   .catch((err) => console.error('Error generating site:', err));
+``
