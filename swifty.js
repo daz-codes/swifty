@@ -1,157 +1,221 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { marked } = require('marked');
-const { generateIndexContent } = require('./index'); // Import the index content function
 
 // Paths for source and destination directories
 const pagesDir = path.join(__dirname, 'pages');
 const distDir = path.join(__dirname, 'dist');
-const postsDir = path.join(pagesDir, 'posts');
-const distPostsDir = path.join(distDir, 'posts');
-const indexFilePath = path.join(distDir, 'index.html');
-const postsFilePath = path.join(distDir, 'posts.html');
 
-// Ensure dist directories exist
+// Default configuration
+const defaultConfig = {
+  title: 'My Swifty Site',
+  author: null,
+  dates: false,
+};
+
+// Ensure dist directory exists
 fs.ensureDirSync(distDir);
-fs.ensureDirSync(distPostsDir); // Ensure dist/posts directory exists
 
-// Read configuration JSON if present
-const readConfig = async () => {
-  const configPath = path.join(__dirname, 'config.json');
-  console.log(configPath)
-  if (await fs.pathExists(configPath)) {
-    return await fs.readJson(configPath);
+// Utility function to capitalize strings
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+// Function to read configuration JSON for a specific folder and merge with the parent config
+const readMergedConfig = async (folderPath, parentConfig = {}) => {
+  const folderConfigPath = path.join(folderPath, 'config.json');
+  let folderConfig = { ...defaultConfig, ...parentConfig };
+
+  if (await fs.pathExists(folderConfigPath)) {
+    const folderSpecificConfig = await fs.readJson(folderConfigPath);
+    folderConfig = { ...folderConfig, ...folderSpecificConfig };
   }
-  return {};
+
+  return folderConfig;
 };
 
 // Function to convert markdown files to turbo-frame-wrapped HTML
-const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false) => {
-  const config = await readConfig();
-  const title = config.title || "Swifty";
-  const author = config.author || "Taylor";
-  
-  if (!(await fs.pathExists(sourceDir))) {
-    console.log(`Skipping ${sourceDir} - directory does not exist.`);
-    return [];
-  }
+const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
+  if (!(await fs.pathExists(sourceDir))) return [];
 
   const files = await fs.readdir(sourceDir);
-  let links = [];
+  const links = [];
+
+  // Read and merge config for the current folder
+  const folderConfig = await readMergedConfig(sourceDir, parentConfig);
 
   for (const file of files) {
     const filePath = path.join(sourceDir, file);
-    const outputFilePath = path.join(outputDir, `${path.basename(file, '.md')}.html`);
 
-    // Check if it's a Markdown file
-    if (path.extname(file) === '.md') {
+    if ((await fs.stat(filePath)).isDirectory()) {
+      // Handle subfolder
+      const folderName = file;
+      const outputFolder = path.join(outputDir, folderName);
+      fs.ensureDirSync(outputFolder);
+
+      const folderLinks = await convertMarkdownToTurboFrame(
+        path.join(sourceDir, folderName),
+        outputFolder,
+        folderName,
+        folderConfig
+      );
+
+      // Create folder index page
+      const folderIndexFilePath = path.join(outputDir, `${folderName}.html`);
+      await generateFolderIndex(folderIndexFilePath, folderName, folderLinks);
+
+      links.push({ title: capitalize(folderName), path: `/${folderName}` });
+    } else if (path.extname(file) === '.md') {
+      // Handle markdown file
       const markdownContent = await fs.readFile(filePath, 'utf-8');
       const htmlContent = marked(markdownContent);
+      const humanReadableTitle = path
+        .basename(file, '.md')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
 
-      // Initialize wrappedContent
-      let wrappedContent;
+      const stats = await fs.stat(filePath);
+      const createdDate = new Date(stats.birthtime).toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
 
-      if (isPost) {
-        // Get file creation date for posts
-        const stats = await fs.stat(filePath);
-        const createdDate = new Date(stats.birthtime).toLocaleDateString(undefined, {
-          weekday: 'short',
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }); // Format the date
-        const humanReadableTitle = path.basename(file, '.md').replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); // Human-readable title
+      // Get values from the merged config
+      const author = folderConfig.author || null;
+      const showDate = folderConfig.dates === true;  // If dates is explicitly set to "true", show date
+      const backlink = parentTitle
+        ? `<p><a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
+            parentTitle
+          )}</a></p>`
+        : '';
 
-        // Build the wrapped content for posts
-        wrappedContent = `<turbo-frame id="content">\n<a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">All Posts</a><h1>${humanReadableTitle}</h1>\n<p>posted on ${createdDate}, by ${author}</p>\n${htmlContent}\n</turbo-frame>`;
-      } else {
-        // For non-post pages, wrap content without title and date
-        wrappedContent = `<turbo-frame id="content">\n${htmlContent}\n</turbo-frame>`;
-      }
-      // Save the resulting HTML in the correct directory
+      // Only include author if it exists
+      const infoLine = author
+      ? `<p>Posted by ${author}${showDate ? ` on ${createdDate}` : ''}</p>`
+      : '';
+
+      const wrappedContent = `
+<turbo-frame id="content">
+  ${backlink}
+  <h1>${humanReadableTitle}</h1>
+  ${infoLine}
+  ${htmlContent}
+</turbo-frame>
+      `;
+
+      const outputFilePath = path.join(outputDir, `${path.basename(file, '.md')}.html`);
       await fs.writeFile(outputFilePath, wrappedContent);
-      console.log(`Converted ${file} to ${outputFilePath}`);
 
-      // Create link for the index, excluding "home.md"
-      if (file !== 'home.md') {
-        const linkPath = isPost ? `posts/${path.basename(file, '.md')}` : path.basename(file, '.md');
-        const link = `<li><a href="/${linkPath}.html" data-turbo-frame="content" data-turbo-action="advance">${path.basename(file, '.md').replace(/-/g, ' ')}</a></li>`;
-        links.push(link);
-      }
+      links.push({ title: humanReadableTitle, path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}` });
     }
   }
 
   return links;
 };
 
-// Main function to handle conversion and index generation
-const generateSite = async () => {
-  const config = await readConfig();
-  const title = config.title || "Swifty";
-  const author = config.author || "Taylor";
-  // Convert markdown in pages directory and generate links
-  const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir);
-
-  // Convert markdown in posts directory and generate links if the directory exists
-  const postLinks = await convertMarkdownToTurboFrame(postsDir, distPostsDir, true);
-
-  // Generate the index.html file
-  const indexContent = generateIndexContent(title, pageLinks, postLinks); // Call the imported function
-
-  // Append Turbo script and other script tags
-  const fullIndexContent = indexContent.replace(
-    '</body>',
-    `
-    <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
-    <script>
-      (function() {
-        const turboFrame = document.querySelector("turbo-frame#content");
-        const path = window.location.pathname;
-
-        // Set the src attribute for the turbo frame
-        if (path === "/") {
-          turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
-        } else {
-          const pagePath = path.endsWith(".html") ? path : path + ".html";
-          turboFrame.setAttribute("src", pagePath);
-        }
-      })();
-
-      document.addEventListener("turbo:frame-load", (event) => {
-        const frameSrc = event.target.getAttribute("src");
-        console.log("frameSrc: ",frameSrc)
-        // Update the address bar without appending '/home' for the root
-        if (frameSrc && frameSrc.endsWith("home.html")) {
-          window.history.pushState({}, "", "/");
-        } else if (frameSrc && frameSrc.endsWith(".html")) {
-          const newPath = frameSrc.replace(".html", "");
-          window.history.pushState({}, "", newPath);
-        }
-      });
-    </script>
-  </body>`
-  );
-
-  // Write the index file to the dist directory
-  await fs.writeFile(indexFilePath, fullIndexContent);
-  console.log(`Index file created at ${indexFilePath}`);
-
-  // Generate the posts.html file with a list of links to all posts if any posts exist
-  if (postLinks.length > 0) {
-    const postsContent = `
+// Function to generate folder index HTML
+const generateFolderIndex = async (filePath, folderName, links) => {
+  const content = `
 <turbo-frame id="content">
-  <h1>Posts</h1>
+  <h1>${capitalize(folderName)}</h1>
   <ul>
-    ${postLinks.join('\n')}
+    ${links
+      .map(
+        (link) =>
+          `<li><a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a></li>`
+      )
+      .join('\n')}
   </ul>
 </turbo-frame>
-    `;
-    await fs.writeFile(postsFilePath, postsContent);
-    console.log(`Posts file created at ${postsFilePath}`);
-  }
+  `;
+
+  await fs.writeFile(filePath, content);
+};
+
+// Function to generate the main navigation HTML
+const generateNavigation = (links) => {
+  // Remove "home" from links to avoid duplicate entry
+  const filteredLinks = links.filter(link => link.title.toLowerCase() !== 'home');
+
+  const homeLink = `<li><a href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>`;
+  const otherLinks = filteredLinks
+    .map(
+      (link) =>
+        `<li><a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a></li>`
+    )
+    .join('\n');
+
+  return `
+<nav>
+  <ul>
+    ${homeLink} <!-- Add Home link once at the top -->
+    ${otherLinks}
+  </ul>
+</nav>
+  `;
+};
+
+// Main function to handle conversion and site generation
+const generateSite = async () => {
+  // Start with default config
+  const siteConfig = await readMergedConfig(pagesDir);
+
+  const siteTitle = siteConfig.title || defaultConfig.title;
+
+  // Convert markdown in pages directory
+  const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
+
+  // Generate navigation
+  const navigation = generateNavigation(pageLinks);
+
+  // Read home.md file and generate home page content
+  const homeFilePath = path.join(pagesDir, 'home.md');
+  const homeContent = await fs.readFile(homeFilePath, 'utf-8');
+  const homeHtmlContent = marked(homeContent);
+
+  // Generate index.html
+  const indexFilePath = path.join(distDir, 'index.html');
+  const indexContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+  <title>${siteTitle}</title>
+</head>
+<body>
+  <header>
+  ${navigation}
+      <h1>${siteTitle}</h1>
+  </header>
+    <main>
+  <turbo-frame id="content">${homeHtmlContent}</turbo-frame>
+  </main>
+    <footer>
+    Run <code>npm run build</code> to build the pages in the dist folder.
+    Run <code>npm start</code> to start a local server.
+  </footer>
+  <script type="module">
+    import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+
+    document.addEventListener("turbo:frame-load", (event) => {
+      const frameSrc = event.target.getAttribute("src");
+      if (frameSrc && frameSrc.endsWith("home.html")) {
+        window.history.pushState({}, "", "/");
+      } else if (frameSrc && frameSrc.endsWith(".html")) {
+        const newPath = frameSrc.replace(".html", "");
+        window.history.pushState({}, "", newPath);
+      }
+    });
+  </script>
+</body>
+</html>
+  `;
+  await fs.writeFile(indexFilePath, indexContent);
 };
 
 // Run the site generation
 generateSite()
-  .then(() => console.log('All files converted and index created'))
-  .catch((err) => console.error('Error during conversion:', err));
+  .then(() => console.log('Site generated successfully'))
+  .catch((err) => console.error('Error generating site:', err));

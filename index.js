@@ -16,7 +16,6 @@ const generateIndexContent = (title, pageLinks, postLinks) => {
         <ul>
             <li><a href="/home.html" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>
             ${pageLinks.join('\n')}
-            ${postLinks.length > 0 ? '<li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>' : ''}
         </ul>
     </nav>
     <h1>${title}</h1>
