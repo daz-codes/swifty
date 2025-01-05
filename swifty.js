@@ -18,18 +18,19 @@ fs.ensureDirSync(distPostsDir); // Ensure dist/posts directory exists
 // Read configuration JSON if present
 const readConfig = async () => {
   const configPath = path.join(__dirname, 'config.json');
+  console.log(configPath)
   if (await fs.pathExists(configPath)) {
     return await fs.readJson(configPath);
   }
   return {};
 };
 
-const config = readConfig();
-const title = config.title || "Swifty";
-const author = config.author || "Taylor";
-
 // Function to convert markdown files to turbo-frame-wrapped HTML
 const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false) => {
+  const config = await readConfig();
+  const title = config.title || "Swifty";
+  const author = config.author || "Taylor";
+  
   if (!(await fs.pathExists(sourceDir))) {
     console.log(`Skipping ${sourceDir} - directory does not exist.`);
     return [];
@@ -85,6 +86,9 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, isPost = false)
 
 // Main function to handle conversion and index generation
 const generateSite = async () => {
+  const config = await readConfig();
+  const title = config.title || "Swifty";
+  const author = config.author || "Taylor";
   // Convert markdown in pages directory and generate links
   const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir);
 
