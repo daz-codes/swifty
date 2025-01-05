@@ -197,32 +197,35 @@ const generateSite = async () => {
     Run <code>npm start</code> to start a local server.
   </footer>
   <script type="module">
-    import * as Turbo from 'https://esm.sh/@hotwired/turbo';
-    <script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
-    <script>
-      (function() {
-        const turboFrame = document.querySelector("turbo-frame#content");
-        const path = window.location.pathname;
+  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
-        // Set the src attribute for the turbo frame
-        if (path === "/") {
-          turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
-        } else {
-          const pagePath = path.endsWith(".html") ? path : path + ".html";
-          turboFrame.setAttribute("src", pagePath);
-        }
-      })();
+  // Ensure the turbo-frame loads the correct content based on the current URL
+  (function() {
+    const turboFrame = document.querySelector("turbo-frame#content");
+    const path = window.location.pathname;
 
-    document.addEventListener("turbo:frame-load", (event) => {
-      const frameSrc = event.target.getAttribute("src");
-      if (frameSrc && frameSrc.endsWith("home.html")) {
-        window.history.pushState({}, "", "/");
-      } else if (frameSrc && frameSrc.endsWith(".html")) {
-        const newPath = frameSrc.replace(".html", "");
-        window.history.pushState({}, "", newPath);
-      }
-    });
-  </script>
+    // Set the src attribute for the turbo frame
+    if (path === "/" || path === "/home.html") {
+      turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
+    } else {
+      const pagePath = path.endsWith(".html") ? path : path + ".html";
+      turboFrame.setAttribute("src", pagePath);
+    }
+  })();
+
+  // Update the address bar without appending '/home' for the root
+  document.addEventListener("turbo:frame-load", (event) => {
+    const frameSrc = event.target.getAttribute("src");
+
+    // If the source is 'home.html', push "/" to the URL
+    if (frameSrc && frameSrc.endsWith("home.html")) {
+      window.history.pushState({}, "", "/");
+    } else if (frameSrc && frameSrc.endsWith(".html")) {
+      const newPath = frameSrc.replace(".html", "");
+      window.history.pushState({}, "", newPath);
+    }
+  });
+</script>
 </body>
 </html>
   `;
