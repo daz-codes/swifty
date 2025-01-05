@@ -1,6 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { marked } = require('marked');
+const matter = require('gray-matter'); // For parsing front matter
+
 
 // Paths for source and destination directories
 const pagesDir = path.join(__dirname, 'pages');
@@ -11,6 +13,8 @@ const defaultConfig = {
   title: 'My Swifty Site',
   author: null,
   dates: false,
+  tags: [],
+  showHeading: true,
 };
 
 // Ensure dist directory exists
@@ -66,7 +70,11 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
     } else if (path.extname(file) === '.md') {
       // Handle markdown file
       const markdownContent = await fs.readFile(filePath, 'utf-8');
-      const htmlContent = marked(markdownContent);
+      const parsed = matter(markdownContent);
+      const frontMatter = parsed.data || {};
+      const content = parsed.content;
+      const htmlContent = marked(content);
+
       const humanReadableTitle = path
         .basename(file, '.md')
         .replace(/-/g, ' ')
@@ -80,10 +88,18 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         year: 'numeric',
       });
 
+      // Merge configurations with precedence: frontMatter > folderConfig > parentConfig > defaultConfig
+      const effectiveConfig = {
+        ...defaultConfig,
+        ...parentConfig,
+        ...folderConfig,
+        ...frontMatter,
+      };
+
       // Get values from the merged config
-      const author = folderConfig.author || null;
-      const showDate = folderConfig.dates === true;  // If dates is explicitly set to "true", show date
-      const showHeading = folderConfig.showHeading !== false;  // Check if showHeading is explicitly false
+      const author = effectiveConfig.author || null;
+      const showDate = effectiveConfig.dates === true;  // If dates is explicitly set to "true", show date
+      const showHeading = effectiveConfig.showHeading !== false;  // Check if showHeading is explicitly false
       const backlink = parentTitle
         ? `<p><a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
             parentTitle
@@ -95,14 +111,21 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       ? `<p>Posted by ${author}${showDate ? ` on ${createdDate}` : ''}</p>`
       : '';
 
+      // Handle tags
+      const tags = effectiveConfig.tags || [];
+      const tagsHtml = tags.length
+        ? `<div class="tags">${tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>`
+        : '';
+
       // Only include <h1> if showHeading is true
-      const heading = showHeading ? `<h1>${humanReadableTitle}</h1>` : '';
+      const heading = effectiveConfig.title ? `<h1>${effectiveConfig.title}</h1>` : showHeading ? `<h1>${humanReadableTitle}</h1>` :  '';
 
       const wrappedContent = `
 <turbo-frame id="content">
   ${backlink}
   ${heading}
   ${infoLine}
+  ${tagsHtml}
   ${htmlContent}
 </turbo-frame>
       `;
@@ -223,19 +246,20 @@ const generateSite = async () => {
 
   // Read home.md file and generate home page content
   const homeFilePath = path.join(pagesDir, 'home.md');
-  const homeContent = await fs.readFile(homeFilePath, 'utf-8');
-  const homeHtmlContent = marked(homeContent);
+  let homeHtmlContent = '';
+  if (await fs.pathExists(homeFilePath)) {
+    const homeMarkdown = await fs.readFile(homeFilePath, 'utf-8');
+    homeHtmlContent = marked(homeMarkdown);
+  }
 
-  // Render the index template with dynamic content
-  const indexFilePath = path.join(distDir, 'index.html');
-  const indexContent = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
+  // Generate index page with the dynamic content
+  const indexHtml = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
 
-  // Write the rendered index.html to dist
-  await fs.writeFile(indexFilePath, indexContent);
+  // Write the final HTML to the dist directory
+  await fs.writeFile(path.join(distDir, 'index.html'), indexHtml);
 };
 
-// Run the site generation
+// Run the site generation process
 generateSite()
-  .then(() => console.log('Site generated successfully'))
+  .then(() => console.log('Site generated successfully!'))
   .catch((err) => console.error('Error generating site:', err));
-``

@@ -1,4 +1,7 @@
-## About
+---
+title: "About This Site"
+tags: ["test","about","swfity"]
+---
 
 This is a super fast SPA blog engine that uses Turbo.
 
