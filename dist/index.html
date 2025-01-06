@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+  <style>
+    .tag{
+      border-radius: 4px;
+      border: silver 1px solid;
+      margin: 0 4px;
+      font-size: 11px;
+      padding: 2px;
+    }
+  </style>
   <title>Swifty</title>
 </head>
 <body>
@@ -49,11 +58,19 @@
     }
   })();
 
-  // Update the address bar without appending '/home' for the root
+  // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", (event) => {
-    const frameSrc = event.target.getAttribute("src");
+    const turboFrame = event.target;
 
-    // If the source is 'home.html', push "/" to the URL
+    // Update the title
+    const newTitle = turboFrame.getAttribute("data-title");
+    console.log("newTitle: ",newTitle,turboFrame)
+    if (newTitle) {
+      document.title = newTitle;
+    }
+
+    // Update the address bar without appending '/home' for the root
+    const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith("home.html")) {
       window.history.pushState({}, "", "/");
     } else if (frameSrc && frameSrc.endsWith(".html")) {

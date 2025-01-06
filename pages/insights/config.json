@@ -1,5 +1,6 @@
 {
   "title": "Insights Blog",
   "author": "Yozu",
-  "dates": true
+  "dates": true,
+  "showHeading": true
 }

@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+  <style>
+    .tag{
+      border-radius: 4px;
+      border: silver 1px solid;
+      margin: 0 4px;
+      font-size: 11px;
+      padding: 2px;
+    }
+  </style>
   <title>{{title}}</title>
 </head>
 <body>
@@ -13,7 +22,7 @@
   </header>
     <main>
   <turbo-frame id="content">
-{{homeHtmlContent}}
+{{content}}
 </turbo-frame>
   </main>
     <footer>

@@ -118,10 +118,10 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         : '';
 
       // Only include <h1> if showHeading is true
-      const heading = effectiveConfig.title ? `<h1>${effectiveConfig.title}</h1>` : showHeading ? `<h1>${humanReadableTitle}</h1>` :  '';
+      const heading = showHeading ? `<h1>${humanReadableTitle}</h1>` :  '';
 
       const wrappedContent = `
-<turbo-frame id="content">
+<turbo-frame id="content" data-title="${effectiveConfig.title || humanReadableTitle}">
   ${backlink}
   ${heading}
   ${infoLine}
@@ -192,7 +192,7 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   templateContent = templateContent
     .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
     .replaceAll('{{nav}}', generateNavigation(pageLinks))
-    .replaceAll('{{homeHtmlContent}}', homeHtmlContent);
+    .replaceAll('{{content}}', homeHtmlContent);
 
   // Add the missing script to the template
   const turboScript = `
@@ -213,11 +213,19 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
     }
   })();
 
-  // Update the address bar without appending '/home' for the root
+  // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", (event) => {
-    const frameSrc = event.target.getAttribute("src");
+    const turboFrame = event.target;
 
-    // If the source is 'home.html', push "/" to the URL
+    // Update the title
+    const newTitle = turboFrame.getAttribute("data-title");
+    console.log("newTitle: ",newTitle,turboFrame)
+    if (newTitle) {
+      document.title = newTitle;
+    }
+
+    // Update the address bar without appending '/home' for the root
+    const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith("home.html")) {
       window.history.pushState({}, "", "/");
     } else if (frameSrc && frameSrc.endsWith(".html")) {
