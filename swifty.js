@@ -135,7 +135,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
       // Update image links in the Markdown content
       const contentWithImages = content.replace(/!\[(.*?)\]\((.*?)\)/g, (match, altText, imgPath) => {
-        const relativePath = `images/${path.basename(imgPath)}`;
+        const relativePath = `/images/${path.basename(imgPath)}`;
         return `![${altText}](${relativePath})`;
       });
 
