@@ -11,6 +11,6 @@ tags:
 
 This is a super fast SPA blog engine that uses Turbo.
 
-Create a blog in no time uisng just markdown files!
+Create a blog in no time using just markdown files!
 
 A god number is {{ number }}

@@ -152,7 +152,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         }
       }
       const tagsHtml = tags.length
-        ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
+        ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
         : '';
 
       // Only include <h1> if showHeading is true
