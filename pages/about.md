@@ -8,8 +8,6 @@ tags:
  - image
 ---
 
-## About This Site
-
 This is a super fast SPA static site generate.
 
 It uses [Turbo](https://turbo.hotwired.dev) to make page navigation super swift.

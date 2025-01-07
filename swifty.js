@@ -123,6 +123,8 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       .replace(/-/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
+      const title = frontMatter.title || humanReadableTitle;
+
       const date = config.date || new Date(stats.birthtime).toLocaleDateString(undefined, {
         weekday: 'short',
         month: 'long',
@@ -163,7 +165,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
             tagsMap.set(tag, []);
           }
           tagsMap.get(tag).push({
-            title: humanReadableTitle,
+            title: title,
             path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}`,
           });
         }
@@ -173,7 +175,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         : '';
 
       // Only include <h1> if showHeading is true
-      const heading = showHeading ? `<h1>${humanReadableTitle}</h1>` :  '';
+      const heading = showHeading ? `<h1>${title}</h1>` :  '';
 
       const wrappedContent = `
 <turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
