@@ -5,6 +5,7 @@ tags:
  - test
  - about
  - swifty
+ - image
 ---
 
 ## About This Site
