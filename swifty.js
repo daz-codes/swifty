@@ -157,6 +157,9 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       // Only include author if it exists
       const infoLine = showInfo ? `<p>Posted by ${author} on ${date}</p>` : '';
 
+      const summaryHtml = config.summary ? `<div class="summary">${config.summary}</div>` : '';
+
+
       // Handle tags
       const tags = config.tags;
       if (tags) {
@@ -183,6 +186,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
   ${heading}
   ${infoLine}
   ${tagsHtml}
+  ${summaryHtml}
   ${htmlContent}
 </turbo-frame>
       `;
