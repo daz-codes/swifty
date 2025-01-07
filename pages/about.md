@@ -10,9 +10,11 @@ tags:
 
 ## About This Site
 
-This is a super fast SPA blog engine that uses Turbo.
+This is a super fast SPA static site generate.
 
-Create a blog in no time using just markdown files!
+It uses [Turbo](https://turbo.hotwired.dev) to make page navigation super swift.
+
+Create a website or blog in no time using just markdown files!
 
 ![Relaxing plants](images/test.jpg)
 
