@@ -1,3 +1,10 @@
+---
+tags:
+  - test
+  - swifty
+  - blog
+---
+
 This is my first blog post.
 
 This is so easy to use.

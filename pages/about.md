@@ -1,6 +1,10 @@
 ---
-title: "About This Site"
-tags: ["test","about","swfity"]
+title: About This Site
+number: 29
+tags: 
+ - test
+ - about
+ - swifty
 ---
 
 ## About This Site
@@ -8,3 +12,5 @@ tags: ["test","about","swfity"]
 This is a super fast SPA blog engine that uses Turbo.
 
 Create a blog in no time uisng just markdown files!
+
+A god number is {{ number }}

@@ -1,3 +1,11 @@
+---
+tags:
+  - swifty
+  - blog
+  - elixir
+  - todo
+---
+
 ## List of things to do
 
 * Learn Elixir

@@ -20,14 +20,13 @@
   
 <nav>
   <ul>
-    <li><a href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a></li> <!-- Add Home link once at the top -->
     <li><a href="/about.html" data-turbo-frame="content" data-turbo-action="advance">About</a></li>
 <li><a href="/insights.html" data-turbo-frame="content" data-turbo-action="advance">Insights</a></li>
 <li><a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></li>
   </ul>
 </nav>
   
-      <h1>Swifty</h1>
+      <h1><a href="/">Swifty</a></h1>
   </header>
     <main>
   <turbo-frame id="content">
@@ -50,12 +49,8 @@
     const path = window.location.pathname;
 
     // Set the src attribute for the turbo frame
-    if (path === "/" || path === "/home.html") {
-      turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
-    } else {
       const pagePath = path.endsWith(".html") ? path : path + ".html";
       turboFrame.setAttribute("src", pagePath);
-    }
   })();
 
   // Update the page title and address bar dynamically

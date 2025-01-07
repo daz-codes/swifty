@@ -1,12 +1,15 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { marked } = require('marked');
-const matter = require('gray-matter'); // For parsing front matter
+const matter = require('gray-matter');
+const yaml = require('js-yaml'); 
 
 
 // Paths for source and destination directories
 const pagesDir = path.join(__dirname, 'pages');
 const distDir = path.join(__dirname, 'dist');
+
+const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
 // Default configuration
 const defaultConfig = {
@@ -23,17 +26,36 @@ fs.ensureDirSync(distDir);
 // Utility function to capitalize strings
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-// Function to read configuration JSON for a specific folder and merge with the parent config
+
+// Function to read configuration JSON or YAML for a specific folder and merge with the parent config
 const readMergedConfig = async (folderPath, parentConfig = {}) => {
-  const folderConfigPath = path.join(folderPath, 'config.json');
+  const jsonConfigPath = path.join(folderPath, 'config.json');
+  const yamlConfigPath = path.join(folderPath, 'config.yaml');
+  const ymlConfigPath = path.join(folderPath, 'config.yml');
   let folderConfig = { ...defaultConfig, ...parentConfig };
 
-  if (await fs.pathExists(folderConfigPath)) {
-    const folderSpecificConfig = await fs.readJson(folderConfigPath);
-    folderConfig = { ...folderConfig, ...folderSpecificConfig };
+  if (await fs.pathExists(jsonConfigPath)) {
+    // Read JSON config
+    const jsonConfig = await fs.readJson(jsonConfigPath);
+    folderConfig = { ...folderConfig, ...jsonConfig };
+  } else if (await fs.pathExists(yamlConfigPath)) {
+    // Read YAML config
+    const yamlConfig = yaml.load(await fs.readFile(yamlConfigPath, 'utf-8'));
+    folderConfig = { ...folderConfig, ...yamlConfig };
+  } else if (await fs.pathExists(ymlConfigPath)) {
+    // Read .yml config (alternative YAML extension)
+    const ymlConfig = yaml.load(await fs.readFile(ymlConfigPath, 'utf-8'));
+    folderConfig = { ...folderConfig, ...ymlConfig };
   }
 
   return folderConfig;
+};
+
+// Function to replace {{ value }} placeholders in a string
+const replacePlaceholders = (template, values) => {
+  return template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
+    return key in values ? values[key] : match;
+  });
 };
 
 // Function to convert markdown files to turbo-frame-wrapped HTML
@@ -72,8 +94,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const markdownContent = await fs.readFile(filePath, 'utf-8');
       const parsed = matter(markdownContent);
       const frontMatter = parsed.data || {};
-      const content = parsed.content;
-      const htmlContent = marked(content);
+      const parsedContent = parsed.content;
 
       const humanReadableTitle = path
         .basename(file, '.md')
@@ -96,6 +117,12 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         ...frontMatter,
       };
 
+      // Replace {{ value }} placeholders in the markdown content
+      content = replacePlaceholders(parsedContent, effectiveConfig);
+
+      // Convert markdown to HTML
+      const htmlContent = marked(content);
+
       // Get values from the merged config
       const author = effectiveConfig.author || null;
       const showDate = effectiveConfig.dates === true;  // If dates is explicitly set to "true", show date
@@ -113,8 +140,19 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
       // Handle tags
       const tags = effectiveConfig.tags || [];
+      if (tags.length > 0) {
+        for (const tag of tags) {
+          if (!tagsMap.has(tag)) {
+            tagsMap.set(tag, []);
+          }
+          tagsMap.get(tag).push({
+            title: humanReadableTitle,
+            path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}`,
+          });
+        }
+      }
       const tagsHtml = tags.length
-        ? `<div class="tags">${tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>`
+        ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
         : '';
 
       // Only include <h1> if showHeading is true
@@ -159,13 +197,57 @@ const generateFolderIndex = async (filePath, folderName, links) => {
   await fs.writeFile(filePath, content);
 };
 
+const generateTagPages = async (outputDir) => {
+  const tagsDir = path.join(outputDir, 'tags');
+  fs.ensureDirSync(tagsDir);
+
+  for (const [tag, pages] of tagsMap) {
+    const tagFilePath = path.join(tagsDir, `${tag}.html`);
+
+    const content = `
+<turbo-frame id="content">
+  <h1>Pages tagged with "${tag}"</h1>
+  <ul>
+    ${pages
+      .map(
+        (page) =>
+          `<li><a href="${page.path}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
+      )
+      .join('\n')}
+  </ul>
+</turbo-frame>
+    `;
+
+    await fs.writeFile(tagFilePath, content);
+  }
+};
+
+const generateTagsIndexPage = async (outputDir) => {
+  const tagsPagePath = path.join(outputDir, 'tags.html');
+
+  const content = `
+<turbo-frame id="content">
+  <h1>All Tags</h1>
+  <ul>
+    ${Array.from(tagsMap.keys())
+      .map(
+        (tag) =>
+          `<li><a href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a></li>`
+      )
+      .join('\n')}
+  </ul>
+</turbo-frame>
+  `;
+
+  await fs.writeFile(tagsPagePath, content);
+};
+
 // Function to generate the main navigation HTML
 const generateNavigation = (links) => {
   // Remove "home" from links to avoid duplicate entry
-  const filteredLinks = links.filter(link => link.title.toLowerCase() !== 'home');
+  const filteredLinks = links.filter(link => link.title.toLowerCase() !== 'index');
 
-  const homeLink = `<li><a href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a></li>`;
-  const otherLinks = filteredLinks
+  const navLinks = filteredLinks
     .map(
       (link) =>
         `<li><a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a></li>`
@@ -175,8 +257,7 @@ const generateNavigation = (links) => {
   return `
 <nav>
   <ul>
-    ${homeLink} <!-- Add Home link once at the top -->
-    ${otherLinks}
+    ${navLinks}
   </ul>
 </nav>
   `;
@@ -205,12 +286,8 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
     const path = window.location.pathname;
 
     // Set the src attribute for the turbo frame
-    if (path === "/" || path === "/home.html") {
-      turboFrame.setAttribute("src", "/home.html"); // Load home.html for the root path
-    } else {
       const pagePath = path.endsWith(".html") ? path : path + ".html";
       turboFrame.setAttribute("src", pagePath);
-    }
   })();
 
   // Update the page title and address bar dynamically
@@ -253,12 +330,15 @@ const generateSite = async () => {
   const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
 
   // Read home.md file and generate home page content
-  const homeFilePath = path.join(pagesDir, 'home.md');
+  const homeFilePath = path.join(pagesDir, 'index.md');
   let homeHtmlContent = '';
   if (await fs.pathExists(homeFilePath)) {
     const homeMarkdown = await fs.readFile(homeFilePath, 'utf-8');
     homeHtmlContent = marked(homeMarkdown);
   }
+
+  await generateTagPages(distDir);
+  await generateTagsIndexPage(distDir);
 
   // Generate index page with the dynamic content
   const indexHtml = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
