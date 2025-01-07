@@ -292,6 +292,10 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   const templatePath = path.join(pagesDir, 'index.html');
   let templateContent = await fs.readFile(templatePath, 'utf-8');
 
+  // Add the meta tag for Turbo refresh method
+  const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
+  templateContent = templateContent.replace('<head>', `<head>\n  ${turboMetaTag}`);
+
   // Replace placeholders with dynamic values
   templateContent = templateContent
     .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
