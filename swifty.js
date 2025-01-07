@@ -7,16 +7,16 @@ const yaml = require('js-yaml');
 
 // Paths for source and destination directories
 const pagesDir = path.join(__dirname, 'pages');
+const imagesDir = path.join(__dirname, 'images');
 const distDir = path.join(__dirname, 'dist');
 
 const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
 // Default configuration
 const defaultConfig = {
-  title: 'My Swifty Site',
-  author: null,
+  title: "My Swifty Site",
+  author: "Taylor Swift",
   dates: false,
-  tags: [],
   showHeading: true,
 };
 
@@ -58,6 +58,17 @@ const replacePlaceholders = (template, values) => {
   });
 };
 
+const copyImages = async () => {
+  const imagesOutputDir = path.join(distDir, 'images');
+  if (await fs.pathExists(imagesDir)) {
+    await fs.ensureDir(imagesDir);
+    await fs.copy(imagesDir, imagesOutputDir);
+    console.log(`Images copied to ${imagesOutputDir}`);
+  } else {
+    console.log(`No images folder found in ${imagesDir}`);
+  }
+};
+
 // Function to convert markdown files to turbo-frame-wrapped HTML
 const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
   if (!(await fs.pathExists(sourceDir))) return [];
@@ -96,37 +107,45 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const frontMatter = parsed.data || {};
       const parsedContent = parsed.content;
 
-      const humanReadableTitle = path
-        .basename(file, '.md')
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-
       const stats = await fs.stat(filePath);
-      const createdDate = new Date(stats.birthtime).toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
+
 
       // Merge configurations with precedence: frontMatter > folderConfig > parentConfig > defaultConfig
-      const effectiveConfig = {
+      const config = {
         ...defaultConfig,
         ...parentConfig,
         ...folderConfig,
         ...frontMatter,
       };
 
+      const humanReadableTitle = path
+      .basename(file, '.md')
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+      const date = config.date || new Date(stats.birthtime).toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
       // Replace {{ value }} placeholders in the markdown content
-      content = replacePlaceholders(parsedContent, effectiveConfig);
+      const content = replacePlaceholders(parsedContent, config);
+
+      // Update image links in the Markdown content
+      const contentWithImages = content.replace(/!\[(.*?)\]\((.*?)\)/g, (match, altText, imgPath) => {
+        const relativePath = `images/${path.basename(imgPath)}`;
+        return `![${altText}](${relativePath})`;
+      });
 
       // Convert markdown to HTML
-      const htmlContent = marked(content);
+      const htmlContent = marked(contentWithImages);
 
       // Get values from the merged config
-      const author = effectiveConfig.author || null;
-      const showDate = effectiveConfig.dates === true;  // If dates is explicitly set to "true", show date
-      const showHeading = effectiveConfig.showHeading !== false;  // Check if showHeading is explicitly false
+      const author = config.author;
+      const showInfo = config.showInfo;  
+      const showHeading = config.showHeading;
       const backlink = parentTitle
         ? `<p><a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
             parentTitle
@@ -134,13 +153,11 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         : '';
 
       // Only include author if it exists
-      const infoLine = author
-      ? `<p>Posted by ${author}${showDate ? ` on ${createdDate}` : ''}</p>`
-      : '';
+      const infoLine = showInfo ? `<p>Posted by ${author} on ${date}</p>` : '';
 
       // Handle tags
-      const tags = effectiveConfig.tags || [];
-      if (tags.length > 0) {
+      const tags = config.tags;
+      if (tags) {
         for (const tag of tags) {
           if (!tagsMap.has(tag)) {
             tagsMap.set(tag, []);
@@ -151,7 +168,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
           });
         }
       }
-      const tagsHtml = tags.length
+      const tagsHtml = tags && tags.length
         ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
         : '';
 
@@ -159,7 +176,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const heading = showHeading ? `<h1>${humanReadableTitle}</h1>` :  '';
 
       const wrappedContent = `
-<turbo-frame id="content" data-title="${effectiveConfig.title || humanReadableTitle}">
+<turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
   ${backlink}
   ${heading}
   ${infoLine}
@@ -324,7 +341,8 @@ const generateSite = async () => {
   // Start with default config
   const siteConfig = await readMergedConfig(pagesDir);
 
-  const siteTitle = siteConfig.title || defaultConfig.title;
+  await copyImages(pagesDir, distDir);
+
 
   // Convert markdown in pages directory
   const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
