@@ -9,6 +9,7 @@ const yaml = require('js-yaml');
 const pagesDir = path.join(__dirname, 'pages');
 const imagesDir = path.join(__dirname, 'images');
 const distDir = path.join(__dirname, 'dist');
+const layoutsDir = path.join(__dirname, 'layouts');
 
 const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
@@ -54,7 +55,7 @@ const readMergedConfig = async (folderPath, parentConfig = {}) => {
 // Function to replace {{ value }} placeholders in a string
 const replacePlaceholders = (template, values) => {
   return template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
-    return key in values ? values[key] : match;
+      return key in values ? values[key] : match;
   });
 };
 
@@ -69,8 +70,63 @@ const copyImages = async () => {
   }
 };
 
+const layoutCache = new Map(); // Use Map for layout caching
+
+// Function to load and cache layouts
+const getLayout = async (layoutName) => {
+  if(layoutName == null) return
+  if (layoutCache.has(layoutName)) {
+    return layoutCache.get(layoutName);
+  }
+
+  const layoutPath = path.join(__dirname, 'layouts', `${layoutName}.html`);
+  if (!(await fs.pathExists(layoutPath))) {
+    console.warn(`Layout "${layoutName}" not found.`);
+    return null;
+  }
+
+  const layoutContent = await fs.readFile(layoutPath, 'utf-8');
+  layoutCache.set(layoutName, layoutContent); // Cache the layout
+  return layoutContent;
+};
+
+// Function to apply layout to content
+const applyLayout = (layoutContent) => {
+  if(layoutContent == null) return ["",""]
+  // // Replace all other placeholders
+  // const replacedLayout = replacePlaceholders(layoutContent, placeholders);
+
+  // Specifically replace `{{ content }}`
+  return layoutContent.split(/{{\s*content\s*}}/)
+};
+
+const processPartials = async (content, partialsDir) => {
+  const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
+
+  // Collect all matches for partials
+  const matches = [...content.matchAll(partialRegex)];
+
+  for (const match of matches) {
+    const [placeholder, partialName] = match;
+    const partialPath = path.join(partialsDir, `${partialName}.md`);
+
+    if (await fs.pathExists(partialPath)) {
+      const partialContent = await fs.readFile(partialPath, 'utf-8');
+      const renderedPartial = marked(partialContent); // Convert partial markdown to HTML
+      content = content.replace(placeholder, renderedPartial);
+    } else {
+      console.warn(`Partial "${partialName}" not found in ${partialsDir}`);
+      content = content.replace(placeholder, `<p>Partial "${partialName}" not found.</p>`);
+    }
+  }
+
+  return content;
+};
+
 // Function to convert markdown files to turbo-frame-wrapped HTML
 const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
+  const partialsDir = path.join(__dirname, 'partials'); // Define partials directory
+
   if (!(await fs.pathExists(sourceDir))) return [];
 
   const files = await fs.readdir(sourceDir);
@@ -103,9 +159,13 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
     } else if (path.extname(file) === '.md') {
       // Handle markdown file
       const markdownContent = await fs.readFile(filePath, 'utf-8');
-      const parsed = matter(markdownContent);
+      // Process partials
+      const markdownContentWithPartials = await processPartials(markdownContent, partialsDir);
+      const parsed = matter(markdownContentWithPartials);
       const frontMatter = parsed.data || {};
       const parsedContent = parsed.content;
+
+      
 
       const stats = await fs.stat(filePath);
 
@@ -125,7 +185,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
       const title = frontMatter.title || humanReadableTitle;
 
-      const date = config.date || new Date(stats.birthtime).toLocaleDateString(undefined, {
+      const date = new Date(config.date || stats.mtime).toLocaleDateString(undefined, {
         weekday: 'short',
         month: 'long',
         day: 'numeric',
@@ -135,14 +195,18 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       // Replace {{ value }} placeholders in the markdown content
       const content = replacePlaceholders(parsedContent, config);
 
-      // Update image links in the Markdown content
-      const contentWithImages = content.replace(/!\[(.*?)\]\((.*?)\)/g, (match, altText, imgPath) => {
-        const relativePath = `/images/${path.basename(imgPath)}`;
-        return `![${altText}](${relativePath})`;
-      });
-
       // Convert markdown to HTML
-      const htmlContent = marked(contentWithImages);
+      const htmlContent = marked(content);
+
+      // Get layout, if specified
+      const layoutName = config.layout;
+      const layoutContent = await getLayout(layoutName);
+
+      // Apply layout if it exists
+      const [beforeLayout,afterLayout] = applyLayout(layoutContent);
+      // const finalContent = layoutContent
+      // ? applyLayout(layoutContent, htmlContent, { title, date, ...config })
+      // : htmlContent;
 
       // Get values from the merged config
       const author = config.author;
@@ -182,12 +246,14 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
       const wrappedContent = `
 <turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
+  ${beforeLayout}
   ${backlink}
   ${heading}
   ${infoLine}
   ${tagsHtml}
   ${summaryHtml}
   ${htmlContent}
+  ${afterLayout}
 </turbo-frame>
       `;
 

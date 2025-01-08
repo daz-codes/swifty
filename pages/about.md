@@ -1,6 +1,7 @@
 ---
 title: About This Site
 number: 29
+layout: test
 tags: 
  - test
  - about
@@ -16,5 +17,4 @@ Create a website or blog in no time using just markdown files!
 
 ![Relaxing plants](images/test.jpg)
 
-
-A god number is {{ number }}
+{{ partial: test }}
