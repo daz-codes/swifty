@@ -230,7 +230,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       });
 
       config.backlink = parentTitle
-      ? `<a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
+      ? `<a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">${capitalize(
           parentTitle
         )}</a>`
       : '';
