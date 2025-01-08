@@ -11,7 +11,7 @@ number: 69
 
 It's all based on Taylor ...
 
-![Taylor Swift](images/taylor.jpg)
+![Taylor Swift](/images/taylor.jpg)
 
 {{ partial: test }}
 

@@ -17,8 +17,6 @@ const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 const defaultConfig = {
   title: "My Swifty Site",
   author: "Taylor Swift",
-  dates: false,
-  showHeading: true,
 };
 
 // Ensure dist directory exists
@@ -54,9 +52,27 @@ const readMergedConfig = async (folderPath, parentConfig = {}) => {
 
 // Function to replace {{ value }} placeholders in a string
 const replacePlaceholders = (template, values) => {
-  return template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
-      return key in values ? values[key] : match;
+  // 1. Extract code blocks (both inline and block)
+  const codeBlockRegex = /(```[\s\S]*?```|`[^`]+`|<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>)/g;
+  const codeBlocks = [];
+  let modifiedTemplate = template.replace(codeBlockRegex, (match) => {
+    // Store code blocks and replace them with placeholders
+    const placeholder = `{{code_block_${codeBlocks.length}}}`;
+    codeBlocks.push(match);
+    return placeholder;
   });
+
+  // 2. Replace placeholders in the rest of the content
+  modifiedTemplate = modifiedTemplate.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
+    return key in values ? values[key] : match;
+  });
+
+  // 3. Re-insert the code blocks back into their original positions
+  modifiedTemplate = modifiedTemplate.replace(/{{code_block_(\d+)}}/g, (match, index) => {
+    return codeBlocks[index]; // Re-insert the code block
+  });
+
+  return modifiedTemplate;
 };
 
 const copyImages = async () => {
@@ -91,34 +107,58 @@ const getLayout = async (layoutName) => {
 };
 
 // Function to apply layout to content
-const applyLayout = (layoutContent) => {
+const applyLayout = (layoutContent,config) => {
   if(layoutContent == null) return ["",""]
-  // // Replace all other placeholders
-  // const replacedLayout = replacePlaceholders(layoutContent, placeholders);
+  // Replace all other placeholders
+  const replacedLayout = replacePlaceholders(layoutContent, config);
 
   // Specifically replace `{{ content }}`
-  return layoutContent.split(/{{\s*content\s*}}/)
+  return replacedLayout.split(/{{\s*content\s*}}/)
 };
 
 const processPartials = async (content, partialsDir) => {
-  const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
+  // Regex for identifying code blocks, both in Markdown (` ```code block``` `) and HTML (`<pre><code>...</code></pre>`)
+  const codeBlockRegex = /(```[\s\S]*?```|<pre><code>[\s\S]*?<\/code><\/pre>)/g;
 
-  // Collect all matches for partials
-  const matches = [...content.matchAll(partialRegex)];
+  // Function to replace partial placeholders, but ignoring code blocks
+  const replacePlaceholdersIgnoringCodeBlocks = async (content) => {
+    // First, escape the code block content by replacing it with a placeholder
+    let codeBlockMatches = [];
+    content = content.replace(codeBlockRegex, (match) => {
+      const placeholder = `{{codeBlock_${codeBlockMatches.length}}}`;
+      codeBlockMatches.push(match);
+      return placeholder;
+    });
 
-  for (const match of matches) {
-    const [placeholder, partialName] = match;
-    const partialPath = path.join(partialsDir, `${partialName}.md`);
+    // Now replace the partials in the non-code block content
+    const partialMatches = content.match(/{{\s*partial:\s*([\w-]+)\s*}}/g) || [];
+    for (const match of partialMatches) {
+      const partialName = match.match(/{{\s*partial:\s*([\w-]+)\s*}}/)[1];
+      const partialPath = path.join(partialsDir, `${partialName}.md`);
+      
+      let renderedPartial = match;
+      if (await fs.pathExists(partialPath)) {
+        const partialContent = await fs.readFile(partialPath, 'utf-8');
+        renderedPartial = marked(partialContent); // Convert partial markdown to HTML
+      } else {
+        console.warn(`Partial "${partialName}" not found in ${partialsDir}`);
+        renderedPartial = `<p>Partial "${partialName}" not found.</p>`;
+      }
 
-    if (await fs.pathExists(partialPath)) {
-      const partialContent = await fs.readFile(partialPath, 'utf-8');
-      const renderedPartial = marked(partialContent); // Convert partial markdown to HTML
-      content = content.replace(placeholder, renderedPartial);
-    } else {
-      console.warn(`Partial "${partialName}" not found in ${partialsDir}`);
-      content = content.replace(placeholder, `<p>Partial "${partialName}" not found.</p>`);
+      content = content.replace(match, renderedPartial);
     }
-  }
+
+    // Replace placeholders with original code block content
+    content = content.replace(/{{codeBlock_\d+}}/g, (match) => {
+      const index = parseInt(match.match(/\d+/)[0]);
+      return codeBlockMatches[index];
+    });
+
+    return content;
+  };
+
+  // Replace placeholders while ignoring code blocks
+  content = await replacePlaceholdersIgnoringCodeBlocks(content);
 
   return content;
 };
@@ -162,20 +202,17 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       // Process partials
       const markdownContentWithPartials = await processPartials(markdownContent, partialsDir);
       const parsed = matter(markdownContentWithPartials);
-      const frontMatter = parsed.data || {};
+      const pageConfig = parsed.data || {};
       const parsedContent = parsed.content;
-
-      
 
       const stats = await fs.stat(filePath);
 
-
-      // Merge configurations with precedence: frontMatter > folderConfig > parentConfig > defaultConfig
+      // Merge configurations with precedence: pageConfig > folderConfig > parentConfig > defaultConfig
       const config = {
         ...defaultConfig,
         ...parentConfig,
         ...folderConfig,
-        ...frontMatter,
+        ...pageConfig,
       };
 
       const humanReadableTitle = path
@@ -183,14 +220,37 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       .replace(/-/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
-      const title = frontMatter.title || humanReadableTitle;
+      config.title = pageConfig.title || humanReadableTitle;
 
-      const date = new Date(config.date || stats.mtime).toLocaleDateString(undefined, {
+      config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString(undefined, {
         weekday: 'short',
         month: 'long',
         day: 'numeric',
         year: 'numeric',
       });
+
+      config.backlink = parentTitle
+      ? `<a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
+          parentTitle
+        )}</a>`
+      : '';
+
+    // Handle tags
+    const tags = config.tags;
+    if (tags) {
+      for (const tag of tags) {
+        if (!tagsMap.has(tag)) {
+          tagsMap.set(tag, []);
+        }
+        tagsMap.get(tag).push({
+          title: config.title,
+          path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}`,
+        });
+      }
+    }
+    config.tagLinks = tags && tags.length
+      ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
+      : '';
 
       // Replace {{ value }} placeholders in the markdown content
       const content = replacePlaceholders(parsedContent, config);
@@ -203,55 +263,13 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const layoutContent = await getLayout(layoutName);
 
       // Apply layout if it exists
-      const [beforeLayout,afterLayout] = applyLayout(layoutContent);
-      // const finalContent = layoutContent
-      // ? applyLayout(layoutContent, htmlContent, { title, date, ...config })
-      // : htmlContent;
+      const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
 
-      // Get values from the merged config
-      const author = config.author;
-      const showInfo = config.showInfo;  
-      const showHeading = config.showHeading;
-      const backlink = parentTitle
-        ? `<p><a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">Back to ${capitalize(
-            parentTitle
-          )}</a></p>`
-        : '';
-
-      // Only include author if it exists
-      const infoLine = showInfo ? `<p>Posted by ${author} on ${date}</p>` : '';
-
-      const summaryHtml = config.summary ? `<div class="summary">${config.summary}</div>` : '';
-
-
-      // Handle tags
-      const tags = config.tags;
-      if (tags) {
-        for (const tag of tags) {
-          if (!tagsMap.has(tag)) {
-            tagsMap.set(tag, []);
-          }
-          tagsMap.get(tag).push({
-            title: title,
-            path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}`,
-          });
-        }
-      }
-      const tagsHtml = tags && tags.length
-        ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
-        : '';
-
-      // Only include <h1> if showHeading is true
-      const heading = showHeading ? `<h1>${title}</h1>` :  '';
+     
 
       const wrappedContent = `
 <turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
   ${beforeLayout}
-  ${backlink}
-  ${heading}
-  ${infoLine}
-  ${tagsHtml}
-  ${summaryHtml}
   ${htmlContent}
   ${afterLayout}
 </turbo-frame>
