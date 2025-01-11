@@ -1,9 +1,14 @@
 
-<turbo-frame id="content">
-  <h1>Posts</h1>
-  <ul>
-    <li><a href="/posts/another-post.html" data-turbo-frame="content" data-turbo-action="advance">Another Post</a></li>
-<li><a href="/posts/first-post.html" data-turbo-frame="content" data-turbo-action="advance">First Post</a></li>
-  </ul>
-</turbo-frame>
+<turbo-frame id="content" data-title="Posts">
+  <p><a href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a> &raquo; <a href="/posts" data-turbo-frame="content" data-turbo-action="advance">Posts</a></p>
+<h1>Posts</h1>
+
   
+  <ul>
+    <li><a href="/posts/another-post" data-turbo-frame="content">Another Post</a></li><li><a href="/posts/first-post" data-turbo-frame="content">First Post</a></li>
+  </ul>
+  
+  
+<p>Something at the bottom of the layout</p>
+</turbo-frame>
+      

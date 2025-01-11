@@ -10,6 +10,8 @@ const pagesDir = path.join(__dirname, 'pages');
 const imagesDir = path.join(__dirname, 'images');
 const distDir = path.join(__dirname, 'dist');
 const layoutsDir = path.join(__dirname, 'layouts');
+const cssDir = path.join(__dirname, 'css');
+const jsDir = path.join(__dirname, 'js');
 
 const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
@@ -25,26 +27,62 @@ fs.ensureDirSync(distDir);
 // Utility function to capitalize strings
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
+// Function to generate import statements for CSS files
+const getCssImports = async () => {
+  if (!(await fs.pathExists(cssDir))) return '';
+  const cssFiles = await fs.readdir(cssDir);
+  return cssFiles
+    .filter((file) => file.endsWith('.css'))
+    .map((file) => `<link rel="stylesheet" href="/css/${file}" />`)
+    .join('\n');
+};
+
+// Function to generate script tags for JS files
+const getJsImports = async () => {
+  if (!(await fs.pathExists(jsDir))) return '';
+  const jsFiles = await fs.readdir(jsDir);
+  return jsFiles
+    .filter((file) => file.endsWith('.js'))
+    .map((file) => `<script src="/js/${file}"></script>`)
+    .join('\n');
+};
+
+const copyCss = async () => {
+  const cssOutputDir = path.join(distDir, 'css');
+  if (await fs.pathExists(cssDir)) {
+    await fs.ensureDir(cssOutputDir);
+    await fs.copy(cssDir, cssOutputDir);
+    console.log(`CSS files copied to ${cssOutputDir}`);
+  } else {
+    console.log(`No CSS folder found in ${cssDir}`);
+  }
+};
+
+const copyJs = async () => {
+  const jsOutputDir = path.join(distDir, 'js');
+  if (await fs.pathExists(jsDir)) {
+    await fs.ensureDir(jsOutputDir);
+    await fs.copy(jsDir, jsOutputDir);
+    console.log(`JS files copied to ${jsOutputDir}`);
+  } else {
+    console.log(`No JS folder found in ${jsDir}`);
+  }
+};
 
 // Function to read configuration JSON or YAML for a specific folder and merge with the parent config
 const readMergedConfig = async (folderPath, parentConfig = {}) => {
-  const jsonConfigPath = path.join(folderPath, 'config.json');
-  const yamlConfigPath = path.join(folderPath, 'config.yaml');
-  const ymlConfigPath = path.join(folderPath, 'config.yml');
+  const configFiles = ['config.json', 'config.yaml', 'config.yml']; // Supported config files
   let folderConfig = { ...defaultConfig, ...parentConfig };
 
-  if (await fs.pathExists(jsonConfigPath)) {
-    // Read JSON config
-    const jsonConfig = await fs.readJson(jsonConfigPath);
-    folderConfig = { ...folderConfig, ...jsonConfig };
-  } else if (await fs.pathExists(yamlConfigPath)) {
-    // Read YAML config
-    const yamlConfig = yaml.load(await fs.readFile(yamlConfigPath, 'utf-8'));
-    folderConfig = { ...folderConfig, ...yamlConfig };
-  } else if (await fs.pathExists(ymlConfigPath)) {
-    // Read .yml config (alternative YAML extension)
-    const ymlConfig = yaml.load(await fs.readFile(ymlConfigPath, 'utf-8'));
-    folderConfig = { ...folderConfig, ...ymlConfig };
+  for (const fileName of configFiles) {
+    const filePath = path.join(folderPath, fileName);
+    if (await fs.pathExists(filePath)) {
+      const fileContent = await fs.readFile(filePath, 'utf-8');
+      const parsedConfig =
+        fileName.endsWith('.json') ? JSON.parse(fileContent) : yaml.load(fileContent);
+      folderConfig = { ...folderConfig, ...parsedConfig };
+      break; // Stop after the first valid config file
+    }
   }
 
   return folderConfig;
@@ -64,7 +102,7 @@ const replacePlaceholders = (template, values) => {
 
   // 2. Replace placeholders in the rest of the content
   modifiedTemplate = modifiedTemplate.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
-    return key in values ? values[key] : match;
+    return key in values ? values[key] : "";
   });
 
   // 3. Re-insert the code blocks back into their original positions
@@ -95,7 +133,7 @@ const getLayout = async (layoutName) => {
     return layoutCache.get(layoutName);
   }
 
-  const layoutPath = path.join(__dirname, 'layouts', `${layoutName}.html`);
+  const layoutPath = path.join(layoutsDir, `${layoutName}.html`);
   if (!(await fs.pathExists(layoutPath))) {
     console.warn(`Layout "${layoutName}" not found.`);
     return null;
@@ -107,13 +145,16 @@ const getLayout = async (layoutName) => {
 };
 
 // Function to apply layout to content
-const applyLayout = (layoutContent,config) => {
-  if(layoutContent == null) return ["",""]
-  // Replace all other placeholders
-  const replacedLayout = replacePlaceholders(layoutContent, config);
+const applyLayout = (layoutContent, config) => {
+  if (layoutContent == null) return ["", ""];
 
   // Specifically replace `{{ content }}`
-  return replacedLayout.split(/{{\s*content\s*}}/)
+  const splitLayout = layoutContent.split(/{{\s*content\s*}}/);
+
+  // Ensure both before and after layout are defined
+  const beforeLayout = replacePlaceholders(splitLayout[0],config) || "";
+  const afterLayout = replacePlaceholders(splitLayout[1],config) || "";
+  return [beforeLayout, afterLayout];
 };
 
 const processPartials = async (content, partialsDir) => {
@@ -163,6 +204,43 @@ const processPartials = async (content, partialsDir) => {
   return content;
 };
 
+function generateBreadcrumbs(filePath) {
+  const relativePath = path.relative(pagesDir, filePath); // Get the relative path from the pages directory
+  const parts = relativePath.replace(/\.md$/, '').split(path.sep); // Normalize and split path, removing the .md extension
+
+  const breadcrumbs = parts.map((part, index) => {
+    const link = '/' + parts.slice(0, index + 1).join('/'); // Build the relative link
+    const title = part
+      .replace(/-/g, ' ') // Replace dashes with spaces
+      .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize each word
+
+    return { link, title };
+  });
+
+  // Add the "Home" breadcrumb at the start
+  breadcrumbs.unshift({ link: '/', title: 'Home' });
+
+  return breadcrumbs;
+}
+
+const generateSiblingLinks = (currentFile, folderFiles, parentPath) => {
+  return folderFiles
+    .filter((file) => file !== currentFile && path.extname(file) === '.md')
+    .map((file) => ({
+      title: capitalize(file.replace(/-/g, ' ').replace(/\.md$/, '')),
+      path: `/${parentPath}/${file.replace(/\.md$/, '')}`,
+    }));
+};
+
+const generateParentLink = (parentPath) => {
+  return parentPath
+    ? {
+        title: capitalize(path.basename(parentPath)),
+        path: `/${parentPath}`,
+      }
+    : null;
+};
+
 // Function to convert markdown files to turbo-frame-wrapped HTML
 const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
   const partialsDir = path.join(__dirname, 'partials'); // Define partials directory
@@ -174,16 +252,31 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
   // Read and merge config for the current folder
   const folderConfig = await readMergedConfig(sourceDir, parentConfig);
-
   for (const file of files) {
     const filePath = path.join(sourceDir, file);
+    const folderFiles = files.filter((f) => f !== file); // Files in the same folder
+
+    const breadcrumbs = generateBreadcrumbs(filePath);
+    const siblingLinks = generateSiblingLinks(file, folderFiles, parentTitle || '');
+    const parentLink = generateParentLink(parentTitle);
+
+    folderConfig.breadcrumbs = breadcrumbs
+      .map(crumb => `<a href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
+      .join(' &raquo; ');
+
+    folderConfig.siblingLinks = siblingLinks
+      .map(sibling => `<a href="${sibling.path}" data-turbo-frame="content" data-turbo-action="advance">${sibling.title}</a>`)
+      .join('');
+
+    folderConfig.parentLink = parentLink
+      ? `<a href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
+      : '';
 
     if ((await fs.stat(filePath)).isDirectory()) {
       // Handle subfolder
       const folderName = file;
       const outputFolder = path.join(outputDir, folderName);
       fs.ensureDirSync(outputFolder);
-
       const folderLinks = await convertMarkdownToTurboFrame(
         path.join(sourceDir, folderName),
         outputFolder,
@@ -193,7 +286,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
       // Create folder index page
       const folderIndexFilePath = path.join(outputDir, `${folderName}.html`);
-      await generateFolderIndex(folderIndexFilePath, folderName, folderLinks);
+      await generateFolderIndex(folderIndexFilePath, folderName, folderLinks, folderConfig);
 
       links.push({ title: capitalize(folderName), path: `/${folderName}` });
     } else if (path.extname(file) === '.md') {
@@ -265,8 +358,6 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       // Apply layout if it exists
       const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
 
-     
-
       const wrappedContent = `
 <turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
   ${beforeLayout}
@@ -286,23 +377,40 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 };
 
 // Function to generate folder index HTML
-const generateFolderIndex = async (filePath, folderName, links) => {
-  const content = `
-<turbo-frame id="content">
-  <h1>${capitalize(folderName)}</h1>
+const generateFolderIndex = async (indexFilePath, folderName, folderLinks, config) => {
+  const folderPath = path.dirname(indexFilePath);
+  // Example of replacing placeholders or using the config
+  config.title = capitalize(folderName);
+
+  // Get layout, if specified
+  const layoutName = config.layout;
+  const layoutContent = await getLayout(layoutName);
+
+  // Apply layout if it exists
+  const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
+
+  // Generate the index content
+  const htmlContent = `
   <ul>
-    ${links
-      .map(
-        (link) =>
-          `<li><a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a></li>`
-      )
-      .join('\n')}
+    ${folderLinks
+      .map(link => `<li><a href="${link.path}" data-turbo-frame="content">${link.title}</a></li>`)
+      .join('')}
   </ul>
-</turbo-frame>
   `;
 
-  await fs.writeFile(filePath, content);
+  const folderIndexContent = `
+<turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
+  ${beforeLayout}
+  ${htmlContent}
+  ${afterLayout}
+</turbo-frame>
+      `;
+
+  // Write the folder index file
+  await fs.writeFile(indexFilePath, folderIndexContent);
 };
+
+
 
 const generateTagPages = async (outputDir) => {
   const tagsDir = path.join(outputDir, 'tags');
@@ -362,23 +470,26 @@ const generateNavigation = (links) => {
     .join('\n');
 
   return `
-<nav>
-  <ul>
+  <nav><ul>
     ${navLinks}
-  </ul>
-</nav>
+  </ul></nav>
   `;
 };
 
 // Function to read and render the index template
 const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   // Read the template from pages folder
-  const templatePath = path.join(pagesDir, 'index.html');
+  const templatePath = path.join(__dirname, 'index.html');
   let templateContent = await fs.readFile(templatePath, 'utf-8');
 
   // Add the meta tag for Turbo refresh method
   const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
   templateContent = templateContent.replace('<head>', `<head>\n  ${turboMetaTag}`);
+  const css = await getCssImports();
+  const js = await getJsImports();
+  const imports = css + js;
+
+  templateContent = templateContent.replace('</head>', `${imports}\n<head>`);
 
   // Replace placeholders with dynamic values
   templateContent = templateContent
@@ -432,11 +543,15 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
 
 // Main function to handle conversion and site generation
 const generateSite = async () => {
+  console.log('Starting build process...');
+
   // Start with default config
   const siteConfig = await readMergedConfig(pagesDir);
 
-  await copyImages(pagesDir, distDir);
-
+  // Copy images, CSS, and JS files
+  await copyImages();
+  await copyCss();
+  await copyJs();
 
   // Convert markdown in pages directory
   const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
