@@ -206,7 +206,7 @@ const processPartials = async (content, partialsDir) => {
 
 function generateBreadcrumbs(filePath) {
   const relativePath = path.relative(pagesDir, filePath); // Get the relative path from the pages directory
-  const parts = relativePath.replace(/\.md$/, '').split(path.sep); // Normalize and split path, removing the .md extension
+  const parts = relativePath.replace(/\.md$/, '.html').split(path.sep); // Normalize and split path, removing the .md extension
 
   const breadcrumbs = parts.map((part, index) => {
     const link = '/' + parts.slice(0, index + 1).join('/'); // Build the relative link
@@ -228,7 +228,7 @@ const generateSiblingLinks = (currentFile, folderFiles, parentPath) => {
     .filter((file) => file !== currentFile && path.extname(file) === '.md')
     .map((file) => ({
       title: capitalize(file.replace(/-/g, ' ').replace(/\.md$/, '')),
-      path: `/${parentPath}/${file.replace(/\.md$/, '')}`,
+      path: `/${parentPath}/${file.replace(/\.md$/, '.html')}`,
     }));
 };
 
@@ -236,7 +236,7 @@ const generateParentLink = (parentPath) => {
   return parentPath
     ? {
         title: capitalize(path.basename(parentPath)),
-        path: `/${parentPath}`,
+        path: `/${parentPath}.html`,
       }
     : null;
 };
@@ -393,7 +393,7 @@ const generateFolderIndex = async (indexFilePath, folderName, folderLinks, confi
   const htmlContent = `
   <ul>
     ${folderLinks
-      .map(link => `<li><a href="${link.path}" data-turbo-frame="content">${link.title}</a></li>`)
+      .map(link => `<li><a href="${link.path}.html" data-turbo-frame="content">${link.title}</a></li>`)
       .join('')}
   </ul>
   `;
