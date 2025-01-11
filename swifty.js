@@ -206,7 +206,7 @@ const processPartials = async (content, partialsDir) => {
 
 function generateBreadcrumbs(filePath) {
   const relativePath = path.relative(pagesDir, filePath); // Get the relative path from the pages directory
-  const parts = relativePath.replace(/\.md$/, '.html').split(path.sep); // Normalize and split path, removing the .md extension
+  const parts = relativePath.replace(/\.md$/, '.html').split(path.sep); // Ensure .html extension
 
   const breadcrumbs = parts.map((part, index) => {
     const link = '/' + parts.slice(0, index + 1).join('/'); // Build the relative link
@@ -217,7 +217,6 @@ function generateBreadcrumbs(filePath) {
     return { link, title };
   });
 
-  // Add the "Home" breadcrumb at the start
   breadcrumbs.unshift({ link: '/', title: 'Home' });
 
   return breadcrumbs;
