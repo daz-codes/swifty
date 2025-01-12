@@ -15,8 +15,8 @@
     /* Default (light) theme */
     --bg: #fff;
     --accent-bg: #f5f7ff;
-    --text: #212121;
-    --text-light: #585858;
+    --text: var(--black);
+    --text-light: var(--darkGrey);
     --border: var(--slate);
     --primary: var(--blue);
     --secondary: var(--slate);
@@ -24,13 +24,17 @@
     --accent-text: var(--bg);
     --code: var(--red);
     --preformatted: #444;
-    --marked: #ffdd33;
+    --marked: var(--yellow);
     --disabled: #efefef;
 
     --white: #f6f7f8;
     --black: #222;
     --grey: #a4a5a6;
     --gray: var(--grey);
+    --lightGrey: #ccc;
+    --lightGray: var(--lightGrey);
+    --darkGrey: #585858;
+    --darkGray: var(--darkGrey);
     --red: #c20000;
     --blue: #0099dd;
     --green: #3c8562;
@@ -79,14 +83,14 @@
       color-scheme: dark;
       --bg: var(--black);
       --accent-bg: #2b2b2b;
-      --text: #dcdcdc;
-      --text-light: #ababab;
+      --text: var(--lightGrey);
+      --text-light: var(--grey);
       --primary: var(--pink);
       --primary-hover: var(--maroon);
       --secondary: var(--aqua);
       --accent-text: var(--bg);
       --code: var(--yellow);
-      --preformatted: #ccc;
+      --preformatted: var(--lightGrey);
       --disabled: var(--black);
     }
     /* Add a bit of transparency so light media isn't so glaring in dark mode */
@@ -235,6 +239,13 @@
   
     h4 {
       font-size: 1.25rem;
+    }
+    
+    p,h1,h2,h3,h4,h5,h6 {
+      text-align: center;
+    }
+    img{
+      margin: var(--margin-s) auto;
     }
   }
   
@@ -635,6 +646,7 @@
   video {
     max-width: 100%;
     height: auto;
+    display: block;
     border-radius: var(--radius-m);
   }
   
