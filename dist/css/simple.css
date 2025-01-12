@@ -373,7 +373,7 @@
     }
 
     header > nav a:hover {
-      background-color: none;
+      background: none;
       color: var(--primary);
     }
   }
