@@ -206,12 +206,12 @@ const processPartials = async (content, partialsDir) => {
 
 function generateBreadcrumbs(filePath) {
   const relativePath = path.relative(pagesDir, filePath); // Get the relative path from the pages directory
-  const parts = relativePath.replace(/\.md$/, '.html').split(path.sep); // Ensure .html extension
+  const parts = relativePath.replace(/\.md$/, "").split(path.sep); // Ensure .html extension
 
   const breadcrumbs = parts.map((part, index) => {
-    const link = '/' + parts.slice(0, index + 1).join('/'); // Build the relative link
+    const link = "/" + parts.slice(0, index + 1).join('/') + ".html"; // Build the relative link
     const title = part
-      .replace(/-/g, ' ') // Replace dashes with spaces
+      .replace(/-/g, " ") // Replace dashes with spaces
       .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize each word
 
     return { link, title };
@@ -260,15 +260,15 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
     const parentLink = generateParentLink(parentTitle);
 
     folderConfig.breadcrumbs = breadcrumbs
-      .map(crumb => `<a href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
-      .join(' &raquo; ');
+      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
+      .join(" &raquo; ");
 
     folderConfig.siblingLinks = siblingLinks
-      .map(sibling => `<a href="${sibling.path}" data-turbo-frame="content" data-turbo-action="advance">${sibling.title}</a>`)
+      .map(sibling => `<a class="sibling" href="${sibling.path}" data-turbo-frame="content" data-turbo-action="advance">${sibling.title}</a>`)
       .join('');
 
     folderConfig.parentLink = parentLink
-      ? `<a href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
+      ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
       : '';
 
     if ((await fs.stat(filePath)).isDirectory()) {
@@ -322,7 +322,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       });
 
       config.backlink = parentTitle
-      ? `<a href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">${capitalize(
+      ? `<a class="backlink" href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">${capitalize(
           parentTitle
         )}</a>`
       : '';
