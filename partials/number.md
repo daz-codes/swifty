@@ -1,6 +1,8 @@
-# This is a partial
+#### This is a partial
 
 It includes content that can be reused in other pages.
+
+![Raspberries](/images/lights.jpg)
 
 Here is a number: {{ number }}
 

@@ -17,7 +17,7 @@
     --accent-bg: #ccedf5;
     --text: var(--carbon);
     --text-light: var(--darkGrey);
-    --border: var(--slate);
+    --border: var(--gray);
     --primary: var(--blue);
     --secondary: var(--slate);
     --primary-hover: var(--teal);

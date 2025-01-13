@@ -420,6 +420,10 @@ const generateTagPages = async (outputDir) => {
 
     const config = await readMergedConfig(pagesDir);
 config.title = `Pages tagged with ${tag}`;
+const breadcrumbs = await generateBreadcrumbs(path.join(pagesDir, `tags/${tag}`));
+config.breadcrumbs = breadcrumbs
+      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
+      .join(" &raquo; ");
 // Get layout, if specified
 const layoutName = config.layout;
 const layoutContent = await getLayout(layoutName);
@@ -457,7 +461,10 @@ const generateTagsIndexPage = async (outputDir) => {
   const tagsPagePath = path.join(outputDir, 'tags.html');
 const config = await readMergedConfig(pagesDir);
 config.title = "All Tags";
-config.breadcrumbs = await generateBreadcrumbs(tagsPagePath);
+const breadcrumbs = await generateBreadcrumbs(path.join(pagesDir, 'tags'));
+config.breadcrumbs = breadcrumbs
+      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
+      .join(" &raquo; ");
 // Get layout, if specified
 const layoutName = config.layout;
 const layoutContent = await getLayout(layoutName);

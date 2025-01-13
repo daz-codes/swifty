@@ -3,7 +3,7 @@
 
 A short introduction to my website.
 
-![Hazy Lights](/images/lights.jpg)
+![Hazy Lights](/images/horizon.jpg)
 
 ## More Info
 
