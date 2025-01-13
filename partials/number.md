@@ -2,7 +2,7 @@
 
 It includes content that can be reused in other pages.
 
-![Raspberries](/images/lights.jpg)
+![Raspberries](/images/raspberries.jpg)
 
 Here is a number: {{ number }}
 
