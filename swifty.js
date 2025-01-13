@@ -17,6 +17,7 @@ const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
 // Default configuration
 const defaultConfig = {
+  sitename: "Swifty",
   title: "My Swifty Site",
   author: "Taylor Swift",
 };
@@ -109,7 +110,6 @@ const replacePlaceholders = (template, values) => {
   modifiedTemplate = modifiedTemplate.replace(/{{code_block_(\d+)}}/g, (match, index) => {
     return codeBlocks[index]; // Re-insert the code block
   });
-
   return modifiedTemplate;
 };
 
@@ -358,7 +358,8 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
 
       const wrappedContent = `
-<turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
+<turbo-frame id="content">
+<head><title>${config.title || humanReadableTitle} | ${config.sitename}</title></head>
   ${beforeLayout}
   ${htmlContent}
   ${afterLayout}
@@ -398,7 +399,8 @@ const generateFolderIndex = async (indexFilePath, folderName, folderLinks, confi
   `;
 
   const folderIndexContent = `
-<turbo-frame id="content" data-title="${config.title || humanReadableTitle}">
+<turbo-frame id="content">
+<head><title>${config.title || humanReadableTitle} | ${config.sitename}</title></head>
   ${beforeLayout}
   ${htmlContent}
   ${afterLayout}
@@ -446,7 +448,7 @@ const htmlContent = `
     `;
 
 const content = `
-<turbo-frame id="content" data-title=${config.title}>
+<turbo-frame id="content">
 ${beforeLayout}
 ${htmlContent}
 ${afterLayout}
@@ -485,7 +487,7 @@ const htmlContent = `
 `;
 
 const content = `
-<turbo-frame id="content" data-title=${config.title}>
+<turbo-frame id="content">
 ${beforeLayout}
 ${htmlContent}
 ${afterLayout}
@@ -534,10 +536,12 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
 
 
   // Replace placeholders with dynamic values
-  templateContent = templateContent
-    .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
-    .replaceAll('{{nav}}', generateNavigation(pageLinks))
-    .replaceAll('{{content}}', content);
+  templateContent = replacePlaceholders(templateContent,{...defaultConfig,...siteConfig,content,nav: generateNavigation(pageLinks)})
+  // templateContent = templateContent
+  //   .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
+  //   .replaceAll('{{sitename}}', siteConfig.sitename || defaultConfig.sitename)
+  //   .replaceAll('{{nav}}', generateNavigation(pageLinks))
+  //   .replaceAll('{{content}}', content);
 
   // Add the missing script to the template
   const turboScript = `
@@ -557,13 +561,6 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", (event) => {
     const turboFrame = event.target;
-
-    // Update the title
-    const newTitle = turboFrame.getAttribute("data-title");
-    console.log("newTitle: ",newTitle,turboFrame)
-    if (newTitle) {
-      document.title = newTitle;
-    }
 
     // Update the address bar without appending '/home' for the root
     const frameSrc = turboFrame.getAttribute("src");

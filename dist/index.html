@@ -4,7 +4,7 @@
   <meta name="turbo-refresh-method" content="morph">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swifty</title>
+  <title>Home | Swifty</title>
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
 <head>
@@ -30,8 +30,8 @@
   </turbo-frame>
   </main>
     <footer>
-    <p>Run <code>npm run build</code> to build the pages in the dist folder.</p>
-    <p></p>Run <code>npm start</code> to start a local server.</p>
+    <p>Run  to build the pages in the dist folder.</p>
+    <p></p>Run  to start a local server.</p>
     <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
   </footer>
 
@@ -51,13 +51,6 @@
   // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", (event) => {
     const turboFrame = event.target;
-
-    // Update the title
-    const newTitle = turboFrame.getAttribute("data-title");
-    console.log("newTitle: ",newTitle,turboFrame)
-    if (newTitle) {
-      document.title = newTitle;
-    }
 
     // Update the address bar without appending '/home' for the root
     const frameSrc = turboFrame.getAttribute("src");

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Holtwood+One+SC&family=Pacifico&family=Monoton&family=Jost&display=swap');
 /* Global variables. */
 :root {
+    background: var(--accent-bg);
     --font-family: var(--sans-font);
     --serif-font: Constantia, "Lucida Bright", Lucidabright, "Lucida Serif", Lucida, "DejaVu Serif", "Bitstream Vera Serif", "Liberation Serif", Georgia, serif;
     --sans-font: -apple-system, "BlinkMacSystemFont", "Avenir",
@@ -50,8 +51,9 @@
     --aqua: #4ecab8;
     --jade: #00adb9;
     --teal: #306c6d;
-    --navy: #0b22a08a;
+    --navy: #0b22a0;
     --graphite: #424242;
+    --midnight: #190919;
 
     --gradient: linear-gradient(135deg, var(--blue), var(--pink), var(--yellow));
 
@@ -89,7 +91,7 @@
     :root {
       color-scheme: dark;
       --bg: var(--black);
-      --accent-bg: var(--graphite);
+      --accent-bg: var(--midnight);
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
