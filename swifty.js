@@ -418,9 +418,18 @@ const generateTagPages = async (outputDir) => {
   for (const [tag, pages] of tagsMap) {
     const tagFilePath = path.join(tagsDir, `${tag}.html`);
 
-    const content = `
+    const config = await readMergedConfig(pagesDir);
+config.title = `Pages tagged with ${tag}`;
+// Get layout, if specified
+const layoutName = config.layout;
+const layoutContent = await getLayout(layoutName);
+
+// Apply layout if it exists
+const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
+
+// Generate the index content
+const htmlContent = `
 <turbo-frame id="content">
-  <h1>Pages tagged with ${tag}</h1>
   <ul>
     ${pages
       .map(
@@ -432,16 +441,32 @@ const generateTagPages = async (outputDir) => {
 </turbo-frame>
     `;
 
+const content = `
+<turbo-frame id="content" data-title=${config.title}>
+${beforeLayout}
+${htmlContent}
+${afterLayout}
+</turbo-frame>
+    `;
+
     await fs.writeFile(tagFilePath, content);
   }
 };
 
 const generateTagsIndexPage = async (outputDir) => {
   const tagsPagePath = path.join(outputDir, 'tags.html');
+const config = await readMergedConfig(pagesDir);
+config.title = "All Tags";
+config.breadcrumbs = await generateBreadcrumbs(tagsPagePath);
+// Get layout, if specified
+const layoutName = config.layout;
+const layoutContent = await getLayout(layoutName);
 
-  const content = `
-<turbo-frame id="content">
-  <h1>All Tags</h1>
+// Apply layout if it exists
+const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
+
+// Generate the index content
+const htmlContent = `
   <ul>
     ${Array.from(tagsMap.keys())
       .map(
@@ -450,8 +475,15 @@ const generateTagsIndexPage = async (outputDir) => {
       )
       .join('\n')}
   </ul>
+`;
+
+const content = `
+<turbo-frame id="content" data-title=${config.title}>
+${beforeLayout}
+${htmlContent}
+${afterLayout}
 </turbo-frame>
-  `;
+    `;
 
   await fs.writeFile(tagsPagePath, content);
 };
@@ -489,11 +521,16 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
 
   templateContent = templateContent.replace('</head>', `${imports}\n<head>`);
 
+  const content =   `<turbo-frame id="content">
+  ${homeHtmlContent}
+  </turbo-frame>`
+
+
   // Replace placeholders with dynamic values
   templateContent = templateContent
     .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
     .replaceAll('{{nav}}', generateNavigation(pageLinks))
-    .replaceAll('{{content}}', homeHtmlContent);
+    .replaceAll('{{content}}', content);
 
   // Add the missing script to the template
   const turboScript = `

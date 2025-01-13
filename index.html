@@ -7,13 +7,11 @@
 </head>
 <body>
   <header>
-  {{nav}}
-      <h1 class="display-l fancy-font glow"><a href="/">{{title}}</a></h1>
+    {{nav}}
+    <h1 class="display-l fancy-font"><a href="/">{{title}}</a></h1>
   </header>
     <main>
-  <turbo-frame id="content">
-{{content}}
-</turbo-frame>
+    {{content}}
   </main>
     <footer>
     <p>Run <code>npm run build</code> to build the pages in the dist folder.</p>

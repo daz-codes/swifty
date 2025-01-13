@@ -14,8 +14,8 @@
   
     /* Default (light) theme */
     --bg: #fff;
-    --accent-bg: #f5f7ff;
-    --text: var(--black);
+    --accent-bg: #ccedf5;
+    --text: var(--carbon);
     --text-light: var(--darkGrey);
     --border: var(--slate);
     --primary: var(--blue);
@@ -52,6 +52,8 @@
     --teal: #306c6d;
     --navy: #0b22a08a;
     --graphite: #424242;
+
+    --gradient: linear-gradient(135deg, var(--blue), var(--pink), var(--yellow));
 
     --grid-columns: 3;
 
@@ -143,7 +145,7 @@
   /* Make the header bg full width, but the content inline with body */
   body > header {
     background-color: var(--accent-bg);
-    border-bottom: 1px solid var(--border);
+    background-image: linear-gradient(var(--accent-bg), var(--bg));
     text-align: center;
     padding: 0 0.5rem 2rem 0.5rem;
     grid-column: 1 / -1;
@@ -173,12 +175,13 @@
   }
   
   body > footer {
+    background-image: linear-gradient(var(--bg),var(--accent-bg));
     margin-top: var(--margin-l);
     padding: var(--padding-xs) var(--padding-s) var(--padding-m) var(--padding-s);
     color: var(--text-light);
     font-size: 0.9rem;
     text-align: center;
-    border-top: var(--border-width-s) solid var(--border);
+    grid-column: 1 / -1;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -795,7 +798,7 @@
     .display-m,
     .display-s{
         font-family: var(--font-family);
-        line-height: 1;
+        line-height: 1.2;
         font-weight: 300;
         font-size: 4rem;
     }
@@ -1050,6 +1053,25 @@
   .no-bullet{
     list-style: none;
     padding-left: 0;
+  }
+
+  /* Classes for gradient text */
+
+  .gradient{
+    background: var(--gradient);
+  }
+  
+  .gradient-text{
+    background-image: var(--gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    text-fill-color: transparent;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    background-size: 100%;
+    -webkit-box-decoration-break: clone;
+    display: inline-block;
   }
   
   /* Classes for notices */

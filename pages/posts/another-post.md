@@ -2,14 +2,15 @@
 tags:
   - swifty
   - blog
-  - elixir
   - todo
 summary: A list of things I need to do.
+number: 69
 ---
 
 ## List of things to do
 
-* Learn Elixir
-* Publish Swifty
-* Finish Nanny State 2
-* Build Priority in Phoenix
+* Learn how to use Swifty
+* Customize the CSS
+* Keep writing blog posts
+
+{{ partial: number }}

@@ -1,14 +1,10 @@
-<h1 class="uppercase secondary-text text-center">Welcome to Swifty!</h1>
+<div class="gradient-text display-l text-center">Welcome to my website!
+</div>
 
-A Super Swift Static Site Generator that is super easy to use!
+A short introduction to my website.
 
-* Write pages in markdown
-* Tags
-* Layouts
-* Partials
+![Hazy Lights](/images/lights.jpg)
 
-## Quick Start
+## More Info
 
-Grab the code from the GitHub repo.
-
-There is already an example site there that uses layouts, partials, tags
+A bit more information about my website.
