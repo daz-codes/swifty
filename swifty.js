@@ -537,11 +537,6 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
 
   // Replace placeholders with dynamic values
   templateContent = replacePlaceholders(templateContent,{...defaultConfig,...siteConfig,content,nav: generateNavigation(pageLinks)})
-  // templateContent = templateContent
-  //   .replaceAll('{{title}}', siteConfig.title || defaultConfig.title)
-  //   .replaceAll('{{sitename}}', siteConfig.sitename || defaultConfig.sitename)
-  //   .replaceAll('{{nav}}', generateNavigation(pageLinks))
-  //   .replaceAll('{{content}}', content);
 
   // Add the missing script to the template
   const turboScript = `
