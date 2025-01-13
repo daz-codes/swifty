@@ -3,6 +3,7 @@ tags:
   - test
   - swifty
   - blog
+summary: My first ever blog post using Swifty!
 ---
 
 This is my first blog post.

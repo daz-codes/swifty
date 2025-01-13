@@ -1,7 +1,6 @@
 ---
 title: About This Site
 number: 29
-layout: test
 tags: 
  - test
  - about
@@ -15,6 +14,6 @@ It uses [Turbo](https://turbo.hotwired.dev) to make page navigation super swift.
 
 Create a website or blog in no time using just markdown files!
 
-![Relaxing plants](/images/test.jpg)
+![Relaxing plants](/images/lights.jpg)
 
 {{ partial: test }}

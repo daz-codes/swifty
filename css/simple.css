@@ -23,15 +23,17 @@
     --primary-hover: var(--teal);
     --accent-text: var(--bg);
     --code: var(--red);
-    --preformatted: #444;
+    --preformatted: var(--graphite);
     --marked: var(--yellow);
-    --disabled: #efefef;
+    --disabled: var(--offWhite);
 
     --white: #f6f7f8;
-    --black: #222;
+    --offWhite: #efefef;
+    --black: #191919;
+    --carbon: #292929;
     --grey: #a4a5a6;
     --gray: var(--grey);
-    --lightGrey: #ccc;
+    --lightGrey: #c4c4c4;
     --lightGray: var(--lightGrey);
     --darkGrey: #585858;
     --darkGray: var(--darkGrey);
@@ -49,8 +51,11 @@
     --jade: #00adb9;
     --teal: #306c6d;
     --navy: #0b22a08a;
+    --graphite: #424242;
 
     --grid-columns: 3;
+
+    --container-width: min(45rem,90%);
 
     --margin-unit: 0.5rem;
     --margin-xs: var(--margin-unit);
@@ -82,7 +87,7 @@
     :root {
       color-scheme: dark;
       --bg: var(--black);
-      --accent-bg: #2b2b2b;
+      --accent-bg: var(--carbon);
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
@@ -128,7 +133,7 @@
     font-size: 1.15rem;
     line-height: 1.5;
     display: grid;
-    grid-template-columns: 1fr min(45rem, 90%) 1fr;
+    grid-template-columns: 1fr var(--container-width) 1fr;
     margin: 0;
   }
   body > * {
@@ -183,6 +188,8 @@
   /* Format headers */
   h1 {
     font-size: 3rem;
+    margin-top: var(--margin-l);
+    margin-bottom: var(--margin-s);
   }
   
   h2 {
@@ -197,18 +204,21 @@
   
   h4 {
     font-size: 1.44rem;
+    margin-top: var(--margin-m);
   }
   
   h5 {
     font-size: 1.15rem;
+    margin-top: var(--margin-m);
   }
   
   h6 {
     font-size: 0.96rem;
+    margin-top: var(--margin-m);
   }
   
   p {
-    margin: 1.5rem 0;
+    margin: var(--margin-m) 0;
   }
   
   /* Prevent long strings from overflowing container */
@@ -892,6 +902,154 @@
   
   .glow{
     text-shadow: 0 0 0.25em currentcolor;
+  }
+
+  /* Classes for layout */
+
+  .full-width{
+    grid-column: 1 / -1;
+  }
+
+  .align-vertical {
+    display: flex;
+    align-items: center;
+  }
+  
+  .align-horizontal {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .align-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .align-right {
+    display: flex;
+    align-items: right;
+    justify-content: flex-end;
+  }
+  
+  .align-left {
+    display: flex;
+    align-items: left;
+    justify-content: flex-start;
+  }
+  
+  .inline{
+    display: inline;
+  }
+  
+  .block{
+    display: block;
+  }
+  
+  .inline-block{
+    display: inline-block;
+  }
+  
+  .absolute{
+    position: absolute;
+  }
+  
+  .relative{
+    position: relative;
+  }
+  
+  .fixed {
+    position: fixed;
+  }
+  
+  .sticky{
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .padding {
+    padding: var(--padding-m);
+  }
+  
+  .padding-x {
+    padding: 0 var(--padding-m);
+  }
+  
+  .padding-y {
+    padding: var(--padding-m) 0;
+  }
+  
+  .no-padding {
+    padding: 0 !important;
+  }
+  
+  .no-padding-x {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  .no-padding-y {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  
+  .margin {
+    margin: var(--margin-m);
+  }
+  
+  .margin-x {
+    margin: 0 var(--margin-m);
+  }
+  
+  .margin-y {
+    margin: var(--margin-m) 0;
+  }
+  
+  .margin-auto{
+    margin: auto !important;
+  }
+  
+  .margin-auto-x{
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  .no-margin {
+    margin: 0 !important;
+  }
+
+  .no-margin-x {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .no-margin-y {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .dropshadow{
+    box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
+  }
+  
+  .clearfix {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+  
+  .muted{
+    opacity: 0.7;
+  }
+  
+  .no-bullet{
+    list-style: none;
+    padding-left: 0;
   }
   
   /* Classes for notices */

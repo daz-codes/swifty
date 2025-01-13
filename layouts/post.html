@@ -1,12 +1,8 @@
-<div>{{ breadcrumbs }}</div>
-<div>Siblings: {{ siblingLinks }}</div>
-<div>Parent: {{ parentLink }}</div>
+<div class="breadcrumbs">{{ breadcrumbs }}</div>
 <h1 class="secondary-text uppercase">{{ title }}</h1>
-<p class="italic text-s">Posted by {{ author }} on {{ date }}</p>
+<div class="italic text-xs">Posted by {{ author }} on {{ date }}</div>
 <div class="tags">{{ tagLinks }}</div>
-<p>{{ summary }}</p>
-<div class="serif-font">
+<p class="text-s bold">{{ summary }}</p>
+<section class="serif-font">
 {{ content }}
-</div>
-<p>Some more content</p>
-  
+</section>  

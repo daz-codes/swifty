@@ -420,7 +420,7 @@ const generateTagPages = async (outputDir) => {
 
     const content = `
 <turbo-frame id="content">
-  <h1>Pages tagged with "${tag}"</h1>
+  <h1>Pages tagged with ${tag}</h1>
   <ul>
     ${pages
       .map(
@@ -464,15 +464,14 @@ const generateNavigation = (links) => {
   const navLinks = filteredLinks
     .map(
       (link) =>
-        `<li><a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a></li>`
+        `<a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a>`
     )
     .join('\n');
 
   return `
-  <nav><ul>
+  <nav>
     ${navLinks}
-  </ul></nav>
-  `;
+  </nav>`;
 };
 
 // Function to read and render the index template
