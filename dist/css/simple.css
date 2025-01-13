@@ -89,7 +89,7 @@
     :root {
       color-scheme: dark;
       --bg: var(--black);
-      --accent-bg: var(--carbon);
+      --accent-bg: var(--graphite);
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
