@@ -214,7 +214,7 @@ const generateParentLink = (parentPath) => {
 
 // Utility: Apply layout and wrap content in a Turbo Frame
 const applyLayoutAndWrapContent = async (content, config, layoutName) => {
-  const layoutContent = await getLayout(layoutName);
+  const layoutContent = await getLayout(layoutName || config.layout);
   const [beforeLayout, afterLayout] = applyLayout(layoutContent, config);
 
   return `
@@ -233,32 +233,38 @@ const writePage = async (filePath, content) => {
   await fs.writeFile(filePath, content);
 };
 
+const makeLinkConfig = async (file,filePath,folderFiles,parentTitle) => {
+    const breadcrumbs = generateBreadcrumbs(filePath);
+    const siblingLinks = generateSiblingLinks(file, folderFiles, parentTitle || '');
+    const parentLink = generateParentLink(parentTitle);
+    config = {}
+    config.breadcrumbs = breadcrumbs
+      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
+      .join(" &raquo; ");
+    config.siblingLinks = siblingLinks
+      .map(sibling => `<a class="sibling" href="${sibling.path}" data-turbo-frame="content" data-turbo-action="advance">${sibling.title}</a>`)
+      .join('');
+
+    config.parentLink = parentLink
+      ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
+      : '';
+
+    return config
+}
+
 const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
   if (!(await fs.pathExists(sourceDir))) return [];
 
   const files = await fs.readdir(sourceDir);
-  const folderConfig = await readMergedConfig(sourceDir, parentConfig);
   const links = [];
 
   for (const file of files) {
     const filePath = path.join(sourceDir, file);
     const folderFiles = files.filter((f) => f !== file); // Files in the same folder
     const stats = await fs.stat(filePath);
-    const breadcrumbs = generateBreadcrumbs(filePath);
-    const siblingLinks = generateSiblingLinks(file, folderFiles, parentTitle || '');
-    const parentLink = generateParentLink(parentTitle);
-
-    folderConfig.breadcrumbs = breadcrumbs
-      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
-      .join(" &raquo; ");
-    folderConfig.siblingLinks = siblingLinks
-      .map(sibling => `<a class="sibling" href="${sibling.path}" data-turbo-frame="content" data-turbo-action="advance">${sibling.title}</a>`)
-      .join('');
-
-    folderConfig.parentLink = parentLink
-      ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
-      : '';
-
+    
+    const linkConfig = await makeLinkConfig(file,filePath,folderFiles,parentTitle);
+    const folderConfig = await readMergedConfig(sourceDir, {...parentConfig,...linkConfig});
     const titleFromFilename = capitalize(file.replace(/\.md$/, '').replace(/-/g, ' '));
   
     if (stats.isDirectory()) {
@@ -274,7 +280,6 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
       const indexFilePath = path.join(folderOutputDir, 'index.html'); // Index file for the folder
       await generateFolderIndex(indexFilePath, file, folderLinks, folderConfig);
-
       // Correct path for the folder index
       const relativeFolderPath = path.relative(dirs.pages, filePath);
       const folderLinkPath = `/${relativeFolderPath.replace(/\\/g, '/')}`; // Ensure proper formatting
@@ -330,35 +335,27 @@ const generateFolderIndex = async (indexFilePath, folderName, folderLinks, confi
   await writePage(indexFilePath, wrappedContent);
 };
 
-// Function to generate tag pages
-const generateTagPages = async (tagsMap) => {
-  for (const [tag, pages] of tagsMap.entries()) {
-    const listItems = pages
-      .map(page => `<li><a href="${page.path}.html" data-turbo-frame="content">${page.title}</a></li>`)
-      .join('');
-    const config = { title: `Pages tagged with ${capitalize(tag)}`, sitename: defaultConfig.sitename };
-    const content = `<h1>${config.title}</h1><ul>${listItems}</ul>`;
+const generateTagPages = async (tagsMap, isIndexPage = false) => {
+  const tagType = isIndexPage ? "tags" : "tag";
+  const titlePrefix = isIndexPage ? 'All Tags' : 'Pages tagged with';
 
-    const wrappedContent = await applyLayoutAndWrapContent(content, config, null);
-    const tagFilePath = path.join(dirs.dist, "tags", `${tag}.html`);
-
-    await writePage(tagFilePath, wrappedContent);
-  }
-};
-
-// Function to generate the tags index page
-const generateTagsIndexPage = async (tagsMap) => {
-  // Use Array.from to get an array of keys from the Map
+  // Generate the list of tags and their associated links
   const listItems = Array.from(tagsMap.keys())
-    .map(tag => `<li><a href="/tags/${tag}.html" data-turbo-frame="content">${capitalize(tag)}</a></li>`)
+    .map(tag => `<li><a href="/${tagType}/${tag}.html" data-turbo-frame="content">${capitalize(tag)}</a></li>`)
     .join('');
-  const content = `<h1>Tags</h1><ul>${listItems}</ul>`;
-  const config = { title: 'Tags Index', sitename: defaultConfig.sitename };
+  
+  const content = `<ul>${listItems}</ul>`;
 
-  const wrappedContent = await applyLayoutAndWrapContent(content, config, null);
-  const indexPath = path.join(dirs.dist, 'tags', 'index.html');
+  const files = await fs.readdir(dirs.pages);
+  const linkConfig = await makeLinkConfig(isIndexPage ? "tags" : tagsMap.keys().next().value, path.join(dirs.pages, `tags`), files, tagType);
+  const folderConfig = await readMergedConfig(dirs.pages, { ...defaultConfig, ...linkConfig });
+  const config = { ...folderConfig, title: isIndexPage ? 'All Tags' : `Pages tagged with ${capitalize(tagsMap.keys().next().value)}` };
 
-  await writePage(indexPath, wrappedContent);
+  const wrappedContent = await applyLayoutAndWrapContent(content, config);
+
+  const outputDir = isIndexPage ? path.join(dirs.dist, 'tags', 'index.html') : path.join(dirs.dist, 'tags', `${tagsMap.keys().next().value}.html`);
+
+  await writePage(outputDir, wrappedContent);
 };
 
 
@@ -462,7 +459,6 @@ const generateSite = async () => {
   }
 
   await generateTagPages(tagsMap);
-  await generateTagsIndexPage(tagsMap);
 
   // Generate index page with the dynamic content
   const indexHtml = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
