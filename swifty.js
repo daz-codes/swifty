@@ -268,22 +268,21 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
     const titleFromFilename = capitalize(file.replace(/\.md$/, '').replace(/-/g, ' '));
   
     if (stats.isDirectory()) {
-      // Handle subfolder
-      const folderOutputDir = path.join(outputDir, file);
-      folderConfig.title = titleFromFilename
-      const folderLinks = await convertMarkdownToTurboFrame(
-        filePath,
-        folderOutputDir,
-        file,
-        folderConfig
-      );
-
-      const indexFilePath = path.join(folderOutputDir, 'index.html'); // Index file for the folder
-      await generateFolderIndex(indexFilePath, file, folderLinks, folderConfig);
-      // Correct path for the folder index
-      const relativeFolderPath = path.relative(dirs.pages, filePath);
-      const folderLinkPath = `/${relativeFolderPath.replace(/\\/g, '/')}`; // Ensure proper formatting
-      links.push({ title: capitalize(file), path: folderLinkPath });
+       // Handle subfolder
+       const outputFolder = path.join(outputDir, file);
+       fs.ensureDirSync(outputFolder);
+       const folderLinks = await convertMarkdownToTurboFrame(
+         path.join(sourceDir, file),
+         outputFolder,
+         file,
+         folderConfig
+       );
+ 
+       // Create folder index page
+       const folderIndexFilePath = path.join(outputDir, `${file}.html`);
+       await generateFolderIndex(folderIndexFilePath, file, folderLinks, folderConfig);
+  
+       links.push({ title: capitalize(file), path: `/${file}` });
     } else if (path.extname(file) === '.md') {
       // Handle markdown file
       const markdownContent = await fs.readFile(filePath, 'utf-8');
