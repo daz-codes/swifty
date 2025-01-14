@@ -2,18 +2,19 @@ const fs = require('fs-extra');
 const path = require('path');
 const { marked } = require('marked');
 const matter = require('gray-matter');
-const yaml = require('js-yaml'); 
+const yaml = require('js-yaml');
 
-
-// Paths for source and destination directories
-const pagesDir = path.join(__dirname, 'pages');
-const imagesDir = path.join(__dirname, 'images');
-const distDir = path.join(__dirname, 'dist');
-const layoutsDir = path.join(__dirname, 'layouts');
-const cssDir = path.join(__dirname, 'css');
-const jsDir = path.join(__dirname, 'js');
-
-const tagsMap = new Map(); // Use Map for tag-to-pages mapping
+// Directories
+const baseDir = __dirname;
+const dirs = {
+  pages: path.join(baseDir, 'pages'),
+  images: path.join(baseDir, 'images'),
+  dist: path.join(baseDir, 'dist'),
+  layouts: path.join(baseDir, 'layouts'),
+  css: path.join(baseDir, 'css'),
+  js: path.join(baseDir, 'js'),
+  partials: path.join(baseDir, 'partials'),
+};
 
 // Default configuration
 const defaultConfig = {
@@ -22,53 +23,42 @@ const defaultConfig = {
   author: "Taylor Swift",
 };
 
-// Ensure dist directory exists
-fs.ensureDirSync(distDir);
+// Utility: Ensure a directory exists and copy if it contains data
+const ensureAndCopy = async (source, destination) => {
+  if (await fs.pathExists(source)) {
+    await fs.ensureDir(destination);
+    await fs.copy(source, destination);
+    console.log(`Copied ${path.basename(source)} to ${destination}`);
+  } else {
+    console.log(`No ${path.basename(source)} found in ${source}`);
+  }
+};
+
+// Copy assets
+const copyAssets = async () => {
+  await ensureAndCopy(dirs.css, path.join(dirs.dist, 'css'));
+  await ensureAndCopy(dirs.js, path.join(dirs.dist, 'js'));
+  await ensureAndCopy(dirs.images, path.join(dirs.dist, 'images'));
+};
+
+// Utility: Generate HTML imports for assets
+const generateAssetImports = async (dir, tagTemplate) => {
+  if (!(await fs.pathExists(dir))) return '';
+  const files = await fs.readdir(dir);
+  return files
+    .map((file) => tagTemplate(file))
+    .join('\n');
+};
+
+// Generate CSS and JS imports
+const getCssImports = () => generateAssetImports(dirs.css, (file) => `<link rel="stylesheet" href="/css/${file}" />`);
+const getJsImports = () => generateAssetImports(dirs.js, (file) => `<script src="/js/${file}"></script>`);
+
+const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
 // Utility function to capitalize strings
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-// Function to generate import statements for CSS files
-const getCssImports = async () => {
-  if (!(await fs.pathExists(cssDir))) return '';
-  const cssFiles = await fs.readdir(cssDir);
-  return cssFiles
-    .filter((file) => file.endsWith('.css'))
-    .map((file) => `<link rel="stylesheet" href="/css/${file}" />`)
-    .join('\n');
-};
-
-// Function to generate script tags for JS files
-const getJsImports = async () => {
-  if (!(await fs.pathExists(jsDir))) return '';
-  const jsFiles = await fs.readdir(jsDir);
-  return jsFiles
-    .filter((file) => file.endsWith('.js'))
-    .map((file) => `<script src="/js/${file}"></script>`)
-    .join('\n');
-};
-
-const copyCss = async () => {
-  const cssOutputDir = path.join(distDir, 'css');
-  if (await fs.pathExists(cssDir)) {
-    await fs.ensureDir(cssOutputDir);
-    await fs.copy(cssDir, cssOutputDir);
-    console.log(`CSS files copied to ${cssOutputDir}`);
-  } else {
-    console.log(`No CSS folder found in ${cssDir}`);
-  }
-};
-
-const copyJs = async () => {
-  const jsOutputDir = path.join(distDir, 'js');
-  if (await fs.pathExists(jsDir)) {
-    await fs.ensureDir(jsOutputDir);
-    await fs.copy(jsDir, jsOutputDir);
-    console.log(`JS files copied to ${jsOutputDir}`);
-  } else {
-    console.log(`No JS folder found in ${jsDir}`);
-  }
-};
 
 // Function to read configuration JSON or YAML for a specific folder and merge with the parent config
 const readMergedConfig = async (folderPath, parentConfig = {}) => {
@@ -113,48 +103,30 @@ const replacePlaceholders = (template, values) => {
   return modifiedTemplate;
 };
 
-const copyImages = async () => {
-  const imagesOutputDir = path.join(distDir, 'images');
-  if (await fs.pathExists(imagesDir)) {
-    await fs.ensureDir(imagesDir);
-    await fs.copy(imagesDir, imagesOutputDir);
-    console.log(`Images copied to ${imagesOutputDir}`);
-  } else {
-    console.log(`No images folder found in ${imagesDir}`);
-  }
-};
-
-const layoutCache = new Map(); // Use Map for layout caching
-
-// Function to load and cache layouts
+// Utility: Cache and load layouts
+const layoutCache = new Map();
 const getLayout = async (layoutName) => {
-  if(layoutName == null) return
-  if (layoutCache.has(layoutName)) {
-    return layoutCache.get(layoutName);
-  }
+  if (!layoutName) return null;
+  if (layoutCache.has(layoutName)) return layoutCache.get(layoutName);
 
-  const layoutPath = path.join(layoutsDir, `${layoutName}.html`);
-  if (!(await fs.pathExists(layoutPath))) {
-    console.warn(`Layout "${layoutName}" not found.`);
-    return null;
+  const layoutPath = path.join(dirs.layouts, `${layoutName}.html`);
+  if (await fs.pathExists(layoutPath)) {
+    const layoutContent = await fs.readFile(layoutPath, 'utf-8');
+    layoutCache.set(layoutName, layoutContent);
+    return layoutContent;
   }
-
-  const layoutContent = await fs.readFile(layoutPath, 'utf-8');
-  layoutCache.set(layoutName, layoutContent); // Cache the layout
-  return layoutContent;
+  console.warn(`Layout "${layoutName}" not found.`);
+  return null;
 };
 
-// Function to apply layout to content
+// Apply layout content to a page
 const applyLayout = (layoutContent, config) => {
-  if (layoutContent == null) return ["", ""];
-
-  // Specifically replace `{{ content }}`
-  const splitLayout = layoutContent.split(/{{\s*content\s*}}/);
-
-  // Ensure both before and after layout are defined
-  const beforeLayout = replacePlaceholders(splitLayout[0],config) || "";
-  const afterLayout = replacePlaceholders(splitLayout[1],config) || "";
-  return [beforeLayout, afterLayout];
+  if (!layoutContent) return ['', ''];
+  const [before, after] = layoutContent.split(/{{\s*content\s*}}/);
+  return [
+    replacePlaceholders(before || '', config),
+    replacePlaceholders(after || '', config),
+  ];
 };
 
 const processPartials = async (content, partialsDir) => {
@@ -205,7 +177,7 @@ const processPartials = async (content, partialsDir) => {
 };
 
 function generateBreadcrumbs(filePath) {
-  const relativePath = path.relative(pagesDir, filePath); // Get the relative path from the pages directory
+  const relativePath = path.relative(dirs.pages, filePath); // Get the relative path from the pages directory
   const parts = relativePath.replace(/\.md$/, "").split(path.sep); // Ensure .html extension
 
   const breadcrumbs = parts.map((part, index) => {
@@ -240,21 +212,38 @@ const generateParentLink = (parentPath) => {
     : null;
 };
 
-// Function to convert markdown files to turbo-frame-wrapped HTML
-const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
-  const partialsDir = path.join(__dirname, 'partials'); // Define partials directory
+// Utility: Apply layout and wrap content in a Turbo Frame
+const applyLayoutAndWrapContent = async (content, config, layoutName) => {
+  const layoutContent = await getLayout(layoutName);
+  const [beforeLayout, afterLayout] = applyLayout(layoutContent, config);
 
+  return `
+<turbo-frame id="content">
+  <head><title>${config.title} | ${config.sitename}</title></head>
+  ${beforeLayout}
+  ${content}
+  ${afterLayout}
+</turbo-frame>
+  `;
+};
+
+// Utility: Write an HTML page
+const writePage = async (filePath, content) => {
+  await fs.ensureDir(path.dirname(filePath));
+  await fs.writeFile(filePath, content);
+};
+
+const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = null, parentConfig = {}) => {
   if (!(await fs.pathExists(sourceDir))) return [];
 
   const files = await fs.readdir(sourceDir);
+  const folderConfig = await readMergedConfig(sourceDir, parentConfig);
   const links = [];
 
-  // Read and merge config for the current folder
-  const folderConfig = await readMergedConfig(sourceDir, parentConfig);
   for (const file of files) {
     const filePath = path.join(sourceDir, file);
     const folderFiles = files.filter((f) => f !== file); // Files in the same folder
-
+    const stats = await fs.stat(filePath);
     const breadcrumbs = generateBreadcrumbs(filePath);
     const siblingLinks = generateSiblingLinks(file, folderFiles, parentTitle || '');
     const parentLink = generateParentLink(parentTitle);
@@ -262,7 +251,6 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
     folderConfig.breadcrumbs = breadcrumbs
       .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
       .join(" &raquo; ");
-
     folderConfig.siblingLinks = siblingLinks
       .map(sibling => `<a class="sibling" href="${sibling.path}" data-turbo-frame="content" data-turbo-action="advance">${sibling.title}</a>`)
       .join('');
@@ -271,231 +259,106 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
       : '';
 
-    if ((await fs.stat(filePath)).isDirectory()) {
+    if (stats.isDirectory()) {
       // Handle subfolder
-      const folderName = file;
-      const outputFolder = path.join(outputDir, folderName);
-      fs.ensureDirSync(outputFolder);
+      const folderOutputDir = path.join(outputDir, file);
       const folderLinks = await convertMarkdownToTurboFrame(
-        path.join(sourceDir, folderName),
-        outputFolder,
-        folderName,
+        filePath,
+        folderOutputDir,
+        file,
         folderConfig
       );
 
-      // Create folder index page
-      const folderIndexFilePath = path.join(outputDir, `${folderName}.html`);
-      await generateFolderIndex(folderIndexFilePath, folderName, folderLinks, folderConfig);
+      const indexFilePath = path.join(folderOutputDir, 'index.html'); // Index file for the folder
+      await generateFolderIndex(indexFilePath, file, folderLinks, folderConfig);
 
-      links.push({ title: capitalize(folderName), path: `/${folderName}` });
+      // Correct path for the folder index
+      const relativeFolderPath = path.relative(dirs.pages, filePath);
+      const folderLinkPath = `/${relativeFolderPath.replace(/\\/g, '/')}`; // Ensure proper formatting
+      links.push({ title: capitalize(file), path: folderLinkPath });
     } else if (path.extname(file) === '.md') {
       // Handle markdown file
       const markdownContent = await fs.readFile(filePath, 'utf-8');
-      // Process partials
-      const markdownContentWithPartials = await processPartials(markdownContent, partialsDir);
-      const parsed = matter(markdownContentWithPartials);
-      const pageConfig = parsed.data || {};
-      const parsedContent = parsed.content;
-
-      const stats = await fs.stat(filePath);
-
-      // Merge configurations with precedence: pageConfig > folderConfig > parentConfig > defaultConfig
-      const config = {
-        ...defaultConfig,
-        ...parentConfig,
-        ...folderConfig,
-        ...pageConfig,
-      };
-
-      const humanReadableTitle = path
-      .basename(file, '.md')
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-
-      config.title = pageConfig.title || humanReadableTitle;
-
-      config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-
-      config.backlink = parentTitle
-      ? `<a class="backlink" href="/${parentTitle}.html" data-turbo-frame="content" data-turbo-action="advance">${capitalize(
-          parentTitle
-        )}</a>`
-      : '';
-
-    // Handle tags
-    const tags = config.tags;
-    if (tags) {
-      for (const tag of tags) {
-        if (!tagsMap.has(tag)) {
-          tagsMap.set(tag, []);
+      const markdownWithPartials = await processPartials(markdownContent, dirs.partials);
+      const { data: pageConfig, content: parsedContent } = matter(markdownWithPartials);
+      const config = { ...defaultConfig, ...parentConfig, ...folderConfig, ...pageConfig };
+      const titleFromFilename = capitalize(file.replace(/\.md$/, '').replace(/-/g, ' '));
+      config.title = pageConfig.title || titleFromFilename;
+      config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString();
+       // Handle tags
+      const tags = config.tags;
+      if (tags) {
+        for (const tag of tags) {
+          if (!tagsMap.has(tag)) {
+            tagsMap.set(tag, []);
+          }
+          tagsMap.get(tag).push({
+            title: config.title,
+            path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}`
+          });
         }
-        tagsMap.get(tag).push({
-          title: config.title,
-          path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}`,
-        });
       }
-    }
-    config.tagLinks = tags && tags.length
-      ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
-      : '';
-
-      // Replace {{ value }} placeholders in the markdown content
-      const content = replacePlaceholders(parsedContent, config);
-
-      // Convert markdown to HTML
-      const htmlContent = marked(content);
-
-      // Get layout, if specified
-      const layoutName = config.layout;
-      const layoutContent = await getLayout(layoutName);
-
-      // Apply layout if it exists
-      const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
-
-      const wrappedContent = `
-<turbo-frame id="content">
-<head><title>${config.title || humanReadableTitle} | ${config.sitename}</title></head>
-  ${beforeLayout}
-  ${htmlContent}
-  ${afterLayout}
-</turbo-frame>
-      `;
-
+      config.tagLinks = tags && tags.length
+        ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
+        : '';
+      const content = marked(replacePlaceholders(parsedContent, config));
+      const wrappedContent = await applyLayoutAndWrapContent(content, config, config.layout);
       const outputFilePath = path.join(outputDir, `${path.basename(file, '.md')}.html`);
-      await fs.writeFile(outputFilePath, wrappedContent);
 
-      links.push({ title: humanReadableTitle, path: `${parentTitle ? `/${parentTitle}` : ''}/${path.basename(file, '.md')}` });
+      await writePage(outputFilePath, wrappedContent);
+
+      // Correct the link path to include folder structure
+      const relativePath = path.relative(dirs.pages, filePath); // Calculate relative path from source base
+      const linkPath = `/${relativePath.replace(/\.md$/, '').replace(/\\/g, '/')}`; // Ensure proper URL formatting
+      links.push({ title: titleFromFilename, path: linkPath });
     }
   }
 
   return links;
 };
 
-// Function to generate folder index HTML
+// Function to generate a folder index
 const generateFolderIndex = async (indexFilePath, folderName, folderLinks, config) => {
-  const folderPath = path.dirname(indexFilePath);
-  // Example of replacing placeholders or using the config
-  config.title = capitalize(folderName);
+  const listItems = folderLinks
+    .map(link => `<li><a href="${link.path}.html" data-turbo-frame="content">${link.title}</a></li>`)
+    .join('');
+  const content = `<ul>${listItems}</ul>`;
+  const wrappedContent = await applyLayoutAndWrapContent(content, config, config.layout);
 
-  // Get layout, if specified
-  const layoutName = config.layout;
-  const layoutContent = await getLayout(layoutName);
-
-  // Apply layout if it exists
-  const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
-
-  // Generate the index content
-  const htmlContent = `
-  <ul>
-    ${folderLinks
-      .map(link => `<li><a href="${link.path}.html" data-turbo-frame="content">${link.title}</a></li>`)
-      .join('')}
-  </ul>
-  `;
-
-  const folderIndexContent = `
-<turbo-frame id="content">
-<head><title>${config.title || humanReadableTitle} | ${config.sitename}</title></head>
-  ${beforeLayout}
-  ${htmlContent}
-  ${afterLayout}
-</turbo-frame>
-      `;
-
-  // Write the folder index file
-  await fs.writeFile(indexFilePath, folderIndexContent);
+  await writePage(indexFilePath, wrappedContent);
 };
 
+// Function to generate tag pages
+const generateTagPages = async (tagsMap) => {
+  for (const [tag, pages] of tagsMap.entries()) {
+    const listItems = pages
+      .map(page => `<li><a href="${page.path}.html" data-turbo-frame="content">${page.title}</a></li>`)
+      .join('');
+    const config = { title: `Pages tagged with ${capitalize(tag)}`, sitename: defaultConfig.sitename };
+    const content = `<h1>${config.title}</h1><ul>${listItems}</ul>`;
 
+    const wrappedContent = await applyLayoutAndWrapContent(content, config, null);
+    const tagFilePath = path.join(dirs.dist, "tags", `${tag}.html`);
 
-const generateTagPages = async (outputDir) => {
-  const tagsDir = path.join(outputDir, 'tags');
-  fs.ensureDirSync(tagsDir);
-
-  for (const [tag, pages] of tagsMap) {
-    const tagFilePath = path.join(tagsDir, `${tag}.html`);
-
-    const config = await readMergedConfig(pagesDir);
-config.title = `Pages tagged with ${tag}`;
-const breadcrumbs = await generateBreadcrumbs(path.join(pagesDir, `tags/${tag}`));
-config.breadcrumbs = breadcrumbs
-      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
-      .join(" &raquo; ");
-// Get layout, if specified
-const layoutName = config.layout;
-const layoutContent = await getLayout(layoutName);
-
-// Apply layout if it exists
-const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
-
-// Generate the index content
-const htmlContent = `
-<turbo-frame id="content">
-  <ul>
-    ${pages
-      .map(
-        (page) =>
-          `<li><a href="${page.path}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
-      )
-      .join('\n')}
-  </ul>
-</turbo-frame>
-    `;
-
-const content = `
-<turbo-frame id="content">
-${beforeLayout}
-${htmlContent}
-${afterLayout}
-</turbo-frame>
-    `;
-
-    await fs.writeFile(tagFilePath, content);
+    await writePage(tagFilePath, wrappedContent);
   }
 };
 
-const generateTagsIndexPage = async (outputDir) => {
-  const tagsPagePath = path.join(outputDir, 'tags.html');
-const config = await readMergedConfig(pagesDir);
-config.title = "All Tags";
-const breadcrumbs = await generateBreadcrumbs(path.join(pagesDir, 'tags'));
-config.breadcrumbs = breadcrumbs
-      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
-      .join(" &raquo; ");
-// Get layout, if specified
-const layoutName = config.layout;
-const layoutContent = await getLayout(layoutName);
+// Function to generate the tags index page
+const generateTagsIndexPage = async (tagsMap) => {
+  // Use Array.from to get an array of keys from the Map
+  const listItems = Array.from(tagsMap.keys())
+    .map(tag => `<li><a href="/tags/${tag}.html" data-turbo-frame="content">${capitalize(tag)}</a></li>`)
+    .join('');
+  const content = `<h1>Tags</h1><ul>${listItems}</ul>`;
+  const config = { title: 'Tags Index', sitename: defaultConfig.sitename };
 
-// Apply layout if it exists
-const [beforeLayout,afterLayout] = applyLayout(layoutContent,config);
+  const wrappedContent = await applyLayoutAndWrapContent(content, config, null);
+  const indexPath = path.join(dirs.dist, 'tags', 'index.html');
 
-// Generate the index content
-const htmlContent = `
-  <ul>
-    ${Array.from(tagsMap.keys())
-      .map(
-        (tag) =>
-          `<li><a href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a></li>`
-      )
-      .join('\n')}
-  </ul>
-`;
-
-const content = `
-<turbo-frame id="content">
-${beforeLayout}
-${htmlContent}
-${afterLayout}
-</turbo-frame>
-    `;
-
-  await fs.writeFile(tagsPagePath, content);
+  await writePage(indexPath, wrappedContent);
 };
+
 
 // Function to generate the main navigation HTML
 const generateNavigation = (links) => {
@@ -580,32 +443,30 @@ const generateSite = async () => {
   console.log('Starting build process...');
 
   // Start with default config
-  const siteConfig = await readMergedConfig(pagesDir);
+  const siteConfig = await readMergedConfig(dirs.pages);
 
   // Copy images, CSS, and JS files
-  await copyImages();
-  await copyCss();
-  await copyJs();
+  await copyAssets();
 
   // Convert markdown in pages directory
-  const pageLinks = await convertMarkdownToTurboFrame(pagesDir, distDir, null, siteConfig);
+  const pageLinks = await convertMarkdownToTurboFrame(dirs.pages, dirs.dist, null, siteConfig);
 
   // Read home.md file and generate home page content
-  const homeFilePath = path.join(pagesDir, 'index.md');
+  const homeFilePath = path.join(dirs.pages, 'index.md');
   let homeHtmlContent = '';
   if (await fs.pathExists(homeFilePath)) {
     const homeMarkdown = await fs.readFile(homeFilePath, 'utf-8');
     homeHtmlContent = marked(homeMarkdown);
   }
 
-  await generateTagPages(distDir);
-  await generateTagsIndexPage(distDir);
+  await generateTagPages(tagsMap);
+  await generateTagsIndexPage(tagsMap);
 
   // Generate index page with the dynamic content
   const indexHtml = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
 
   // Write the final HTML to the dist directory
-  await fs.writeFile(path.join(distDir, 'index.html'), indexHtml);
+  await fs.writeFile(path.join(dirs.dist, 'index.html'), indexHtml);
 };
 
 // Run the site generation process
