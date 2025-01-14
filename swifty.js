@@ -259,9 +259,12 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
       : '';
 
+    const titleFromFilename = capitalize(file.replace(/\.md$/, '').replace(/-/g, ' '));
+  
     if (stats.isDirectory()) {
       // Handle subfolder
       const folderOutputDir = path.join(outputDir, file);
+      folderConfig.title = titleFromFilename
       const folderLinks = await convertMarkdownToTurboFrame(
         filePath,
         folderOutputDir,
@@ -282,7 +285,6 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const markdownWithPartials = await processPartials(markdownContent, dirs.partials);
       const { data: pageConfig, content: parsedContent } = matter(markdownWithPartials);
       const config = { ...defaultConfig, ...parentConfig, ...folderConfig, ...pageConfig };
-      const titleFromFilename = capitalize(file.replace(/\.md$/, '').replace(/-/g, ' '));
       config.title = pageConfig.title || titleFromFilename;
       config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString();
        // Handle tags
@@ -310,7 +312,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       // Correct the link path to include folder structure
       const relativePath = path.relative(dirs.pages, filePath); // Calculate relative path from source base
       const linkPath = `/${relativePath.replace(/\.md$/, '').replace(/\\/g, '/')}`; // Ensure proper URL formatting
-      links.push({ title: titleFromFilename, path: linkPath });
+      links.push({ title: titleFromFilename, path: linkPath, date: config.date });
     }
   }
 
@@ -320,7 +322,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 // Function to generate a folder index
 const generateFolderIndex = async (indexFilePath, folderName, folderLinks, config) => {
   const listItems = folderLinks
-    .map(link => `<li><a href="${link.path}.html" data-turbo-frame="content">${link.title}</a></li>`)
+    .map(link => `<li>${link.date}: <a href="${link.path}.html" data-turbo-frame="content">${link.title}</a></li>`)
     .join('');
   const content = `<ul>${listItems}</ul>`;
   const wrappedContent = await applyLayoutAndWrapContent(content, config, config.layout);
