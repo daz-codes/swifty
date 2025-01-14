@@ -269,6 +269,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
   
     if (stats.isDirectory()) {
        // Handle subfolder
+       folderConfig.title = titleFromFilename;
        const outputFolder = path.join(outputDir, file);
        fs.ensureDirSync(outputFolder);
        const folderLinks = await convertMarkdownToTurboFrame(
@@ -335,28 +336,35 @@ const generateFolderIndex = async (indexFilePath, folderName, folderLinks, confi
 };
 
 const generateTagPages = async (tagsMap, isIndexPage = false) => {
-  const tagType = isIndexPage ? "tags" : "tag";
-  const titlePrefix = isIndexPage ? 'All Tags' : 'Pages tagged with';
+  for (const [tag, pages] of tagsMap) {
+    // Generate the list of tags and their associated links
+    const listItems = isIndexPage ? 
+    Array.from(tagsMap.keys())
+      .map(
+        tag =>
+          `<li><a href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a></li>`
+      )
+      .join('\n')
+    : pages
+      .map(
+        page =>
+          `<li><a href="${page.path}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
+      )
+      .join('\n')
+    const content = `<ul>${listItems}</ul>`;
 
-  // Generate the list of tags and their associated links
-  const listItems = Array.from(tagsMap.keys())
-    .map(tag => `<li><a href="/${tagType}/${tag}.html" data-turbo-frame="content">${capitalize(tag)}</a></li>`)
-    .join('');
-  
-  const content = `<ul>${listItems}</ul>`;
+    const files = await fs.readdir(dirs.pages);
+    const linkConfig = await makeLinkConfig(isIndexPage ? "tags" : tag, path.join(dirs.pages, `tags`), files,isIndexPage ? null : "tags");
+    const folderConfig = await readMergedConfig(dirs.pages, { ...defaultConfig, ...linkConfig });
+    const config = { ...folderConfig, title: isIndexPage ? 'All Tags' : `Pages tagged with ${capitalize(tag)}` };
 
-  const files = await fs.readdir(dirs.pages);
-  const linkConfig = await makeLinkConfig(isIndexPage ? "tags" : tagsMap.keys().next().value, path.join(dirs.pages, `tags`), files, tagType);
-  const folderConfig = await readMergedConfig(dirs.pages, { ...defaultConfig, ...linkConfig });
-  const config = { ...folderConfig, title: isIndexPage ? 'All Tags' : `Pages tagged with ${capitalize(tagsMap.keys().next().value)}` };
+    const wrappedContent = await applyLayoutAndWrapContent(content, config);
+    
+    const outputDir = isIndexPage ? path.join(dirs.dist, 'tags.html') : path.join(dirs.dist, 'tags', `${tag}.html`);
 
-  const wrappedContent = await applyLayoutAndWrapContent(content, config);
-
-  const outputDir = isIndexPage ? path.join(dirs.dist, 'tags', 'index.html') : path.join(dirs.dist, 'tags', `${tagsMap.keys().next().value}.html`);
-
-  await writePage(outputDir, wrappedContent);
+    await writePage(outputDir, wrappedContent);
+  }
 };
-
 
 // Function to generate the main navigation HTML
 const generateNavigation = (links) => {
@@ -458,6 +466,8 @@ const generateSite = async () => {
   }
 
   await generateTagPages(tagsMap);
+  await generateTagPages(tagsMap,true);
+
 
   // Generate index page with the dynamic content
   const indexHtml = await renderIndexTemplate(homeHtmlContent, siteConfig, pageLinks);
