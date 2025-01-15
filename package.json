@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@hotwired/turbo": "^8.0.12",
     "fs-extra": "^11.2.0",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.0",

@@ -37,7 +37,7 @@
   </footer>
 
 <script type="module">
-  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+  import * as Turbo from '/js/turbo.js';
 
   // Ensure the turbo-frame loads the correct content based on the current URL
   (function() {
@@ -45,8 +45,8 @@
     const path = window.location.pathname;
 
     // Set the src attribute for the turbo frame
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
+    const pagePath = path.endsWith(".html") ? path : path + ".html";
+    turboFrame.setAttribute("src", pagePath);
   })();
 
   // Update the page title and address bar dynamically
@@ -63,6 +63,6 @@
     }
   });
 </script>
-  </body>
+</body>
 </html>
   

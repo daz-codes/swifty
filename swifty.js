@@ -34,11 +34,19 @@ const ensureAndCopy = async (source, destination) => {
   }
 };
 
+const copyTurbo = async () => {
+  const turboSourcePath = path.join(__dirname, 'node_modules', '@hotwired', 'turbo', 'dist', 'turbo.es2017-umd.js');
+  const turboDestinationPath = path.join(dirs.dist, 'js', 'turbo.js');
+  await fs.copy(turboSourcePath, turboDestinationPath);
+  console.log('Turbo.js copied to dist/js');
+};
+
 // Copy assets
 const copyAssets = async () => {
   await ensureAndCopy(dirs.css, path.join(dirs.dist, 'css'));
   await ensureAndCopy(dirs.js, path.join(dirs.dist, 'js'));
   await ensureAndCopy(dirs.images, path.join(dirs.dist, 'images'));
+  await copyTurbo();
 };
 
 // Utility: Generate HTML imports for assets
@@ -367,7 +375,11 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   templateContent = templateContent.replace('<head>', `<head>\n  ${turboMetaTag}`);
   const css = await getCssImports();
   const js = await getJsImports();
-  const imports = css + js;
+  // Exclude turbo.js from <head> imports
+  const filteredJs = js.replace(/<script src="\/js\/turbo\.js"><\/script>/, '');
+
+  // Inject CSS and remaining JS into the head
+  const imports = css + filteredJs;
 
   templateContent = templateContent.replace('</head>', `${imports}\n<head>`);
 
@@ -382,7 +394,7 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   // Add the missing script to the template
   const turboScript = `
 <script type="module">
-  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+  import * as Turbo from '/js/turbo.js';
 
   // Ensure the turbo-frame loads the correct content based on the current URL
   (function() {
@@ -390,8 +402,8 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
     const path = window.location.pathname;
 
     // Set the src attribute for the turbo frame
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
+    const pagePath = path.endsWith(".html") ? path : path + ".html";
+    turboFrame.setAttribute("src", pagePath);
   })();
 
   // Update the page title and address bar dynamically
@@ -408,7 +420,7 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
     }
   });
 </script>
-  `;
+`;
 
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
