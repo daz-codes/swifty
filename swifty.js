@@ -86,22 +86,21 @@ const replacePlaceholders = (template, values) => {
   const codeBlocks = [];
   let modifiedTemplate = template.replace(codeBlockRegex, (match) => {
     // Store code blocks and replace them with placeholders
-    const placeholder = `{{code_block_${codeBlocks.length}}}`;
+    const placeholder = `<<swifty_code_block_${codeBlocks.length}>>`;
     codeBlocks.push(match);
     return placeholder;
   });
-
   // 2. Replace placeholders in the rest of the content
   modifiedTemplate = modifiedTemplate.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
     return key in values ? values[key] : "";
   });
-
   // 3. Re-insert the code blocks back into their original positions
-  modifiedTemplate = modifiedTemplate.replace(/{{code_block_(\d+)}}/g, (match, index) => {
+  modifiedTemplate = modifiedTemplate.replace(/<<swifty_code_block_(\d+)>>/g, (match, index) => {
     return codeBlocks[index]; // Re-insert the code block
   });
   return modifiedTemplate;
 };
+
 
 // Utility: Cache and load layouts
 const layoutCache = new Map();
