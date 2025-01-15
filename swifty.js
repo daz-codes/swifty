@@ -80,27 +80,46 @@ const readMergedConfig = async (folderPath, parentConfig = {}) => {
 };
 
 // Function to replace {{ value }} placeholders in a string
-const replacePlaceholders = (template, values) => {
-  // 1. Extract code blocks (both inline and block)
-  const codeBlockRegex = /(```[\s\S]*?```|`[^`]+`|<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>)/g;
+const replacePlaceholders = async (template, values) => {
+  // 1. Extract code blocks to avoid unintended replacements within them
+  const codeBlockRegex = /(```[\s\S]*?```|<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>)/g;
   const codeBlocks = [];
   let modifiedTemplate = template.replace(codeBlockRegex, (match) => {
-    // Store code blocks and replace them with placeholders
     const placeholder = `<<swifty_code_block_${codeBlocks.length}>>`;
     codeBlocks.push(match);
     return placeholder;
   });
-  // 2. Replace placeholders in the rest of the content
+
+  // 2. Replace partial placeholders manually for async support
+  const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
+  const matches = [...modifiedTemplate.matchAll(partialRegex)];
+  for (const match of matches) {
+    const [fullMatch, partialName] = match;
+    const partialPath = path.join(dirs.partials, `${partialName}.md`);
+    let replacement = `<p>Partial "${partialName}" not found.</p>`;
+    if (await fs.pathExists(partialPath)) {
+      let partialContent = await fs.readFile(partialPath, 'utf-8');
+      // Recursively replace placeholders in the partial content
+      partialContent = await replacePlaceholders(partialContent, values);
+      replacement = marked(partialContent); // Convert Markdown to HTML
+    } else {
+      console.warn(`Partial "${partialName}" not found.`);
+    }
+    modifiedTemplate = modifiedTemplate.replace(fullMatch, replacement);
+  }
+
+  // 3. Replace other placeholders
   modifiedTemplate = modifiedTemplate.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
-    return key in values ? values[key] : "";
+    return key in values ? values[key] : match; // Preserve unmatched placeholders
   });
-  // 3. Re-insert the code blocks back into their original positions
+
+  // 4. Re-insert the code blocks back into the template
   modifiedTemplate = modifiedTemplate.replace(/<<swifty_code_block_(\d+)>>/g, (match, index) => {
-    return codeBlocks[index]; // Re-insert the code block
+    return codeBlocks[index];
   });
+
   return modifiedTemplate;
 };
-
 
 // Utility: Cache and load layouts
 const layoutCache = new Map();
@@ -119,60 +138,13 @@ const getLayout = async (layoutName) => {
 };
 
 // Apply layout content to a page
-const applyLayout = (layoutContent, config) => {
+const applyLayout = async (layoutContent, config) => {
   if (!layoutContent) return ['', ''];
   const [before, after] = layoutContent.split(/{{\s*content\s*}}/);
   return [
-    replacePlaceholders(before || '', config),
-    replacePlaceholders(after || '', config),
+    await replacePlaceholders(before || '', config),
+    await replacePlaceholders(after || '', config),
   ];
-};
-
-const processPartials = async (content, partialsDir) => {
-  // Regex for identifying code blocks, both in Markdown (` ```code block``` `) and HTML (`<pre><code>...</code></pre>`)
-  const codeBlockRegex = /(```[\s\S]*?```|<pre><code>[\s\S]*?<\/code><\/pre>)/g;
-
-  // Function to replace partial placeholders, but ignoring code blocks
-  const replacePlaceholdersIgnoringCodeBlocks = async (content) => {
-    // First, escape the code block content by replacing it with a placeholder
-    let codeBlockMatches = [];
-    content = content.replace(codeBlockRegex, (match) => {
-      const placeholder = `{{codeBlock_${codeBlockMatches.length}}}`;
-      codeBlockMatches.push(match);
-      return placeholder;
-    });
-
-    // Now replace the partials in the non-code block content
-    const partialMatches = content.match(/{{\s*partial:\s*([\w-]+)\s*}}/g) || [];
-    for (const match of partialMatches) {
-      const partialName = match.match(/{{\s*partial:\s*([\w-]+)\s*}}/)[1];
-      const partialPath = path.join(partialsDir, `${partialName}.md`);
-      
-      let renderedPartial = match;
-      if (await fs.pathExists(partialPath)) {
-        const partialContent = await fs.readFile(partialPath, 'utf-8');
-        renderedPartial = marked(partialContent); // Convert partial markdown to HTML
-      } else {
-        console.warn(`Partial "${partialName}" not found in ${partialsDir}`);
-        renderedPartial = `<p>Partial "${partialName}" not found.</p>`;
-      }
-
-      content = content.replace(match, renderedPartial);
-    }
-
-    // Replace placeholders with original code block content
-    content = content.replace(/{{codeBlock_\d+}}/g, (match) => {
-      const index = parseInt(match.match(/\d+/)[0]);
-      return codeBlockMatches[index];
-    });
-
-    return content;
-  };
-
-  // Replace placeholders while ignoring code blocks
-  content = await replacePlaceholdersIgnoringCodeBlocks(content);
-
-  return content;
 };
 
 function generateBreadcrumbs(filePath) {
@@ -214,7 +186,7 @@ const generateParentLink = (parentPath) => {
 // Utility: Apply layout and wrap content in a Turbo Frame
 const applyLayoutAndWrapContent = async (content, config, layoutName) => {
   const layoutContent = await getLayout(layoutName || config.layout);
-  const [beforeLayout, afterLayout] = applyLayout(layoutContent, config);
+  const [beforeLayout, afterLayout] = await applyLayout(layoutContent, config);
 
   return `
 <turbo-frame id="content">
@@ -286,8 +258,8 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
     } else if (path.extname(file) === '.md') {
       // Handle markdown file
       const markdownContent = await fs.readFile(filePath, 'utf-8');
-      const markdownWithPartials = await processPartials(markdownContent, dirs.partials);
-      const { data: pageConfig, content: parsedContent } = matter(markdownWithPartials);
+      //const markdownWithPartials = await processPartials(markdownContent, dirs.partials);
+      const { data: pageConfig, content: parsedContent } = matter(markdownContent);
       const config = { ...defaultConfig, ...parentConfig, ...folderConfig, ...pageConfig };
       config.title = pageConfig.title || titleFromFilename;
       config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString();
@@ -307,8 +279,9 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       config.tagLinks = tags && tags.length
         ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
         : '';
-      const content = marked(replacePlaceholders(parsedContent, config));
-      const wrappedContent = await applyLayoutAndWrapContent(content, config, config.layout);
+      const content = await replacePlaceholders(parsedContent, config);
+      const markedContent = marked(content);
+      const wrappedContent = await applyLayoutAndWrapContent(markedContent, config, config.layout);
       const outputFilePath = path.join(outputDir, `${path.basename(file, '.md')}.html`);
 
       await writePage(outputFilePath, wrappedContent);
@@ -404,7 +377,7 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
 
 
   // Replace placeholders with dynamic values
-  templateContent = replacePlaceholders(templateContent,{...defaultConfig,...siteConfig,content,nav: generateNavigation(pageLinks)})
+  templateContent = await replacePlaceholders(templateContent,{...defaultConfig,...siteConfig,content,nav: generateNavigation(pageLinks)})
 
   // Add the missing script to the template
   const turboScript = `
