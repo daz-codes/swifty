@@ -21,6 +21,7 @@ const defaultConfig = {
   sitename: "Swifty",
   title: "My Swifty Site",
   author: "Taylor Swift",
+  dateFormat: {weekday: "short",month: "short", day: "numeric", year: "numeric"}
 };
 
 // Utility: Ensure a directory exists and copy if it contains data
@@ -217,7 +218,7 @@ const makeLinkConfig = async (file,filePath,folderFiles,parentTitle) => {
       .join('');
 
     config.parentLink = parentLink
-      ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content">${parentLink.title}</a>`
+      ? `<a class="parent" href="${parentLink.path}" data-turbo-frame="content" data-turbo-action="advance">${parentLink.title}</a>`
       : '';
 
     return config
@@ -262,7 +263,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
       const { data: pageConfig, content: parsedContent } = matter(markdownContent);
       const config = { ...defaultConfig, ...parentConfig, ...folderConfig, ...pageConfig };
       config.title = pageConfig.title || titleFromFilename;
-      config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString();
+      config.date = new Date(pageConfig.date || stats.mtime).toLocaleDateString(undefined,config.dateFormat);
        // Handle tags
       const tags = config.tags;
       if (tags) {
@@ -406,6 +407,27 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
       const newPath = frameSrc.replace(".html", "");
       window.history.pushState({}, "", newPath);
     }
+
+    const rootUrl = "/"; // Define the root URL to exclude
+
+    document.querySelectorAll('#content a[href]').forEach(link => {
+      const href = link.getAttribute('href');
+
+      // Skip external links and the root URL
+      if (
+        href.startsWith('#') || // Skip anchor links
+        href.startsWith('http') || // Skip external links
+        href === rootUrl // Skip the root URL
+      ) {
+        return;
+      }
+
+      // Add Turbo attributes for internal links
+      link.setAttribute('data-turbo-frame', 'content');
+      link.setAttribute('data-turbo-action', 'advance');
+      link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
+      console.log(link);
+    });
   });
 </script>
   `;

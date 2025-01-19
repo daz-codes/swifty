@@ -61,6 +61,27 @@
       const newPath = frameSrc.replace(".html", "");
       window.history.pushState({}, "", newPath);
     }
+
+    const rootUrl = "/"; // Define the root URL to exclude
+
+    document.querySelectorAll('#content a[href]').forEach(link => {
+      const href = link.getAttribute('href');
+
+      // Skip external links and the root URL
+      if (
+        href.startsWith('#') || // Skip anchor links
+        href.startsWith('http') || // Skip external links
+        href === rootUrl // Skip the root URL
+      ) {
+        return;
+      }
+
+      // Add Turbo attributes for internal links
+      link.setAttribute('data-turbo-frame', 'content');
+      link.setAttribute('data-turbo-action', 'advance');
+      link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
+      console.log(link);
+    });
   });
 </script>
   </body>

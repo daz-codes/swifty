@@ -13,4 +13,6 @@ number: 69
 * Customize the CSS
 * Keep writing blog posts
 
+[A link to about](/about)
+
 {{ partial: number }}
