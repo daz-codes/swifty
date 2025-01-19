@@ -16,6 +16,13 @@ const dirs = {
   partials: path.join(baseDir, 'partials'),
 };
 
+// Valid file extensions for assets
+const validExtensions = {
+  css: ['.css'],
+  js: ['.js'],
+  images: ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'],
+};
+
 // Default configuration
 const defaultConfig = {
   sitename: "Swifty",
@@ -24,41 +31,50 @@ const defaultConfig = {
   dateFormat: {weekday: "short",month: "short", day: "numeric", year: "numeric"}
 };
 
-// Utility: Ensure a directory exists and copy if it contains data
-const ensureAndCopy = async (source, destination) => {
+// Ensure and copy valid assets
+const ensureAndCopy = async (source, destination, validExts) => {
   if (await fs.pathExists(source)) {
     await fs.ensureDir(destination);
-    await fs.copy(source, destination);
-    console.log(`Copied ${path.basename(source)} to ${destination}`);
+
+    const files = await fs.readdir(source);
+    for (const file of files) {
+      const filePath = path.join(source, file);
+      const ext = path.extname(file).toLowerCase();
+      if (validExts.includes(ext)) {
+        await fs.copy(filePath, path.join(destination, file));
+      }
+    }
+    console.log(`Copied valid files from ${source} to ${destination}`);
   } else {
     console.log(`No ${path.basename(source)} found in ${source}`);
   }
 };
 
-// Copy assets
+// Copy assets with file type validation
 const copyAssets = async () => {
-  await ensureAndCopy(dirs.css, path.join(dirs.dist, 'css'));
-  await ensureAndCopy(dirs.js, path.join(dirs.dist, 'js'));
-  await ensureAndCopy(dirs.images, path.join(dirs.dist, 'images'));
+  await ensureAndCopy(dirs.css, path.join(dirs.dist, 'css'), validExtensions.css);
+  await ensureAndCopy(dirs.js, path.join(dirs.dist, 'js'), validExtensions.js);
+  await ensureAndCopy(dirs.images, path.join(dirs.dist, 'images'), validExtensions.images);
 };
 
 // Utility: Generate HTML imports for assets
-const generateAssetImports = async (dir, tagTemplate) => {
+const generateAssetImports = async (dir, tagTemplate, validExts) => {
   if (!(await fs.pathExists(dir))) return '';
   const files = await fs.readdir(dir);
   return files
-    .map((file) => tagTemplate(file))
+    .filter(file => validExts.includes(path.extname(file).toLowerCase()))
+    .map(file => tagTemplate(file))
     .join('\n');
 };
 
 // Generate CSS and JS imports
-const getCssImports = () => generateAssetImports(dirs.css, (file) => `<link rel="stylesheet" href="/css/${file}" />`);
-const getJsImports = () => generateAssetImports(dirs.js, (file) => `<script src="/js/${file}"></script>`);
+const getCssImports = () => generateAssetImports(dirs.css, (file) => `<link rel="stylesheet" href="/css/${file}" />`,validExtensions.css);
+const getJsImports = () => generateAssetImports(dirs.js, (file) => `<script src="/js/${file}"></script>`,validExtensions.js);
 
 const tagsMap = new Map(); // Use Map for tag-to-pages mapping
 
 // Utility function to capitalize strings
-const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
 
 
 // Function to read configuration JSON or YAML for a specific folder and merge with the parent config
@@ -85,7 +101,7 @@ const replacePlaceholders = async (template, values) => {
   // 1. Extract code blocks to avoid unintended replacements within them
   const codeBlockRegex = /(```[\s\S]*?```|<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>)/g;
   const codeBlocks = [];
-  let modifiedTemplate = template.replace(codeBlockRegex, (match) => {
+  let modifiedTemplate = template.replace(codeBlockRegex, match => {
     const placeholder = `<<swifty_code_block_${codeBlocks.length}>>`;
     codeBlocks.push(match);
     return placeholder;
@@ -124,7 +140,7 @@ const replacePlaceholders = async (template, values) => {
 
 // Utility: Cache and load layouts
 const layoutCache = new Map();
-const getLayout = async (layoutName) => {
+const getLayout = async layoutName => {
   if (!layoutName) return null;
   if (layoutCache.has(layoutName)) return layoutCache.get(layoutName);
 
@@ -168,14 +184,14 @@ function generateBreadcrumbs(filePath) {
 
 const generateSiblingLinks = (currentFile, folderFiles, parentPath) => {
   return folderFiles
-    .filter((file) => file !== currentFile && path.extname(file) === '.md')
-    .map((file) => ({
+    .filter(file => file !== currentFile && path.extname(file) === '.md')
+    .map(file => ({
       title: capitalize(file.replace(/-/g, ' ').replace(/\.md$/, '')),
       path: `/${parentPath}/${file.replace(/\.md$/, '.html')}`,
     }));
 };
 
-const generateParentLink = (parentPath) => {
+const generateParentLink = parentPath => {
   return parentPath
     ? {
         title: capitalize(path.basename(parentPath)),
@@ -232,7 +248,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
 
   for (const file of files) {
     const filePath = path.join(sourceDir, file);
-    const folderFiles = files.filter((f) => f !== file); // Files in the same folder
+    const folderFiles = files.filter(f => f !== file); // Files in the same folder
     const stats = await fs.stat(filePath);
     
     const linkConfig = await makeLinkConfig(file,filePath,folderFiles,parentTitle);
@@ -278,7 +294,7 @@ const convertMarkdownToTurboFrame = async (sourceDir, outputDir, parentTitle = n
         }
       }
       config.tagLinks = tags && tags.length
-        ? `<div class="tags">${tags.map((tag) => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
+        ? `<div class="tags">${tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
         : '';
       const content = await replacePlaceholders(parsedContent, config);
       const markedContent = marked(content);
@@ -340,13 +356,13 @@ const generateTagPages = async (tagsMap, isIndexPage = false) => {
 };
 
 // Function to generate the main navigation HTML
-const generateNavigation = (links) => {
+const generateNavigation = links => {
   // Remove "home" from links to avoid duplicate entry
   const filteredLinks = links.filter(link => link.title.toLowerCase() !== 'index');
 
   const navLinks = filteredLinks
     .map(
-      (link) =>
+      link =>
         `<a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a>`
     )
     .join('\n');
@@ -396,7 +412,7 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
   })();
 
   // Update the page title and address bar dynamically
-  document.addEventListener("turbo:frame-load", (event) => {
+  document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
 
     // Update the address bar without appending '/home' for the root
@@ -426,7 +442,6 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
       link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
-      console.log(link);
     });
   });
 </script>
@@ -473,4 +488,4 @@ const generateSite = async () => {
 // Run the site generation process
 generateSite()
   .then(() => console.log('Site generated successfully!'))
-  .catch((err) => console.error('Error generating site:', err));
+  .catch(err => console.error('Error generating site:', err));

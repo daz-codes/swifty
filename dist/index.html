@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home | Swifty</title>
-<link rel="stylesheet" href="/css/.DS_Store" />
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
 <head>
@@ -50,7 +49,7 @@
   })();
 
   // Update the page title and address bar dynamically
-  document.addEventListener("turbo:frame-load", (event) => {
+  document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
 
     // Update the address bar without appending '/home' for the root
@@ -80,7 +79,6 @@
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
       link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
-      console.log(link);
     });
   });
 </script>
