@@ -411,10 +411,23 @@ const renderIndexTemplate = async (homeHtmlContent, siteConfig, pageLinks) => {
       turboFrame.setAttribute("src", pagePath);
   })();
 
+  document.addEventListener('turbo:before-render', () => {
+  const contentFrame = document.querySelector('#content');
+  if (contentFrame) {
+    contentFrame.style.visibility = 'hidden';
+  }
+});
+
+document.addEventListener('turbo:render', () => {
+  const contentFrame = document.querySelector('#content');
+  if (contentFrame) {
+    contentFrame.style.visibility = 'visible';
+  }
+});
+
   // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
-
     // Update the address bar without appending '/home' for the root
     const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith("home.html")) {
