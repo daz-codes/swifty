@@ -4,7 +4,7 @@
   <meta name="turbo-refresh-method" content="morph">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home | Swifty</title>
+  <title>My Swifty Site | Swifty</title>
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
 <head>
@@ -19,6 +19,12 @@
   </header>
     <main>
     <turbo-frame id="content">
+  
+<turbo-frame id="content">
+  <head><title>Home || Swifty</title></head>
+  <div class="breadcrumbs">{{ breadcrumbs }}</div>
+<h1>My Swifty Site</h1>
+
   <div class="gradient-text display-l text-center">Welcome to my website!
 </div>
 
@@ -27,6 +33,9 @@
 <h2>More Info</h2>
 <p>A bit more information about my website.</p>
 
+  
+</turbo-frame>
+  
   </turbo-frame>
   </main>
     <footer>
@@ -46,20 +55,6 @@
       const pagePath = path.endsWith(".html") ? path : path + ".html";
       turboFrame.setAttribute("src", pagePath);
   })();
-
-  document.addEventListener('turbo:before-render', () => {
-  const contentFrame = document.querySelector('#content');
-  if (contentFrame) {
-    contentFrame.style.visibility = 'hidden';
-  }
-});
-
-document.addEventListener('turbo:render', () => {
-  const contentFrame = document.querySelector('#content');
-  if (contentFrame) {
-    contentFrame.style.visibility = 'visible';
-  }
-});
 
   // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", event => {
