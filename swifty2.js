@@ -7,10 +7,7 @@ import yaml from "js-yaml";
 import { fileURLToPath } from "url";
 
 // TO DO
-// breadcrumbs on homepage
 // the logic of the homepage needs tightening up
-// partials working again
-// Get layout and title working properly
 // sibling, parent, child page links
 // Have a parial for displaying index pages
 
@@ -104,7 +101,6 @@ const loadConfig = async (dir) => {
       // File not found, continue to next option
     }
   }
-
   return {}; // Return an empty object if no config file is found
 };
 
@@ -151,7 +147,6 @@ const applyLayoutAndWrapContent = async (page,content) => {
   `;
 };
 
-
 const isValid = async (filePath) => {
   try {
     const stats = await fs.stat(filePath);
@@ -163,72 +158,63 @@ const isValid = async (filePath) => {
 
 const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   const pages = [];
-
   try {
     const files = await fs.readdir(sourceDir, { withFileTypes: true });
-
     for (const file of files) {
       const filePath = path.join(sourceDir, file.name);
-      if(!isValid(filePath)) continue;
+      const valid = await isValid(filePath);
+      if(!valid) continue;
       const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/"); // Normalize slashes
       // Check if the file is "index.md", and if so, set path to "/"
       const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
-      if (file.name === 'index.md') continue;
+      const name = path.basename(file.name, path.extname(file.name))
+      if (file.name === "index.md") continue;
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
       const folderConfig = await loadConfig(sourceDir);
       const config = {...defaultConfig,...parent?.data,...folderConfig};
 
       let page = {
-        name: file.name,
+        name,
         path: finalPath,
         filepath: filePath,
-        url: (parent ? parent.path : "") + "/" + file.name + ".html",
-        parent,
+        url: (parent ? parent.path : "") + "/" + name + ".html",
+        nav: !parent,
+        parent: parent ? {title: parent.data.title, url: parent.url} : undefined,
         folder: isDirectory,
         title: capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " ")),
         created_at: new Date(stats.birthtime).toLocaleDateString(undefined,config.dateFormat),
         updated_at: new Date(stats.mtime).toLocaleDateString(undefined,config.dateFormat),
         data: config
       };
-
       page.data.date = page.updated_at;
-
-      page.data.tagLinks = page.data.tags && page.data.tags.length
-        ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
-        : '';
-
-      // const parts = finalPath.split("/");
-      // const breadcrumbs = parts.map((part, index) => {
-      // const link = parts.slice(0, index + 1).join('/') + ".html"; // Build the relative link
-      // const title = part
-      //     .replace(/-/g, " ") // Replace dashes with spaces
-      //     .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize each word
-    
-      //   return { link, title };
-      // });
-    
-      // breadcrumbs.unshift({ link: '/', title: 'Home' });
-    
-      page.data.breadcrumbs = (parent ? parent.breadcrumbs : "/") + " &raquo; " + `<a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`
 
       if (isDirectory) {
         page.data.title = page.name
         page.pages = await generatePages(filePath, baseDir, page);
-        page.children = page.pages.map(p => ({title: p.title, url: p.url}))
+        page.children = page.pages.map(p => ({title: p.title, url: p.url}));
+        page.pages = page.pages.map(p => ({...p, siblings: page.children.filter(child => child.name !== p.name)}));
         const content = generateIndexPage(page);
         page.content = await render(page,content);
       } else if (path.extname(file.name) === ".md") {
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
         page.data = {...page.data, ...data};
-        page.data.tile =  data.title || page.name
+        page.data.title =  data.title || page.title
         page.content = await render(page,content);
-      } else {
-        continue;
       }
-    
 
+    const generateLink = ({title,url}) => `<a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a>`
+    // add links
+    page.data.links_to_tags = page.data.tags && page.data.tags.length
+      ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
+      : "";
+    page.data.breadcrumbs = (parent ? parent.breadcrumbs : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>`) + " &raquo; " + `<a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`
+    page.data.link_to_parent = page.parent ? generateLink(page.parent) : "";
+    page.data.links_to_children = page.children ? page.children.map(child => generateLink(child)).join`` : "";
+    page.data.links_to_siblings = page.siblings ? page.siblings.map(sibling => generateLink(sibling)).join`` : "";
+    page.data.links_to_self_and_siblings = page.siblings ? ({...{title: page.data.title, url: page.url},...page.siblings}).map(sibling => generateLink(sibling)).join`` : "";
+    
     // add tags
     if (page.data.tags) {
         for (const tag of page.data.tags) {
@@ -242,15 +228,16 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   }
 
   // make Tags page
-  if(tagsMap.size){
+  if(!parent && tagsMap.size){
     const tagPage = {
         path: "/tags",
         url: "/tags.html",
+        nav: false,
         folder: true,
         name: "tags",
         title: "All Tags",
         updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
-        layout: "layout",
+        data: defaultConfig,
     }
     tagPage.pages = [];
     for (const [tag, pages] of tagsMap) {
@@ -264,7 +251,6 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           const page = { 
             data: defaultConfig, 
             title: `Pages tagged with ${capitalize(tag)}`, 
-            layout: "layout",
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
             url:  `/tags/${tag}.html`
@@ -272,7 +258,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           page.content = await applyLayoutAndWrapContent(page, content);
           tagPage.pages.push(page);
     }
-    tagPage.content = generateIndexPage(tagPage);
+    tagPage.content = await render(tagPage,generateIndexPage(tagPage));
     pages.push(tagPage);
   }
   console.log(pages)
@@ -280,7 +266,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 };
 
 const generateIndexPage = page => {
-  return `<h1>${page.title}</h1>
+  return `
   <ul>
   ${page.pages.map(page => `<li>${page.updated_at}: <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join``}
   </ul>`
@@ -392,20 +378,27 @@ const createPages = async (pages, distDir=dirs.dist) => {
   }
 };
 
-// Function to replace {{ value }} placeholders in a string
 const replacePlaceholders = async (template, values) => {
   const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
-  const placeholderRegex = /{{\s*([^}\s]+)\s*}}/g;
+
+  // Async replace function
+  const replaceAsync = async (str, regex, asyncFn) => {
+    const matches = [];
+    str.replace(regex, (match, ...args) => {
+      matches.push(asyncFn(match, ...args));
+      return match;
+    });
+
+    const results = await Promise.all(matches);
+    return str.replace(regex, () => results.shift());
+  };
 
   // Replace partial includes
-  template = await template.replace(partialRegex, async (match, partialName) => {
-    console.log("PARTIAL!!!: ",match,partialName)
+  template = await replaceAsync(template, partialRegex, async (match, partialName) => {
     const partialPath = path.join(dirs.partials, `${partialName}.md`);
     if (await fsExtra.pathExists(partialPath)) {
-      let partialContent = await fs.readFile(partialPath, 'utf-8');
+      let partialContent = await fs.readFile(partialPath, "utf-8");
       partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
-      console.log(marked(partialContent))
-
       return marked(partialContent); // Convert Markdown to HTML
     } else {
       console.warn(`Include "${partialName}" not found.`);
@@ -413,30 +406,25 @@ const replacePlaceholders = async (template, values) => {
     }
   });
 
-  // 2Replace other placeholders **only outside of code blocks**
+  // Replace other placeholders **only outside of code blocks**
   template = template.replace(
     /(?<!`{3}[^]*?){{\s*([^}\s]+)\s*}}(?![^]*?`{3})/g,
-    (match, key) => key in values ? values[key] : match
+    (match, key) => (key in values ? values[key] : match)
   );
 
   return template;
 };
 
+
 // Main function to handle conversion and site generation
 const generateSite = async () => {
   console.log('Starting build process...');
-
-  // Start with default config
-  const siteConfig = defaultConfig;
-  //await readMergedConfig(dirs.pages);
-
   // Copy images, CSS, and JS files
   await copyAssets();
-
   // Convert markdown in pages directory
   const pages = await generatePages(dirs.pages);
   await createPages(pages);
-  const navLinks = pages.map(
+  const navLinks = pages.filter(page => page?.nav || page?.data?.nav).map(
           page =>
             `<a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`
         )
@@ -446,20 +434,19 @@ const generateSite = async () => {
   <nav>
     ${navLinks}
   </nav>`;
-
   const breadcrumbs = `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>`;
 
   // Read home.md file and generate home page content
-  const homeFilePath = path.join(dirs.pages, 'index.md');
-  let homeHtmlContent = '';
+  const homeFilePath = path.join(dirs.pages, "index.md");
+  let homeHtmlContent = "";
   if (await fsExtra.pathExists(homeFilePath)) {
-      const content = await fs.readFile(homeFilePath, 'utf-8');
-      const page = {title: "Home", layout: "layout", data: siteConfig, nav, breadcrumbs};
+      const content = await fs.readFile(homeFilePath, "utf-8");
+      const page = {data: {...defaultConfig, title: "Home", ...breadcrumbs}};
       homeHtmlContent = await render(page,content);
   }
 
   // Generate index page with the dynamic content
-  const indexHtml = await renderIndexTemplate(homeHtmlContent, {nav, breadcrumbs});
+  const indexHtml = await renderIndexTemplate(homeHtmlContent, {...defaultConfig, title: "Home", ...breadcrumbs, nav});
 
   // Write the final HTML to the dist directory
   await fs.writeFile(path.join(dirs.dist, 'index.html'), indexHtml);
