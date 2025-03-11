@@ -7,17 +7,10 @@ import yaml from "js-yaml";
 import { fileURLToPath } from "url";
 
 // TO DO
-// make index DONE
-// Turbo frames DONE
-// config ... yaml or json files in indexes DONE
-// layouts DONE
-// partials DONE
-// add variables DONE
-// make index page for folders DONE
-// tags DONE .... possible needs refactoring into pages
-// Site Navigation
+// breadcrumbs on homepage
+// the logic of the homepage needs tightening up
+// partials working again
 // Get layout and title working properly
-// consider if page.data is even needed, could just be page.tags etc
 // sibling, parent, child page links
 // Have a parial for displaying index pages
 
@@ -36,7 +29,11 @@ const dirs = {
   partials: path.join(baseDir, 'partials'),
 };
 
-const tagsMap = new Map(); // Use Map for tag-to-pages mapping
+const tagsMap = new Map();
+const addToTagMap = (tag, page) => {
+  if (!tagsMap.has(tag)) tagsMap.set(tag, []);
+  tagsMap.get(tag).push({ title: page.title, url: page.url });
+};
 
 // Valid file extensions for assets
 const validExtensions = {
@@ -59,13 +56,11 @@ const ensureAndCopy = async (source, destination, validExts) => {
     await fsExtra.ensureDir(destination);
 
     const files = await fs.readdir(source);
-    for (const file of files) {
-      const filePath = path.join(source, file);
-      const ext = path.extname(file).toLowerCase();
-      if (validExts.includes(ext)) {
-        await fsExtra.copy(filePath, path.join(destination, file));
-      }
-    }
+    await Promise.all(
+      files
+        .filter(file => validExts.includes(path.extname(file).toLowerCase()))
+        .map(file => fsExtra.copy(path.join(source, file), path.join(destination, file)))
+    );
     console.log(`Copied valid files from ${source} to ${destination}`);
   } else {
     console.log(`No ${path.basename(source)} found in ${source}`);
@@ -115,18 +110,19 @@ const loadConfig = async (dir) => {
 
 // Utility: Cache and load layouts
 const layoutCache = new Map();
-const getLayout = async layoutName => {
+const getLayout = async (layoutName) => {
   if (!layoutName) return null;
-  if (layoutCache.has(layoutName)) return layoutCache.get(layoutName);
-
-  const layoutPath = path.join(dirs.layouts, `${layoutName}.html`);
-  if (await fsExtra.pathExists(layoutPath)) {
-    const layoutContent = await fs.readFile(layoutPath, 'utf-8');
-    layoutCache.set(layoutName, layoutContent);
-    return layoutContent;
+  if (!layoutCache.has(layoutName)) {
+    const layoutPath = path.join(dirs.layouts, `${layoutName}.html`);
+    if (await fsExtra.pathExists(layoutPath)) {
+      const layoutContent = await fs.readFile(layoutPath, 'utf-8');
+      layoutCache.set(layoutName, layoutContent);
+    } else {
+      console.warn(`Layout "${layoutName}" not found.`);
+      return null;
+    }
   }
-  console.warn(`Layout "${layoutName}" not found.`);
-  return null;
+  return layoutCache.get(layoutName);
 };
 
 // Apply layout content to a page
@@ -142,7 +138,7 @@ const applyLayout = async (layoutContent, config) => {
 
 // Utility: Apply layout and wrap content in a Turbo Frame
 const applyLayoutAndWrapContent = async (page,content) => {
-  const layoutContent = await getLayout(page.layout);
+  const layoutContent = await getLayout(page.data.layout);
   const [beforeLayout, afterLayout] = await applyLayout(layoutContent, page.data);
 
   return `
@@ -157,11 +153,15 @@ const applyLayoutAndWrapContent = async (page,content) => {
 
 
 const isValid = async (filePath) => {
-  const stats = await fs.stat(filePath);
-  return stats.isDirectory() || path.extname(filePath) === '.md'
-}
+  try {
+    const stats = await fs.stat(filePath);
+    return stats.isDirectory() || path.extname(filePath) === '.md';
+  } catch (err) {
+    return false; // Handle errors like file not found
+  }
+};
 
-const generatePages = async (sourceDir, baseDir = sourceDir, prevConfig = defaultConfig) => {
+const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   const pages = [];
 
   try {
@@ -169,6 +169,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, prevConfig = defaul
 
     for (const file of files) {
       const filePath = path.join(sourceDir, file.name);
+      if(!isValid(filePath)) continue;
       const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/"); // Normalize slashes
       // Check if the file is "index.md", and if so, set path to "/"
       const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
@@ -176,59 +177,44 @@ const generatePages = async (sourceDir, baseDir = sourceDir, prevConfig = defaul
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
       const folderConfig = await loadConfig(sourceDir);
-      const config = {...prevConfig,...folderConfig};
+      const config = {...defaultConfig,...parent?.data,...folderConfig};
 
       let page = {
+        name: file.name,
         path: finalPath,
         filepath: filePath,
-        url: finalPath + ".html",
-        parent: finalPath.substring(0, finalPath.lastIndexOf('/')) || '/',
+        url: (parent ? parent.path : "") + "/" + file.name + ".html",
+        parent,
         folder: isDirectory,
-        name: file.name,
         title: capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " ")),
         created_at: new Date(stats.birthtime).toLocaleDateString(undefined,config.dateFormat),
         updated_at: new Date(stats.mtime).toLocaleDateString(undefined,config.dateFormat),
-        layout: "layout",
-        content: "",
         data: config
       };
 
       page.data.date = page.updated_at;
-      page.data.title ||= page.title;
-      if (page.data.tags) {
-        for (const tag of page.data.tags) {
-          if (!tagsMap.has(tag)) {
-            tagsMap.set(tag, []);
-          }
-          tagsMap.get(tag).push({
-            title: page.title,
-            url: page.url
-          });
-        }
-      };
+
       page.data.tagLinks = page.data.tags && page.data.tags.length
         ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join('')}</div>`
         : '';
 
-      const parts = finalPath.split("/");
-      const breadcrumbs = parts.map((part, index) => {
-        const link = "/" + parts.slice(0, index + 1).join('/') + ".html"; // Build the relative link
-        const title = part
-          .replace(/-/g, " ") // Replace dashes with spaces
-          .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize each word
+      // const parts = finalPath.split("/");
+      // const breadcrumbs = parts.map((part, index) => {
+      // const link = parts.slice(0, index + 1).join('/') + ".html"; // Build the relative link
+      // const title = part
+      //     .replace(/-/g, " ") // Replace dashes with spaces
+      //     .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize each word
     
-        return { link, title };
-      });
+      //   return { link, title };
+      // });
     
-      breadcrumbs.unshift({ link: '/', title: 'Home' });
+      // breadcrumbs.unshift({ link: '/', title: 'Home' });
     
-      page.data.breadcrumbs = breadcrumbs
-      .map(crumb => `<a class="breadcrumb" href="${crumb.link}" data-turbo-frame="content" data-turbo-action="advance">${crumb.title}</a>`)
-      .join(" &raquo; ");
+      page.data.breadcrumbs = (parent ? parent.breadcrumbs : "/") + " &raquo; " + `<a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`
 
-      console.log("DATA: ", page.data)
       if (isDirectory) {
-        page.pages = await generatePages(filePath, baseDir, config);
+        page.data.title = page.name
+        page.pages = await generatePages(filePath, baseDir, page);
         page.children = page.pages.map(p => ({title: p.title, url: p.url}))
         const content = generateIndexPage(page);
         page.content = await render(page,content);
@@ -236,15 +222,60 @@ const generatePages = async (sourceDir, baseDir = sourceDir, prevConfig = defaul
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
         page.data = {...page.data, ...data};
+        page.data.tile =  data.title || page.name
         page.content = await render(page,content);
       } else {
         continue;
+      }
+    
+
+    // add tags
+    if (page.data.tags) {
+        for (const tag of page.data.tags) {
+          addToTagMap(tag, page);
+        }
       }
       pages.push(page);
     }
   } catch (err) {
     console.error("Error reading directory:", err);
   }
+
+  // make Tags page
+  if(tagsMap.size){
+    const tagPage = {
+        path: "/tags",
+        url: "/tags.html",
+        folder: true,
+        name: "tags",
+        title: "All Tags",
+        updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
+        layout: "layout",
+    }
+    tagPage.pages = [];
+    for (const [tag, pages] of tagsMap) {
+      const listItems = pages
+          .map(
+            page =>
+              `<li><a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
+          )
+          .join('\n')
+          const content = `<ul>${listItems}</ul>`;
+          const page = { 
+            data: defaultConfig, 
+            title: `Pages tagged with ${capitalize(tag)}`, 
+            layout: "layout",
+            updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
+            path: `/tags/${tag}`,
+            url:  `/tags/${tag}.html`
+          };
+          page.content = await applyLayoutAndWrapContent(page, content);
+          tagPage.pages.push(page);
+    }
+    tagPage.content = generateIndexPage(tagPage);
+    pages.push(tagPage);
+  }
+  console.log(pages)
   return pages;
 };
 
@@ -255,12 +286,12 @@ const generateIndexPage = page => {
   </ul>`
 }
 
-const render = async (page,content) => {
+const render = async (page, content) => {
   const replacedContent = await replacePlaceholders(content, page.data);
-  const markedContent = marked(replacedContent);
-  const wrappedContent = await applyLayoutAndWrapContent(page,markedContent);
-  return wrappedContent
-}
+  const htmlContent = marked(replacedContent); // Markdown processed once
+  const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
+  return wrappedContent;
+};
 
 // Function to read and render the index template
 const renderIndexTemplate = async (homeHtmlContent, config) => {
@@ -270,12 +301,11 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 
   // Add the meta tag for Turbo refresh method
   const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
-  templateContent = templateContent.replace('<head>', `<head>\n  ${turboMetaTag}`);
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
 
-  templateContent = templateContent.replace('</head>', `${imports}\n<head>`);
+  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n</head>`);
 
   const content =   `<turbo-frame id="content">
   ${homeHtmlContent}
@@ -344,14 +374,13 @@ const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
     const pagePath = path.join(distDir, page.url);
     // If it's a folder, create the directory and recurse into its pages
+
     if (page.folder) {
-      try {
-        await fs.mkdir(path.join(distDir, page.path), { recursive: true }); // Create directory
+      if (!(await fsExtra.pathExists(path.join(distDir, page.path)))) {
+        await fs.mkdir(path.join(distDir, page.path), { recursive: true });
+      }
         // Recurse into pages inside the directory
         await createPages(page.pages); // Process nested pages inside the folder
-      } catch (err) {
-        console.error(`Error creating directory ${pagePath}:`, err);
-      }
     }
     // create an HTML file
     try {
@@ -361,6 +390,36 @@ const createPages = async (pages, distDir=dirs.dist) => {
       console.error(`Error writing file ${pagePath}:`, err);
     }
   }
+};
+
+// Function to replace {{ value }} placeholders in a string
+const replacePlaceholders = async (template, values) => {
+  const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
+  const placeholderRegex = /{{\s*([^}\s]+)\s*}}/g;
+
+  // Replace partial includes
+  template = await template.replace(partialRegex, async (match, partialName) => {
+    console.log("PARTIAL!!!: ",match,partialName)
+    const partialPath = path.join(dirs.partials, `${partialName}.md`);
+    if (await fsExtra.pathExists(partialPath)) {
+      let partialContent = await fs.readFile(partialPath, 'utf-8');
+      partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
+      console.log(marked(partialContent))
+
+      return marked(partialContent); // Convert Markdown to HTML
+    } else {
+      console.warn(`Include "${partialName}" not found.`);
+      return `<p>Include "${partialName}" not found.</p>`;
+    }
+  });
+
+  // 2Replace other placeholders **only outside of code blocks**
+  template = template.replace(
+    /(?<!`{3}[^]*?){{\s*([^}\s]+)\s*}}(?![^]*?`{3})/g,
+    (match, key) => key in values ? values[key] : match
+  );
+
+  return template;
 };
 
 // Main function to handle conversion and site generation
@@ -386,22 +445,21 @@ const generateSite = async () => {
   const nav = `
   <nav>
     ${navLinks}
-  </nav>`
+  </nav>`;
+
+  const breadcrumbs = `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>`;
 
   // Read home.md file and generate home page content
   const homeFilePath = path.join(dirs.pages, 'index.md');
   let homeHtmlContent = '';
   if (await fsExtra.pathExists(homeFilePath)) {
       const content = await fs.readFile(homeFilePath, 'utf-8');
-      const page = {title: "Home", layout: "layout", data: siteConfig};
+      const page = {title: "Home", layout: "layout", data: siteConfig, nav, breadcrumbs};
       homeHtmlContent = await render(page,content);
   }
 
-  await generateTagPages(tagsMap);
-  await generateTagPages(tagsMap,true);
-
   // Generate index page with the dynamic content
-  const indexHtml = await renderIndexTemplate(homeHtmlContent, {nav});
+  const indexHtml = await renderIndexTemplate(homeHtmlContent, {nav, breadcrumbs});
 
   // Write the final HTML to the dist directory
   await fs.writeFile(path.join(dirs.dist, 'index.html'), indexHtml);
@@ -411,99 +469,3 @@ const generateSite = async () => {
 generateSite()
   .then(() => console.log('Site generated successfully!'))
   .catch(err => console.error('Error generating site:', err));
-
-
-
-// const tagsMap = new Map(); // Use Map for tag-to-pages mapping
-
-
-// Function to replace {{ value }} placeholders in a string
-const replacePlaceholders = async (template, values) => {
-  // 1. Extract code blocks to avoid unintended replacements within them
-  const codeBlockRegex = /(```[\s\S]*?```|<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>)/g;
-  const codeBlocks = [];
-  let modifiedTemplate = template.replace(codeBlockRegex, match => {
-    const placeholder = `<<swifty_code_block_${codeBlocks.length}>>`;
-    codeBlocks.push(match);
-    return placeholder;
-  });
-
-  // 2. Replace partials
-  const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
-  const matches = [...modifiedTemplate.matchAll(partialRegex)];
-  for (const match of matches) {
-    const [fullMatch, partialName] = match;
-    const partialPath = path.join(dirs.partials, `${partialName}.md`);
-    let replacement = `<p>Include "${partialName}" not found.</p>`;
-    if (await fsExtra.pathExists(partialPath)) {
-      let partialContent = await fs.readFile(partialPath, 'utf-8');
-      // Recursively replace placeholders in the include content
-      partialContent = await replacePlaceholders(partialContent, values);
-      replacement = marked(partialContent); // Convert Markdown to HTML
-    } else {
-      console.warn(`Include "${partialName}" not found.`);
-    }
-    modifiedTemplate = modifiedTemplate.replace(fullMatch, replacement);
-  }
-
-  // 3. Replace other placeholders
-  modifiedTemplate = modifiedTemplate.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
-    return key in values ? values[key] : match; // Preserve unmatched placeholders
-  });
-  // 4. Re-insert the code blocks back into the template
-  modifiedTemplate = modifiedTemplate.replace(/<<swifty_code_block_(\d+)>>/g, (match, index) => {
-    return codeBlocks[index];
-  });
-
-  return modifiedTemplate;
-};
-
-// // Function to generate the main navigation HTML
-// const generateNavigation = links => {
-//   // Remove "home" from links to avoid duplicate entry
-//   const filteredLinks = links.filter(link => link.title.toLowerCase() !== 'index');
-
-//   const navLinks = filteredLinks
-//     .map(
-//       link =>
-//         `<a href="${link.path}.html" data-turbo-frame="content" data-turbo-action="advance">${link.title}</a>`
-//     )
-//     .join('\n');
-
-//   return `
-//   <nav>
-//     ${navLinks}
-//   </nav>`;
-// };
-
-const generateTagPages = async (tagsMap, isIndexPage = false) => {
-    for (const [tag, pages] of tagsMap) {
-      // Generate the list of tags and their associated links
-      const listItems = isIndexPage ? 
-      Array.from(tagsMap.keys())
-        .map(
-          tag =>
-            `<li><a href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a></li>`
-        )
-        .join('\n')
-      : pages
-        .map(
-          page =>
-            `<li><a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
-        )
-        .join('\n')
-      const content = `<ul>${listItems}</ul>`;
-  
-      const page = { data: defaultConfig, title: isIndexPage ? 'All Tags' : `Pages tagged with ${capitalize(tag)}`, layout: "layout" };
-      const wrappedContent = await applyLayoutAndWrapContent(page,content);
-      const pagePath = isIndexPage ? path.join(dirs.dist, 'tags.html') : path.join(dirs.dist, 'tags', `${tag}.html`);
-      await fsExtra.ensureDir(path.join(dirs.dist, "tags"));
-      // create the tags pages
-      try {
-        await fs.writeFile(pagePath, wrappedContent);
-        console.log(`Created file: ${pagePath}`);
-      } catch (err) {
-        console.error(`Error writing file ${pagePath}:`, err);
-      }
-    }
-  };
