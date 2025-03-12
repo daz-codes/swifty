@@ -1,0 +1,12 @@
+
+<turbo-frame id="content">
+  <head><title>Posts || Swifty</title></head>
+  <div class="breadcrumbs"><a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a> &raquo; <a class="breadcrumb" href="/postshtml" data-turbo-frame="content" data-turbo-action="advance">Posts</a></div>
+<h1>posts</h1>
+
+    <ul>
+  <li>Sun, 23 Feb 2025: <a href="/posts/another-posthtml" data-turbo-frame="content">Another Post</a></li><li>Sun, 23 Feb 2025: <a href="/posts/first-posthtml" data-turbo-frame="content">First Post</a></li>
+  </ul>
+  
+</turbo-frame>
+  

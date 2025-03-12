@@ -7,8 +7,6 @@ import yaml from "js-yaml";
 import { fileURLToPath } from "url";
 
 // TO DO
-// the logic of the homepage needs tightening up
-// sibling, parent, child page links
 // Have a partial for displaying index pages
 
 const __filename = fileURLToPath(import.meta.url);
@@ -99,6 +97,7 @@ const loadConfig = async (dir) => {
 // Default configuration
 const defaultConfig = await loadConfig(baseDir);
 
+
 // Utility: Cache and load layouts
 const layoutCache = new Map();
 const getLayout = async (layoutName) => {
@@ -152,48 +151,42 @@ const isValid = async (filePath) => {
 
 const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   const pages = [];
+  const folderConfig = await loadConfig(sourceDir);
+  const config = {...defaultConfig,...parent?.data,...folderConfig};
   try {
     const files = await fs.readdir(sourceDir, { withFileTypes: true });
     for (const file of files) {
       const filePath = path.join(sourceDir, file.name);
       const valid = await isValid(filePath);
       if(!valid) continue;
+      const root = file.name === "index.md" && !parent;
       const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/"); // Normalize slashes
       // Check if the file is "index.md", and if so, set path to "/"
       const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
       const name = path.basename(file.name, path.extname(file.name))
 
       const stats = await fs.stat(filePath);
-      const isDirectory = file.isDirectory();
-      const folderConfig = await loadConfig(sourceDir);
-      const config = {...defaultConfig,...parent?.data,...folderConfig};
+      const isDirectory = file.isDirectory()
 
       const page = {
-        name,
+        name, root,
         path: finalPath,
         filepath: filePath,
-        url: (parent ? parent.path : "") + "/" + name + ".html",
-        nav: !parent,
+        url: root ? "/" : finalPath + ".html",
+        nav: !parent && !root,
         parent: parent ? {title: parent.data.title, url: parent.url} : undefined,
         folder: isDirectory,
         title: capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " ")),
         created_at: new Date(stats.birthtime).toLocaleDateString(undefined,config.dateFormat),
         updated_at: new Date(stats.mtime).toLocaleDateString(undefined,config.dateFormat),
-        data: config
+        breadcrumbs: root ? [{title: "Home", url: "/"}] : parent ? [...parent.breadcrumbs,{title: name, url: finalPath + ".html"}] : [{title: "Home", url: "/"},{title: name, url: finalPath + ".html"}],
+        data: root ? defaultConfig : config
       };
       page.data.date = page.updated_at;
-
-      if (file.name === "index.md") {
-        page.index = true;
-        page.nav = false;
-        page.url = "/";
-      };
 
       if (isDirectory) {
         page.data.title = page.name
         page.pages = await generatePages(filePath, baseDir, page);
-        page.children = page.pages.map(p => ({title: p.title, url: p.url}));
-        page.pages = page.pages.map(p => ({...p, siblings: page.children.filter(child => child.name !== p.name)}));
         page.content = generateIndexPage(page);
       } else if (path.extname(file.name) === ".md") {
         const markdownContent = await fs.readFile(filePath, "utf-8");
@@ -201,30 +194,10 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         Object.assign(page, { data: { ...page.data, ...data }, content });
         page.data.title =  data.title || page.title
       }
-
     // add tags
-    if (page.data.tags) {
-      for (const tag of page.data.tags) {
-        addToTagMap(tag, page);
-        }
-      }
-
-      const generateLink = ({title,url}) => `<a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a>`
-      // add links
-      page.data.links_to_tags = page.data.tags && page.data.tags.length
-        ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
-        : "";
-      const homeCrumb = `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>`;
-      if(page.name === "posts") console.log("POSTS!!!!!!!!!!!!",page.data)
-      page.data.breadcrumbs = page.index ? homeCrumb
-        : `${parent ? parent.data.breadcrumbs : homeCrumb} &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`
-        if(page.name === "posts") console.log("POSTS!!!!!!!!!!!!",page.data)
-          page.data.link_to_parent = page.parent ? generateLink(page.parent) : "";
-      page.data.links_to_children = page.children ? page.children.map(child => generateLink(child)).join`` : "";
-      page.data.links_to_siblings = page.siblings ? page.siblings.map(sibling => generateLink(sibling)).join`` : "";
-      page.data.links_to_self_and_siblings = page.siblings ? ({...{title: page.data.title, url: page.url},...page.siblings}).map(sibling => generateLink(sibling)).join`` : "";
-
-      pages.push(page);
+    if (page.data.tags) page.data.tags.forEach(tag => addToTagMap(tag, page));
+    
+    pages.push(page);
     }
 
   } catch (err) {
@@ -240,8 +213,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         folder: true,
         name: "tags",
         title: "All Tags",
+        breadcrumbs: [{title: "Home", url: "/"},{title: "Tags", url: "/tags"}],
         updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
-        data: defaultConfig,
+        data: {...config,title: "All Tags"},
     }
     tagPage.pages = [];
     for (const [tag, pages] of tagsMap) {
@@ -251,20 +225,20 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
               `<li><a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
           )
           .join('\n')
-          const content = `<ul>${listItems}</ul>`;
           const page = { 
-            data: {...defaultConfig, title: `Pages tagged with ${capitalize(tag)}`},
+            data: {...config,  title: `Pages tagged with ${capitalize(tag)}`},
+            title: `Pages tagged with ${capitalize(tag)}`,
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
-            url:  `/tags/${tag}.html`
+            url:  `/tags/${tag}.html`,
+            breadcrumbs: [{title: "Home", url: "/"},{title: "Tags", url: "/tags"},{title: tag, url: `/tags/${tag}.html`}]
           };
-          page.content = await applyLayoutAndWrapContent(page, content);
+          page.content = `<ul>${listItems}</ul>`;
           tagPage.pages.push(page);
     }
-    tagPage.content = await render(tagPage,generateIndexPage(tagPage));
+    tagPage.content = generateIndexPage(tagPage);
     pages.push(tagPage);
   }
-  console.log(pages)
   return pages;
 };
 
@@ -362,13 +336,13 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
   let html = await render(page,page.content);
-  if(page.index){
+  if(page.root){
       const navLinks = pages.filter(page => page?.nav || page?.data?.nav).map(
       page => `<a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`).join('\n');
       page.data.nav = `<nav>${navLinks}</nav>`; 
       html = await renderIndexTemplate(html,page.data);
     }
-    const pagePath = path.join(distDir, page.index ? "/index.html" : page.url);
+    const pagePath = path.join(distDir, page.root ? "/index.html" : page.url);
     // If it's a folder, create the directory and recurse into its pages
     if (page.folder) {
       if (!(await fsExtra.pathExists(path.join(distDir, page.path)))) {
@@ -424,6 +398,26 @@ const replacePlaceholders = async (template, values) => {
   return template;
 };
 
+const addLinks = (pages,parent) => {
+  const generateLink = ({title,url}) => `<a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a>`
+
+  pages.forEach(page => {
+    page.data ||= {};
+    page.data.links_to_tags = page?.data?.tags?.length
+    ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
+    : "";
+    const crumb = ` &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`;
+    page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
+    : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
+        
+    page.data.links_to_children = page.pages ? page.pages.map(child => generateLink(child)).join`` : "";
+    page.data.links_to_siblings = parent && parent.pages.length > 1 ? parent.pages.filter(child => child.url !== page.url).map(sibling => generateLink(sibling)).join`` : "";
+    page.data.links_to_self_and_siblings = parent ? parent.pages.map(sibling => generateLink(sibling)).join`` : "";
+
+    if(page.pages) addLinks(page.pages,parent = page)
+  })
+}
+
 
 // Main function to handle conversion and site generation
 const generateSite = async () => {
@@ -432,6 +426,7 @@ const generateSite = async () => {
   await copyAssets();
   // Convert markdown in pages directory
   const pages = await generatePages(dirs.pages);
+  addLinks(pages);
   await createPages(pages);
 };
 

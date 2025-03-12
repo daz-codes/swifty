@@ -1,0 +1,7 @@
+sitename: Swifty
+author: Taylor Swift
+dateFormat: 
+  weekday: short
+  month: short
+  day: numeric
+  year: numeric
