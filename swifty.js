@@ -384,7 +384,7 @@ const replacePlaceholders = async (template, values) => {
 };
 
 const addLinks = (pages,parent) => {
-  const generateLink = ({title,url}) => `<a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a>`
+  const generateLink = ({title,url}) => `<li><a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a></li>`
   pages.forEach(page => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
@@ -393,9 +393,9 @@ const addLinks = (pages,parent) => {
     const crumb = ` &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;     
-    page.data.links_to_children = page.pages ? page.pages.map(child => generateLink(child)).join`` : "";
-    page.data.links_to_siblings = parent && parent.pages.length > 1 ? parent.pages.filter(child => child.url !== page.url).map(sibling => generateLink(sibling)).join`` : "";
-    page.data.links_to_self_and_siblings = parent ? parent.pages.map(sibling => generateLink(sibling)).join`` : "";
+    page.data.links_to_children = page.pages ? `<ul class="links">` + page.pages.map(child => generateLink(child)).join`` + "</ul>" : "";
+    page.data.links_to_siblings = parent && parent.pages.length > 1 ? `<ul class="links">` + parent.pages.filter(child => child.url !== page.url).map(sibling => generateLink(sibling)).join`` + "</ul>" : "";
+    page.data.links_to_self_and_siblings = parent ? `<ul class="links">` + parent.pages.map(sibling => generateLink(sibling)).join`` + "</ul>" : "";
     if(page.pages) addLinks(page.pages,page)
   });
 }
