@@ -172,7 +172,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         created_at: new Date(stats.birthtime).toLocaleDateString(undefined,config.dateFormat),
         updated_at: new Date(stats.mtime).toLocaleDateString(undefined,config.dateFormat),
         date: new Date(stats.mtime).toLocaleDateString(undefined,config.dateFormat),
-        data: root ? defaultConfig : config
+        data: root ? {...defaultConfig} : {...config}
       };
       if (isDirectory) {
         page.pages = await generatePages(filePath, baseDir, page);
@@ -202,16 +202,10 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         name: "Tags",
         title: "All Tags",
         updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
-        data: config,
+        data: {...config},
     }
     tagPage.pages = [];
     for (const [tag, pages] of tagsMap) {
-      const listItems = pages
-          .map(
-            page =>
-              `<li><a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a></li>`
-          )
-          .join('\n')
           const page = { 
             name: tag,
             title: `Pages tagged with ${capitalize(tag)}`,
@@ -220,11 +214,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             url:  `/tags/${tag}.html`,
             data: config,
           };
-          page.content = `<ul>${listItems}</ul>`;
+          page.content = pages
+          .map(page =>`* <a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
+          .join('\n');
           tagPage.pages.push(page);
     }
     tagPage.content = await generateIndexPage(tagPage);
-    console.log("tagpage: ",tagPage, tagPage.pages)
     pages.push(tagPage);
   }
   return pages;
@@ -240,16 +235,13 @@ const generateIndexPage = async page => {
     const content = await Promise.all(page.pages.map(child => replacePlaceholders(partial, child)));
     return content.join('\n');
   } else {
-    return `
-    <ul>
-    ${page.pages.map(page => `<li>${page.updated_at}: <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join``}
-    </ul>`
+    return `${page.pages.map(page => `* ${page.updated_at}: <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
   }
 };
 
-const render = async (page, content) => {
-  const replacedContent = await replacePlaceholders(content, page);
-  const htmlContent = marked(replacedContent); // Markdown processed once
+const render = async page => {
+  const replacedContent = await replacePlaceholders(page.content, page);
+  const htmlContent = marked.parse(replacedContent, { gfm: true, breaks: true }); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   return wrappedContent;
 };
@@ -326,13 +318,13 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
   `;
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
-
   return templateContent;
 };
 
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
-  let html = await render(page,page.content);
+  let html = await render(page);
+  //if(page.name === "Tag") console.log("TAGPAGE hmtl: ",html)
   if(page.root){
       const navLinks = pages.filter(page => page?.nav || page?.data?.nav).map(
       page => `<a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`).join('\n');
@@ -404,8 +396,6 @@ const addLinks = (pages,parent) => {
     const crumb = page.root ? "" : ` &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
-    if(parent) console.log("page: ",page.data.breadcrumbs)
-    if(parent) console.log("parent: ",parent.data.breadcrumbs)        
     page.data.links_to_children = page.pages ? `<ul class="links">` + page.pages.map(child => generateLink(child)).join`` + "</ul>" : "";
     page.data.links_to_siblings = pages.filter(p => p.url !== page.url).map(sibling => generateLink(sibling)).join`` + "</ul>";
     page.data.links_to_self_and_siblings = pages.map(sibling => generateLink(sibling)).join`` + "</ul>";
