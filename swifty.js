@@ -215,7 +215,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             data: config,
           };
           page.content = pages
-          .map(page =>`* <a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
+          .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
           .join('\n');
           tagPage.pages.push(page);
     }
@@ -278,9 +278,19 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
     const path = window.location.pathname;
 
     // Set the src attribute for the turbo frame
-    const pagePath = path.endsWith(".html") ? path : path + ".html";
-    Turbo.visit(pagePath, { frame: turboFrame });
+      const pagePath = path.endsWith(".html") ? path : path + ".html";
+      turboFrame.setAttribute("src", pagePath);
   })();
+
+  // Update the page title and address bar dynamically
+  document.addEventListener("turbo:frame-load", event => {
+    const turboFrame = event.target;
+    // Update the address bar without appending '/home' for the root
+    const frameSrc = turboFrame.getAttribute("src");
+    if (frameSrc && frameSrc.endsWith(".html")) {
+      const newPath = frameSrc.replace(".html", "");
+      window.history.pushState({}, "", newPath);
+    }
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
