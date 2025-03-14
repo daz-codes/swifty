@@ -272,15 +272,21 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
-  (function() {
+  function loadFrameContent() {
+    const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
     const pagePath = path.endsWith(".html") ? path : path + ".html";
 
-    // Prevent unnecessary reloads
-    if (window.location.pathname !== pagePath.replace(".html", "")) {
+    if (turboFrame) {
       Turbo.visit(pagePath, { frame: "content" });
     }
-  })();
+  }
+
+  // Load content into turbo-frame on initial page load
+  loadFrameContent();
+
+  // Handle back/forward navigation
+  window.addEventListener("popstate", loadFrameContent);
 
   document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
@@ -307,7 +313,6 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
   });
 </script>
 `;
-;
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
   return templateContent;
