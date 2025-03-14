@@ -271,47 +271,106 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
   const turboScript = `
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
-
-  // Ensure the turbo-frame loads the correct content based on the current URL
+  
+  // Handle initial page load
   (function() {
     const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
-
+    
     // Set the src attribute for the turbo frame
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
+    const pagePath = path === "/" ? "/index.html" : 
+                     path.endsWith(".html") ? path : path + ".html";
+        
+    // Add error handling
+    turboFrame.addEventListener("turbo:frame-error", (event) => {
+      turboFrame.innerHTML = `<div class="error-container">
+        <h1>Page Not Found</h1>
+        <p>Sorry, the page "${path}" could not be found.</p>
+        <a href="/" data-turbo-frame="content">Return Home</a>
+      </div>`;
+    });
+    
+    turboFrame.setAttribute("src", pagePath);
   })();
-
-  // Update the page title and address bar dynamically
-  document.addEventListener("turbo:frame-load", event => {
-    const turboFrame = event.target;
-    // Update the address bar without appending '/home' for the root
-    const frameSrc = turboFrame.getAttribute("src");
-    if (frameSrc && frameSrc.endsWith(".html")) {
-      const newPath = frameSrc.replace(".html", "");
-      window.history.pushState({}, "", newPath);
-    }
-
-    const rootUrl = "/"; // Define the root URL to exclude
-
-    document.querySelectorAll('#content a[href]').forEach(link => {
+  
+  // Process all Turbo links in the content area
+  function processTurboLinks() {
+    document.querySelectorAll('#content a[href]:not([data-turbo-processed])').forEach(link => {
       const href = link.getAttribute('href');
-
-      // Skip external links and the root URL
+      
+      // Skip specific types of links
       if (
-        href.startsWith('#') || // Skip anchor links
-        href.startsWith('http') || // Skip external links
-        href === rootUrl // Skip the root URL
+        !href || // No href
+        href.startsWith('#') || // Anchor links
+        href.startsWith('http') || // External links
+        href.startsWith('mailto:') || // Email links
+        href.startsWith('tel:') || // Phone links
+        link.hasAttribute('download') || // Download links
+        link.getAttribute('target') === '_blank' // New window links
       ) {
+        link.setAttribute('data-turbo-processed', 'true');
         return;
       }
-
+      
+      // Special case for root URL
+      if (href === "/") {
+        link.setAttribute('data-turbo-frame', 'content');
+        link.setAttribute('data-turbo-action', 'advance');
+        link.setAttribute('href', "/index.html");
+        link.setAttribute('data-turbo-processed', 'true');
+        return;
+      }
+      
       // Add Turbo attributes for internal links
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
       link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
+      link.setAttribute('data-turbo-processed', 'true');
     });
+  }
+  
+  // Handle frame loading events
+  document.addEventListener("turbo:frame-load", event => {
+    const turboFrame = event.target;
+    if (turboFrame.id !== "content") return;
+      
+    // Update page title from the frame
+    const frameTitle = turboFrame.querySelector("head title");
+    if (frameTitle) {
+      document.title = frameTitle.textContent;
+    }
+    
+    // Update the address bar
+    const frameSrc = turboFrame.getAttribute("src");
+    if (frameSrc && frameSrc.endsWith(".html")) {
+      const newPath = frameSrc === "/index.html" ? "/" : frameSrc.replace(".html", "");
+      window.history.pushState({
+        turboFrameSrc: frameSrc,
+        title: document.title
+      }, document.title, newPath);
+    }
+    
+    // Process links in the new content
+    processTurboLinks();
   });
+  
+  // Handle browser back/forward buttons
+  window.addEventListener("popstate", (event) => {
+    const turboFrame = document.querySelector("turbo-frame#content");
+    if (event.state && event.state.turboFrameSrc) {
+      turboFrame.setAttribute("src", event.state.turboFrameSrc);
+      if (event.state.title) document.title = event.state.title;
+    } else {
+      // Handle case where no state exists
+      const path = window.location.pathname;
+      const pagePath = path === "/" ? "/index.html" : 
+                       path.endsWith(".html") ? path : path + ".html";
+      turboFrame.setAttribute("src", pagePath);
+    }
+  });
+  
+  // Initial link processing
+  document.addEventListener("DOMContentLoaded", processTurboLinks);
 </script>
   `;
   // Inject the script at the end of the template
