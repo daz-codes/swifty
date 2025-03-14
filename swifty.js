@@ -418,7 +418,7 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
       window.history.pushState({}, document.title, cleanPath);
     }
   }
-</script>;
+</script>`;
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
   return templateContent;
