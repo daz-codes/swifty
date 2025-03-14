@@ -272,106 +272,96 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
   
-  // Handle initial page load
-  (function() {
+  // Helper function to convert paths between HTML and clean URLs
+  const pathHelpers = {
+    toHtmlPath(path) {
+      if (path === '/') return '/index.html';
+      return path.endsWith('.html') ? path : ${`${path}.html`};
+    },
+    toCleanPath(path) {
+      if (path === '/index.html') return '/';
+      return path.endsWith('.html') ? path.replace('.html', '') : path;
+    },
+    isInternalLink(href) {
+      return href && 
+        !href.startsWith('#') && 
+        !href.startsWith('http') && 
+        !href.startsWith('mailto:') && 
+        !href.startsWith('tel:');
+    }
+  };
+
+  // Initialize the app
+  document.addEventListener('DOMContentLoaded', () => {
+    initializeTurboFrame();
+    handleInitialNavigation();
+    setupEventListeners();
+  });
+
+  // Set up the initial turbo frame based on current URL
+  function initializeTurboFrame() {
     const turboFrame = document.querySelector("turbo-frame#content");
-    const path = window.location.pathname;
+    if (!turboFrame) return;
     
-    // Set the src attribute for the turbo frame
-    const pagePath = path === "/" ? "/index.html" : 
-                     path.endsWith(".html") ? path : path + ".html";
-        
-    // Add error handling
-    turboFrame.addEventListener("turbo:frame-error", (event) => {
-      turboFrame.innerHTML = `<div class="error-container">
-        <h1>Page Not Found</h1>
-        <p>Sorry, the page "${path}" could not be found.</p>
-        <a href="/" data-turbo-frame="content">Return Home</a>
-      </div>`;
+    // Add loading class to body when frame starts loading
+    turboFrame.addEventListener("turbo:before-frame-render", () => {
     });
     
-    turboFrame.setAttribute("src", pagePath);
-  })();
-  
-  // Process all Turbo links in the content area
-  function processTurboLinks() {
-    document.querySelectorAll('#content a[href]:not([data-turbo-processed])').forEach(link => {
-      const href = link.getAttribute('href');
-      
-      // Skip specific types of links
-      if (
-        !href || // No href
-        href.startsWith('#') || // Anchor links
-        href.startsWith('http') || // External links
-        href.startsWith('mailto:') || // Email links
-        href.startsWith('tel:') || // Phone links
-        link.hasAttribute('download') || // Download links
-        link.getAttribute('target') === '_blank' // New window links
-      ) {
-        link.setAttribute('data-turbo-processed', 'true');
-        return;
-      }
-      
-      // Special case for root URL
-      if (href === "/") {
-        link.setAttribute('data-turbo-frame', 'content');
-        link.setAttribute('data-turbo-action', 'advance');
-        link.setAttribute('href', "/index.html");
-        link.setAttribute('data-turbo-processed', 'true');
-        return;
-      }
-      
-      // Add Turbo attributes for internal links
-      link.setAttribute('data-turbo-frame', 'content');
-      link.setAttribute('data-turbo-action', 'advance');
-      link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
-      link.setAttribute('data-turbo-processed', 'true');
+    // Remove loading class when frame finishes loading
+    turboFrame.addEventListener("turbo:frame-render", () => {
+    });
+    
+    // Handle frame errors
+    turboFrame.addEventListener("turbo:frame-error", (event) => {
+      const path = window.location.pathname;
+      turboFrame.innerHTML = ${`
+        <div class="error-container">
+          <h1>Page Not Found</h1>
+          <p>Sorry, the page "${path}" could not be found.</p>
+          <a href="/" data-turbo-action="advance">Return Home</a>
+        </div>
+      `};
     });
   }
-  
-  // Handle frame loading events
-  document.addEventListener("turbo:frame-load", event => {
-    const turboFrame = event.target;
-    if (turboFrame.id !== "content") return;
-      
-    // Update page title from the frame
-    const frameTitle = turboFrame.querySelector("head title");
-    if (frameTitle) {
-      document.title = frameTitle.textContent;
-    }
-    
-    // Update the address bar
-    const frameSrc = turboFrame.getAttribute("src");
-    if (frameSrc && frameSrc.endsWith(".html")) {
-      const newPath = frameSrc === "/index.html" ? "/" : frameSrc.replace(".html", "");
-      window.history.pushState({
-        turboFrameSrc: frameSrc,
-        title: document.title
-      }, document.title, newPath);
-    }
-    
-    // Process links in the new content
-    processTurboLinks();
-  });
-  
-  // Handle browser back/forward buttons
-  window.addEventListener("popstate", (event) => {
+
+  // Handle the initial page load
+  function handleInitialNavigation() {
     const turboFrame = document.querySelector("turbo-frame#content");
-    if (event.state && event.state.turboFrameSrc) {
-      turboFrame.setAttribute("src", event.state.turboFrameSrc);
-      if (event.state.title) document.title = event.state.title;
-    } else {
-      // Handle case where no state exists
+    if (!turboFrame) return;
+    
+    const path = window.location.pathname;
+    const htmlPath = pathHelpers.toHtmlPath(path);
+    
+    turboFrame.setAttribute("src", htmlPath);
+  }
+
+  // Set up all event listeners
+  function setupEventListeners() {
+    // Process links after frame loads
+    document.addEventListener("turbo:frame-load", (event) => {
+      const turboFrame = event.target;
+      if (turboFrame.id !== "content") return;
+      
+      // Update page title from the frame
+      updatePageTitle(turboFrame);
+      
+      // Update URL
+      updateBrowserURL(turboFrame);
+      
+      // Process links in the new content
+      processLinks();
+    });
+    
+    // Handle browser back/forward buttons
+    window.addEventListener("popstate", (event) => {
       const path = window.location.pathname;
-      const pagePath = path === "/" ? "/index.html" : 
-                       path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
-    }
-  });
-  
-  // Initial link processing
-  document.addEventListener("DOMContentLoaded", processTurboLinks);
-</script>
+      if (event.state && event.state.turbo) {
+        // This is a Turbo-controlled navigation
+        Turbo.visit(path, { action: "advance" });
+      } else {
+        // Regular browser navigation
+        const htmlPath = pathHelpers.toHtmlPath(path);
+        const turboFrame = document.qu
   `;
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
