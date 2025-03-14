@@ -272,50 +272,47 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
-  // Ensure turbo-frame loads the correct content on initial load
+  // Ensure the turbo-frame loads the correct content based on the current URL
   (function() {
     const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
 
-    // Determine which .html page to load into the turbo-frame
-    const pagePath = path.endsWith(".html") ? path : path + "html";
-    
-    // Directly visit the page using Turbo.visit for smoother page handling
-    Turbo.visit(pagePath, { frame: turboFrame });
+    // Set the src attribute for the turbo frame
+      const pagePath = path.endsWith(".html") ? path : path + ".html";
+      Turbo.visit(pagePath, { frame: turboFrame });
   })();
 
-  // Turbo frame load event to update the address bar and process links
-  document.addEventListener("turbo:frame-load", (event) => {
+  // Update the page title and address bar dynamically
+  document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
-    const frameSrc = turboFrame.getAttribute("src");
-
     // Update the address bar without appending '/home' for the root
+    const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
-      window.history.replaceState({}, "", newPath);  // Use replaceState to avoid multiple URL entries
+      window.history.pushState({}, "", newPath);
     }
 
-    // Enhance internal links inside the turbo-frame with Turbo attributes
+    const rootUrl = "/"; // Define the root URL to exclude
+
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
 
-      // Skip anchor links, external links, and the root URL
-      if (href.startsWith('#') || href.startsWith('http') || href === '/') {
+      // Skip external links and the root URL
+      if (
+        href.startsWith('#') || // Skip anchor links
+        href.startsWith('http') || // Skip external links
+        href === rootUrl // Skip the root URL
+      ) {
         return;
       }
 
-      // Ensure internal links are using Turbo with .html extension
-      if (!href.endsWith(".html")) {
-        link.setAttribute('href', href + ".html");
-      }
-
-      // Add Turbo attributes for internal navigation
+      // Add Turbo attributes for internal links
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
+      link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
     });
   });
 </script>
-
   `;
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
