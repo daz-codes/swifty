@@ -22,7 +22,7 @@
   
   <div class="gradient-text display-l text-center">The Simple & Speedy Static Site Generator!</div>
 
-<p>A short introduction to my website.</p>
+<p>The next generation of static site generator. Simple and Speedy.</p>
 <p><img src="/images/lights.jpg" alt="Hazy Lights"></p>
 <h2>More Info</h2>
 <ul>
@@ -51,49 +51,50 @@
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
-  // Ensure the turbo-frame loads the correct content based on the current URL
+  // Ensure turbo-frame loads the correct content on initial load
   (function() {
     const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
 
-    // Set the src attribute for the turbo frame
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
+    // Determine which .html page to load into the turbo-frame
+    const pagePath = path.endsWith(".html") ? path : path + "html";
+    
+    // Directly visit the page using Turbo.visit for smoother page handling
+    Turbo.visit(pagePath, { frame: turboFrame });
   })();
 
-  // Update the page title and address bar dynamically
-  document.addEventListener("turbo:frame-load", event => {
+  // Turbo frame load event to update the address bar and process links
+  document.addEventListener("turbo:frame-load", (event) => {
     const turboFrame = event.target;
-    // Update the address bar without appending '/home' for the root
     const frameSrc = turboFrame.getAttribute("src");
-    if (frameSrc && frameSrc.endsWith("home.html")) {
-      window.history.pushState({}, "", "/");
-    } else if (frameSrc && frameSrc.endsWith(".html")) {
+
+    // Update the address bar without appending '/home' for the root
+    if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
-      window.history.pushState({}, "", newPath);
+      window.history.replaceState({}, "", newPath);  // Use replaceState to avoid multiple URL entries
     }
 
-    const rootUrl = "/"; // Define the root URL to exclude
-
+    // Enhance internal links inside the turbo-frame with Turbo attributes
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
 
-      // Skip external links and the root URL
-      if (
-        href.startsWith('#') || // Skip anchor links
-        href.startsWith('http') || // Skip external links
-        href === rootUrl // Skip the root URL
-      ) {
+      // Skip anchor links, external links, and the root URL
+      if (href.startsWith('#') || href.startsWith('http') || href === '/') {
         return;
       }
 
-      // Add Turbo attributes for internal links
+      // Ensure internal links are using Turbo with .html extension
+      if (!href.endsWith(".html")) {
+        link.setAttribute('href', href + ".html");
+      }
+
+      // Add Turbo attributes for internal navigation
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
-      link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
     });
   });
 </script>
+
   </body>
 </html>
   

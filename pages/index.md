@@ -1,6 +1,6 @@
 <div class="gradient-text display-l text-center">The Simple & Speedy Static Site Generator!</div>
 
-A short introduction to my website.
+The next generation of static site generator. Simple and Speedy.
 
 ![Hazy Lights](/images/lights.jpg)
 
