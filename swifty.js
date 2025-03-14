@@ -272,27 +272,32 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
-  // Ensure the turbo-frame loads the correct content based on the current URL
   (function() {
     const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
 
-    // Set the src attribute for the turbo frame
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
+    // Determine the page path, ensuring it ends with '.html'
+    const pagePath = path.endsWith(".html") ? path : path + ".html";
+
+    // Only perform a Turbo visit if the src has changed
+    if (turboFrame.getAttribute("src") !== pagePath) {
+      Turbo.visit(pagePath, { frame: turboFrame });
+    }
   })();
 
-  // Update the page title and address bar dynamically
+  // Update the page title and address bar dynamically after the content loads
   document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
-    // Update the address bar without appending '/home' for the root
     const frameSrc = turboFrame.getAttribute("src");
+    
+    // Update the address bar if needed (without appending '.html')
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
-      window.history.pushState({}, "", newPath);
+      if (window.location.pathname !== newPath) {
+        window.history.pushState({}, "", newPath);
+      }
     }
-
-    const rootUrl = "/"; // Define the root URL to exclude
+  });
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
@@ -301,7 +306,7 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
       if (
         href.startsWith('#') || // Skip anchor links
         href.startsWith('http') || // Skip external links
-        href === rootUrl // Skip the root URL
+        href === "/" // Skip the root URL
       ) {
         return;
       }
