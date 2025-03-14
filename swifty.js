@@ -176,7 +176,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       };
       if (isDirectory) {
         page.pages = await generatePages(filePath, baseDir, page);
-        page.content = generateIndexPage(page);
+        page.content = await generateIndexPage(page);
       } else if (path.extname(file.name) === ".md") {
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
@@ -213,28 +213,39 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           )
           .join('\n')
           const page = { 
-            data: config,
             name: tag,
             title: `Pages tagged with ${capitalize(tag)}`,
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
             url:  `/tags/${tag}.html`,
+            data: config,
           };
           page.content = `<ul>${listItems}</ul>`;
           tagPage.pages.push(page);
     }
-    tagPage.content = generateIndexPage(tagPage);
+    tagPage.content = await generateIndexPage(tagPage);
+    console.log("tagpage: ",tagPage, tagPage.pages)
     pages.push(tagPage);
   }
   return pages;
 };
 
-const generateIndexPage = page => {
-  return `
-  <ul>
-  ${page.pages.map(page => `<li>${page.updated_at}: <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join``}
-  </ul>`
-}
+const generateIndexPage = async page => {
+  const partial = `${page.path.split('/').pop()}.md`; // 'post.md' or 'list.md'
+    const partialPath = path.join(dirs.partials, partial);
+  // Check if either file exists in the 'partials' folder
+  const fileExists = await fsExtra.pathExists(partialPath); // Use await here
+  if (fileExists) {
+    const partial = await fs.readFile(partialPath, "utf-8");
+    const content = await Promise.all(page.pages.map(child => replacePlaceholders(partial, child)));
+    return content.join('\n');
+  } else {
+    return `
+    <ul>
+    ${page.pages.map(page => `<li>${page.updated_at}: <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join``}
+    </ul>`
+  }
+};
 
 const render = async (page, content) => {
   const replacedContent = await replacePlaceholders(content, page);
@@ -390,13 +401,17 @@ const addLinks = (pages,parent) => {
     page.data.links_to_tags = page?.data?.tags?.length
     ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
     : "";
-    const crumb = ` &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
+    const crumb = page.root ? "" : ` &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
-    : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;     
+    : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
+    if(parent) console.log("page: ",page.data.breadcrumbs)
+    if(parent) console.log("parent: ",parent.data.breadcrumbs)        
     page.data.links_to_children = page.pages ? `<ul class="links">` + page.pages.map(child => generateLink(child)).join`` + "</ul>" : "";
-    page.data.links_to_siblings = parent && parent.pages.length > 1 ? `<ul class="links">` + parent.pages.filter(child => child.url !== page.url).map(sibling => generateLink(sibling)).join`` + "</ul>" : "";
-    page.data.links_to_self_and_siblings = parent ? `<ul class="links">` + parent.pages.map(sibling => generateLink(sibling)).join`` + "</ul>" : "";
-    if(page.pages) addLinks(page.pages,page)
+    page.data.links_to_siblings = pages.filter(p => p.url !== page.url).map(sibling => generateLink(sibling)).join`` + "</ul>";
+    page.data.links_to_self_and_siblings = pages.map(sibling => generateLink(sibling)).join`` + "</ul>";
+    if(page.pages) {
+      addLinks(page.pages,page)
+    }
   });
 }
 
