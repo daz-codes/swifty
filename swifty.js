@@ -215,7 +215,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             data: config,
           };
           page.content = pages
-          .map(page =>`* <a href="${page.url}.html" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
+          .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
           .join('\n');
           tagPage.pages.push(page);
     }
@@ -318,7 +318,7 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
         <div class="error-container">
           <h1>Page Not Found</h1>
           <p>Sorry, the page "${path}" could not be found.</p>
-          <a href="/" data-turbo-action="advance">Return Home</a>
+          <a href="/" data-turbo-frame="content">Return Home</a>
         </div>
       `};
     });
@@ -345,24 +345,80 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
       // Update page title from the frame
       updatePageTitle(turboFrame);
       
-      // Update URL
+      // Update URL without appending .html
       updateBrowserURL(turboFrame);
-      
-      // Process links in the new content
-      processLinks();
     });
     
     // Handle browser back/forward buttons
     window.addEventListener("popstate", (event) => {
       const path = window.location.pathname;
-      if (event.state && event.state.turbo) {
-        // This is a Turbo-controlled navigation
-        Turbo.visit(path, { action: "advance" });
-      } else {
-        // Regular browser navigation
-        const htmlPath = pathHelpers.toHtmlPath(path);
-        const turboFrame = document.qu
-  `;
+      const htmlPath = pathHelpers.toHtmlPath(path);
+      const turboFrame = document.querySelector("turbo-frame#content");
+      
+      if (turboFrame) {
+        turboFrame.setAttribute("src", htmlPath);
+      }
+    });
+    
+    // Handle all click events with event delegation
+    document.addEventListener("click", (event) => {
+      // Find if a link was clicked
+      let link = event.target.closest('a[href]');
+      if (!link) return;
+      
+      const href = link.getAttribute('href');
+      
+      // Skip non-internal links or links with special attributes
+      if (!pathHelpers.isInternalLink(href) || 
+          link.hasAttribute('download') || 
+          link.getAttribute('target') === '_blank') {
+        return;
+      }
+      
+      // Get the HTML path version for the turbo frame
+      let htmlHref = pathHelpers.toHtmlPath(href);
+      
+      // If the link already has the turbo frame attribute, let it work normally
+      if (link.hasAttribute('data-turbo-frame')) {
+        // Only modify the href if it doesn't already end with .html
+        if (!link.getAttribute('href').endsWith('.html')) {
+          link.setAttribute('href', htmlHref);
+        }
+        return;
+      }
+      
+      // Prevent default for links we're handling
+      event.preventDefault();
+      
+      // Set the turbo frame source
+      const turboFrame = document.querySelector("turbo-frame#content");
+      if (turboFrame) {
+        turboFrame.setAttribute("src", htmlHref);
+        
+        // Update the URL to the clean version
+        const cleanPath = pathHelpers.toCleanPath(href);
+        window.history.pushState({}, document.title, cleanPath);
+      }
+    });
+  }
+
+  // Update the page title from a turbo frame
+  function updatePageTitle(turboFrame) {
+    const frameTitle = turboFrame.querySelector("head title");
+    if (frameTitle) {
+      document.title = frameTitle.textContent;
+    }
+  }
+
+  // Update the browser URL based on the frame's src
+  function updateBrowserURL(turboFrame) {
+    const frameSrc = turboFrame.getAttribute("src");
+    if (frameSrc) {
+      const cleanPath = pathHelpers.toCleanPath(frameSrc);
+      window.history.pushState({}, document.title, cleanPath);
+    }
+  }
+</script>;
   // Inject the script at the end of the template
   templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
   return templateContent;
