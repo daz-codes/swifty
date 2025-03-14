@@ -51,45 +51,40 @@
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
 
-  // Ensure the turbo-frame loads the correct content based on the current URL
   (function() {
-    const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
+    const pagePath = path.endsWith(".html") ? path : path + ".html";
 
-    // Set the src attribute for the turbo frame
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      turboFrame.setAttribute("src", pagePath);
+    // Prevent unnecessary reloads
+    if (window.location.pathname !== pagePath.replace(".html", "")) {
+      Turbo.visit(pagePath, { frame: "content" });
+    }
   })();
 
-  // Update the page title and address bar dynamically
   document.addEventListener("turbo:frame-load", event => {
     const turboFrame = event.target;
-    // Update the address bar without appending '/home' for the root
     const frameSrc = turboFrame.getAttribute("src");
+
+    // Update the address bar without ".html"
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
-      window.history.pushState({}, "", newPath);
+      if (window.location.pathname !== newPath) {
+        window.history.pushState({}, "", newPath);
+      }
     }
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
 
-      // Skip external links and the root URL
-      if (
-        href.startsWith('#') || // Skip anchor links
-        href.startsWith('http') || // Skip external links
-        href === "/" // Skip the root URL
-      ) {
-        return;
-      }
+      // Skip external and anchor links
+      if (href.startsWith('#') || href.startsWith('http') || href === "/") return;
 
-      // Add Turbo attributes for internal links
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
-      link.setAttribute('href', href + (href.endsWith(".html") ? "" : ".html"));
+      link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
     });
   });
 </script>
-  </body>
+</body>
 </html>
   
