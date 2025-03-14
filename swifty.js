@@ -282,16 +282,6 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
       Turbo.visit(pagePath, { frame: turboFrame });
   })();
 
-  // Update the page title and address bar dynamically
-  document.addEventListener("turbo:frame-load", event => {
-    const turboFrame = event.target;
-    // Update the address bar without appending '/home' for the root
-    const frameSrc = turboFrame.getAttribute("src");
-    if (frameSrc && frameSrc.endsWith(".html")) {
-      const newPath = frameSrc.replace(".html", "");
-      window.history.pushState({}, "", newPath);
-    }
-
     const rootUrl = "/"; // Define the root URL to exclude
 
     document.querySelectorAll('#content a[href]').forEach(link => {
