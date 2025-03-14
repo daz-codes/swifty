@@ -7,3 +7,8 @@ main {
 .post-info{
   margin-top: -1rem;
 }
+
+.post{
+  margin: 1rem;
+  border-bottom: 1px dotted var(--grey);
+}

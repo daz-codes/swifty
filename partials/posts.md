@@ -1,6 +1,13 @@
+<div class="post">
+<!-- markdown content starts -->
+
+{{ date }}
+
 ### [{{ title }}]({{ url }})
-<div class="italic">{{ author }}</div>
 
-published on: {{ date }}
+##### {{ summary }}
 
-{{ summary }}
+<strong>{{ author }}</strong>
+
+<!-- markdown content ends -->
+</div>
