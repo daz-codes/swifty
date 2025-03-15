@@ -267,7 +267,9 @@ const renderIndexTemplate = async (content, config) => {
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
   const turboFrame = document.querySelector("turbo-frame#content");
   function loadFrameContent() {
+    console.log("loadFrameContent")
     const path = window.location.pathname;
+    console.log(path)
     if(path !== "/") turboFrame.style.visibility = "hidden";
     const pagePath = path.endsWith(".html") ? path : path + ".html";
     if (turboFrame) Turbo.visit(pagePath, { frame: "content" });
