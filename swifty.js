@@ -293,9 +293,7 @@ const renderIndexTemplate = async (content, config) => {
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const turboFrame = document.querySelector("turbo-frame#content");
-
+    document.addEventListener("turbo:before-fetch-request", () => {
       if (turboFrame) {
         turboFrame.style.display = "none"; // Hide initially
 
