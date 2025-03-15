@@ -156,7 +156,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const root = file.name === "index.md" && !parent;
       const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/"); // Normalize slashes
       const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
-      const name = capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
+      const name = root ? "Home" : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory()
 
@@ -212,7 +212,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
             url:  `/tags/${tag}.html`,
-            data: config,
+            data: {...config},
           };
           page.content = pages
           .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
@@ -321,7 +321,6 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
   let html = await render(page);
-  //if(page.name === "Tag") console.log("TAGPAGE hmtl: ",html)
   if(page.root){
       const navLinks = pages.filter(page => page?.nav || page?.data?.nav).map(
       page => `<a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`).join('\n');
