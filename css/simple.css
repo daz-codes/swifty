@@ -34,15 +34,25 @@
     --carbon: #292929;
     --grey: #a4a5a6;
     --gray: var(--grey);
-    --lightGrey: #c4c4c4;
+    --lightGrey: #f5f5f5;
     --lightGray: var(--lightGrey);
     --darkGrey: #585858;
     --darkGray: var(--darkGrey);
+    --lightRed: #ffcdd2;
     --red: #c20000;
+    --darkRed: #b71c1c;
+    --lightBlue: #e1f5fe;
     --blue: #0099dd;
-    --green: #3c8562;
+    --darkBlue: #01579b;
+    --lightGreen: #e8f5e9;
+    --green: #4caf50;
+    --darkGreen: #1b5e20;
+    --lightYellow: #fff9c4;
     --yellow: #f6e548;
+    --darkYellow: #fbc02d;
+    --lightOrange: #ffe0b2;
     --orange: #ff6900;
+    --darkOrange: #e65100;
     --pink: #ffb3db;
     --purple: #5f52a1;
     --brown: #5d3c2f;
@@ -174,6 +184,7 @@
   /* Add a little padding to ensure spacing is correct between content and header > nav */
   main {
     padding-top: var(--padding-s);
+    grid-column: 1 / -1;
   }
   
   body > footer {
@@ -440,26 +451,13 @@
   }
   
   section {
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: var(--padding-l) var(--padding-s);
-    margin: var(--margin-l) 0;
+    padding: var(--padding-m);
+    margin: var(--margin-m) 0;
   }
   
   /* Don't double separators when chaining sections */
-  section + section,
-  section:first-child {
-    border-top: 0;
-    padding-top: 0;
-  }
-  
   section + section {
     margin-top: 0;
-  }
-  
-  section:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
   }
   
   details {
@@ -1113,6 +1111,8 @@
 
     .white { background-color: var(--white) !important; }
     .grey,.gray { background-color: var(--grey) !important; }
+    .light-grey,.light-gray { background-color: var(--lightGrey) !important; }
+    .dark-grey,.dark-gray { background-color: var(--darkGrey) !important; }
     .black { background-color: var(--black)!important; }
 
     .red { background-color: var(--red) !important; }
@@ -1128,6 +1128,20 @@
     .maroon { background-color: var(--maroon) !important; }
     .teal { background-color: var(--teal) !important; }
     .jade { background-color: var(--jade) !important;}
+    .light-red { background-color: var(--lightRed) !important;}
+    .light-orange { background-color: var(--lightOrange) !important;}
+    .light-yellow { background-color: var(--lightYellow) !important;}
+    .light-green { background-color: var(--lightGreen) !important;}
+    .light-blue { background-color: var(--lightBlue) !important;}
+    .dark-red { background-color: var(--darkRed) !important;}
+    .dark-orange { background-color: var(--darkOrange) !important;}
+    .dark-yellow { background-color: var(--darkYellow) !important;}
+    .dark-green { background-color: var(--darkGreen) !important;}
+    .dark-blue { background-color: var(--darkBlue) !important;}
+
+
+
+
 
     .primary-text{ color: var(--primary) !important; }
     .secondary-text{ color: var(--secondary) !important; }

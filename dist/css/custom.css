@@ -12,3 +12,13 @@ main {
   margin: 1rem;
   border-bottom: 1px dotted var(--grey);
 }
+
+#content section {
+  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr var(--container-width) 1fr;
+}
+
+#content section > * {
+  grid-column: 2;
+}
