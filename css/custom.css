@@ -1,4 +1,9 @@
-main {
+h1.logo a{
+  text-decoration: none;
+  text-transform: none;
+ }
+ 
+ main {
   h1,h2,h3,h4,h5,h6{
     text-transform: uppercase;
   }
@@ -16,6 +21,8 @@ main {
 #content section {
   text-align: center;
   display: grid;
+  margin: var(--margin-s) 0;
+  padding: var(--padding-s);
   grid-template-columns: 1fr var(--container-width) 1fr;
 }
 

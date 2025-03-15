@@ -1,11 +1,12 @@
 <section>
-<div class="gradient-text display-m text-center">A Super Speedy Static Site Generator!</div>
+    <h1 class="display-l fancy-font logo"><a href="/">{{sitename}}</a></h1>
+    <div class="gradient-text display-m text-center">A Super Speedy Static Site Generator!</div>
 </section>
 
 
 <section class="light-grey">
 
-## Create a website using just MarkDown
+## Create a website in no time!
 
 Swifty is the next generation of static site generator. It lets you write all your content in MarkDown and then builds the whole site based on your folder structure with pretty urls and super fast navigation.
 

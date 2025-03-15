@@ -159,22 +159,13 @@
     background-color: var(--accent-bg);
     background-image: linear-gradient(var(--accent-bg), var(--bg));
     text-align: center;
-    padding: 0 0.5rem 2rem 0.5rem;
+    padding: 0;
     grid-column: 1 / -1;
   }
   
   body > header > *:only-child {
     margin-block-start: 2rem;
   }
-  
-  body > header h1 {
-    max-width: 1200px;
-    margin: var(--margin-s) auto;
-  }
-
-   body > header h1 a{
-    text-decoration: none;
-   }
   
   body > header p {
     max-width: 40rem;
