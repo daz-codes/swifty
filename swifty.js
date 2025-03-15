@@ -125,7 +125,7 @@ const applyLayoutAndWrapContent = async (page,content) => {
   const layoutContent = await getLayout(page.data.layout || page.layout);
   const [beforeLayout, afterLayout] = await applyLayout(layoutContent, page);
   return `
-<turbo-frame id="content">
+<turbo-frame id="content" style="visibility: hidden">
   <head><title>${page.title} || ${page.data.sitename}</title></head>
   ${beforeLayout}
   ${content}
@@ -275,18 +275,16 @@ const renderIndexTemplate = async (content, config) => {
       Turbo.visit(pagePath, { frame: "content" });
     }
   }
-
   // Load content into turbo-frame on initial page load
   loadFrameContent();
 
   // Handle back/forward navigation
   window.addEventListener("popstate", loadFrameContent);
 
+  //update address bar after nagigatoing to a new page
   document.addEventListener("turbo:frame-load", event => {
     turboFrame.style.visibility = "visible"; // Show when Turbo is done loading
     const frameSrc = turboFrame.getAttribute("src");
-
-    // Update the address bar without ".html"
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
       if (window.location.pathname !== newPath) {
@@ -305,16 +303,10 @@ const renderIndexTemplate = async (content, config) => {
       link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
     });
   });
-
-  document.addEventListener("turbo:before-frame-render", () => {
-    if (turboFrame) {
-      turboFrame.style.visibility = "hidden"; // Hide initially
-    }
-  });
 </script>
 `;
   // Inject the script at the end of the template
-  templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
+  templateContent = templateContent.replace('</head>', `${turboScript}</head>`);
   return templateContent;
 };
 

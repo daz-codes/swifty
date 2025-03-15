@@ -7,6 +7,48 @@
 <meta name="turbo-refresh-method" content="morph">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
+<script type="module">
+  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+  const turboFrame = document.querySelector("turbo-frame#content");
+
+  function loadFrameContent() {
+    const path = window.location.pathname;
+    const pagePath = path.endsWith(".html") ? path : path + ".html";
+
+    if (turboFrame) {
+      Turbo.visit(pagePath, { frame: "content" });
+    }
+  }
+  // Load content into turbo-frame on initial page load
+  loadFrameContent();
+
+  // Handle back/forward navigation
+  window.addEventListener("popstate", loadFrameContent);
+
+  //update address bar after nagigatoing to a new page
+  document.addEventListener("turbo:frame-load", event => {
+    turboFrame.style.visibility = "visible"; // Show when Turbo is done loading
+    const frameSrc = turboFrame.getAttribute("src");
+    if (frameSrc && frameSrc.endsWith(".html")) {
+      const newPath = frameSrc.replace(".html", "");
+      if (window.location.pathname !== newPath) {
+        window.history.pushState({}, "", newPath);
+      }
+    }
+
+    document.querySelectorAll('#content a[href]').forEach(link => {
+      const href = link.getAttribute('href');
+
+      // Skip external and anchor links
+      if (href.startsWith('#') || href.startsWith('http') || href === "/") return;
+
+      link.setAttribute('data-turbo-frame', 'content');
+      link.setAttribute('data-turbo-action', 'advance');
+      link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
+    });
+  });
+</script>
 </head>
 <body>
   <header>
@@ -15,7 +57,7 @@
   </header>
     <main>
     
-<turbo-frame id="content">
+<turbo-frame id="content" style="visibility: hidden">
   <head><title>Home || Swifty</title></head>
   
   <section>
@@ -52,56 +94,6 @@
     <p>This site was built with Swifty, the super speedy static site generator.</p>
     <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
   </footer>
-
-<script type="module">
-  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
-  const turboFrame = document.querySelector("turbo-frame#content");
-
-  function loadFrameContent() {
-    const path = window.location.pathname;
-    const pagePath = path.endsWith(".html") ? path : path + ".html";
-
-    if (turboFrame) {
-      Turbo.visit(pagePath, { frame: "content" });
-    }
-  }
-
-  // Load content into turbo-frame on initial page load
-  loadFrameContent();
-
-  // Handle back/forward navigation
-  window.addEventListener("popstate", loadFrameContent);
-
-  document.addEventListener("turbo:frame-load", event => {
-    turboFrame.style.visibility = "visible"; // Show when Turbo is done loading
-    const frameSrc = turboFrame.getAttribute("src");
-
-    // Update the address bar without ".html"
-    if (frameSrc && frameSrc.endsWith(".html")) {
-      const newPath = frameSrc.replace(".html", "");
-      if (window.location.pathname !== newPath) {
-        window.history.pushState({}, "", newPath);
-      }
-    }
-
-    document.querySelectorAll('#content a[href]').forEach(link => {
-      const href = link.getAttribute('href');
-
-      // Skip external and anchor links
-      if (href.startsWith('#') || href.startsWith('http') || href === "/") return;
-
-      link.setAttribute('data-turbo-frame', 'content');
-      link.setAttribute('data-turbo-action', 'advance');
-      link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
-    });
-  });
-
-  document.addEventListener("turbo:before-frame-render", () => {
-    if (turboFrame) {
-      turboFrame.style.visibility = "hidden"; // Hide initially
-    }
-  });
-</script>
 </body>
 </html>
   
