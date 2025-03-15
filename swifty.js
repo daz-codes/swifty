@@ -125,7 +125,7 @@ const applyLayoutAndWrapContent = async (page,content) => {
   const layoutContent = await getLayout(page.data.layout || page.layout);
   const [beforeLayout, afterLayout] = await applyLayout(layoutContent, page);
   return `
-<turbo-frame id="content" style="visibility: hidden">
+<turbo-frame id="content">
   <head><title>${page.title} || ${page.data.sitename}</title></head>
   ${beforeLayout}
   ${content}
@@ -270,7 +270,6 @@ const renderIndexTemplate = async (content, config) => {
   function loadFrameContent() {
     const path = window.location.pathname;
     const pagePath = path.endsWith(".html") ? path : path + ".html";
-
     if (turboFrame) {
       Turbo.visit(pagePath, { frame: "content" });
     }
@@ -283,7 +282,6 @@ const renderIndexTemplate = async (content, config) => {
 
   //update address bar after nagigatoing to a new page
   document.addEventListener("turbo:frame-load", event => {
-    turboFrame.style.visibility = "visible"; // Show when Turbo is done loading
     const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");

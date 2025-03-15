@@ -15,7 +15,6 @@
   function loadFrameContent() {
     const path = window.location.pathname;
     const pagePath = path.endsWith(".html") ? path : path + ".html";
-
     if (turboFrame) {
       Turbo.visit(pagePath, { frame: "content" });
     }
@@ -28,7 +27,6 @@
 
   //update address bar after nagigatoing to a new page
   document.addEventListener("turbo:frame-load", event => {
-    turboFrame.style.visibility = "visible"; // Show when Turbo is done loading
     const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
@@ -57,7 +55,7 @@
   </header>
     <main>
     
-<turbo-frame id="content" style="visibility: hidden">
+<turbo-frame id="content">
   <head><title>Home || Swifty</title></head>
   
   <section>
