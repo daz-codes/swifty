@@ -1,10 +1,8 @@
-<div class="gradient-text display-l text-center">The Simple & Speedy Static Site Generator!</div>
-
-The next generation of static site generator. Simple and Speedy.
+<div class="gradient-text display-l text-center">A Super Speedy Static Site Generator!</div>
 
 ![Hazy Lights](/images/lights.jpg)
 
-## More Info
+## Features
 
 * Nested urls that follow the structure of the site
 * Generates index pages for folders automatically
