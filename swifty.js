@@ -306,7 +306,7 @@ const renderIndexTemplate = async (content, config) => {
     });
   });
 
-  document.addEventListener("turbo:before-fetch-request", () => {
+  document.addEventListener("turbo:before-frame-render", () => {
     if (turboFrame) {
       turboFrame.style.display = "none"; // Hide initially
     }
