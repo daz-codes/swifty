@@ -14,8 +14,7 @@
 <a href="/posts.html" data-turbo-frame="content" data-turbo-action="advance">Posts</a></nav>
   </header>
     <main>
-    <turbo-frame id="content">
-  
+    
 <turbo-frame id="content">
   <head><title>Home || Swifty</title></head>
   
@@ -48,7 +47,6 @@
   
 </turbo-frame>
   
-  </turbo-frame>
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -57,9 +55,9 @@
 
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+  const turboFrame = document.querySelector("turbo-frame#content");
 
   function loadFrameContent() {
-    const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
     const pagePath = path.endsWith(".html") ? path : path + ".html";
 
@@ -75,7 +73,6 @@
   window.addEventListener("popstate", loadFrameContent);
 
   document.addEventListener("turbo:frame-load", event => {
-    const turboFrame = event.target;
     const frameSrc = turboFrame.getAttribute("src");
 
     // Update the address bar without ".html"
@@ -85,6 +82,18 @@
         window.history.pushState({}, "", newPath);
       }
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const turboFrame = document.querySelector("turbo-frame#content");
+
+      if (turboFrame) {
+        turboFrame.style.display = "none"; // Hide initially
+
+        document.addEventListener("turbo:frame-load", () => {
+          turboFrame.style.display = "block"; // Show when Turbo is done loading
+        });
+      }
+    });
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');

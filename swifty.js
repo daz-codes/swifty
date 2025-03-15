@@ -158,7 +158,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
       const name = root ? "Home" : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
-      const isDirectory = file.isDirectory()
+      const isDirectory = file.isDirectory();
 
       const page = {
         name, root,
@@ -247,7 +247,7 @@ const render = async page => {
 };
 
 // Function to read and render the index template
-const renderIndexTemplate = async (homeHtmlContent, config) => {
+const renderIndexTemplate = async (content, config) => {
   // Read the template from pages folder
   const templatePath = path.join(__dirname, 'template.html');
   let templateContent = await fs.readFile(templatePath, 'utf-8');
@@ -259,21 +259,15 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
   const imports = css + js;
 
   templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n</head>`);
-
-  const content =   `<turbo-frame id="content">
-  ${homeHtmlContent}
-  </turbo-frame>`
-
-  // Replace placeholders with dynamic values
   templateContent = await replacePlaceholders(templateContent,{...defaultConfig,...config,content})
 
   // Add the missing script to the template
   const turboScript = `
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+  const turboFrame = document.querySelector("turbo-frame#content");
 
   function loadFrameContent() {
-    const turboFrame = document.querySelector("turbo-frame#content");
     const path = window.location.pathname;
     const pagePath = path.endsWith(".html") ? path : path + ".html";
 
@@ -289,7 +283,6 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
   window.addEventListener("popstate", loadFrameContent);
 
   document.addEventListener("turbo:frame-load", event => {
-    const turboFrame = event.target;
     const frameSrc = turboFrame.getAttribute("src");
 
     // Update the address bar without ".html"
@@ -299,6 +292,18 @@ const renderIndexTemplate = async (homeHtmlContent, config) => {
         window.history.pushState({}, "", newPath);
       }
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const turboFrame = document.querySelector("turbo-frame#content");
+
+      if (turboFrame) {
+        turboFrame.style.display = "none"; // Hide initially
+
+        document.addEventListener("turbo:frame-load", () => {
+          turboFrame.style.display = "block"; // Show when Turbo is done loading
+        });
+      }
+    });
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
@@ -383,18 +388,18 @@ const replacePlaceholders = async (template, values) => {
 };
 
 const addLinks = (pages,parent) => {
-  const generateLink = ({title,url}) => `<li><a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a></li>`
+  const generateLink = ({title,url}) => `<div class="${defaultConfig.link_class}"><a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a></li>`
   pages.forEach(page => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
-    ? `<div class="tags">${page.data.tags.map(tag => `<a class="tag" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
+    ? `<div class="tags">${page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
     : "";
-    const crumb = page.root ? "" : ` &raquo; <a class="breadcrumb" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
+    const crumb = page.root ? "" : ` &raquo; <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
-    : `<a class="breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
-    page.data.links_to_children = page.pages ? `<ul class="links">` + page.pages.map(child => generateLink(child)).join`` + "</ul>" : "";
-    page.data.links_to_siblings = pages.filter(p => p.url !== page.url).map(sibling => generateLink(sibling)).join`` + "</ul>";
-    page.data.links_to_self_and_siblings = pages.map(sibling => generateLink(sibling)).join`` + "</ul>";
+    : `<a class="${defaultConfig.breadcrumb_class}" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
+    page.data.links_to_children = page.pages ? page.pages.map(child => generateLink(child)).join`` : "";
+    page.data.links_to_siblings = pages.filter(p => p.url !== page.url).map(sibling => generateLink(sibling)).join``;
+    page.data.links_to_self_and_siblings = pages.map(sibling => generateLink(sibling)).join``;
     if(page.pages) {
       addLinks(page.pages,page)
     }

@@ -1,5 +1,9 @@
 sitename: Swifty
 author: Taylor Swift
+breadcrumb_class: swifty_breadcrumb
+link_class: swifty_link
+tag_class: tag
+
 dateFormat: 
   weekday: short
   month: short
