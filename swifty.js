@@ -283,6 +283,7 @@ const renderIndexTemplate = async (content, config) => {
   window.addEventListener("popstate", loadFrameContent);
 
   document.addEventListener("turbo:frame-load", event => {
+    turboFrame.style.display = "block"; // Show when Turbo is done loading
     const frameSrc = turboFrame.getAttribute("src");
 
     // Update the address bar without ".html"
@@ -292,16 +293,6 @@ const renderIndexTemplate = async (content, config) => {
         window.history.pushState({}, "", newPath);
       }
     }
-
-    document.addEventListener("turbo:before-fetch-request", () => {
-      if (turboFrame) {
-        turboFrame.style.display = "none"; // Hide initially
-
-        document.addEventListener("turbo:frame-load", () => {
-          turboFrame.style.display = "block"; // Show when Turbo is done loading
-        });
-      }
-    });
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
@@ -313,6 +304,12 @@ const renderIndexTemplate = async (content, config) => {
       link.setAttribute('data-turbo-action', 'advance');
       link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
     });
+  });
+
+  document.addEventListener("turbo:before-fetch-request", () => {
+    if (turboFrame) {
+      turboFrame.style.display = "none"; // Hide initially
+    }
   });
 </script>
 `;
