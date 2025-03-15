@@ -73,6 +73,7 @@
   window.addEventListener("popstate", loadFrameContent);
 
   document.addEventListener("turbo:frame-load", event => {
+    turboFrame.style.display = "block"; // Show when Turbo is done loading
     const frameSrc = turboFrame.getAttribute("src");
 
     // Update the address bar without ".html"
@@ -82,18 +83,6 @@
         window.history.pushState({}, "", newPath);
       }
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const turboFrame = document.querySelector("turbo-frame#content");
-
-      if (turboFrame) {
-        turboFrame.style.display = "none"; // Hide initially
-
-        document.addEventListener("turbo:frame-load", () => {
-          turboFrame.style.display = "block"; // Show when Turbo is done loading
-        });
-      }
-    });
 
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
@@ -105,6 +94,12 @@
       link.setAttribute('data-turbo-action', 'advance');
       link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
     });
+  });
+
+  document.addEventListener("turbo:before-fetch-request", () => {
+    if (turboFrame) {
+      turboFrame.style.display = "none"; // Hide initially
+    }
   });
 </script>
 </body>
