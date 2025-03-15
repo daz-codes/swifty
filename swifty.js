@@ -283,7 +283,7 @@ const renderIndexTemplate = async (content, config) => {
   window.addEventListener("popstate", loadFrameContent);
 
   document.addEventListener("turbo:frame-load", event => {
-    turboFrame.style.display = "block"; // Show when Turbo is done loading
+    turboFrame.style.visibility = "visible"; // Show when Turbo is done loading
     const frameSrc = turboFrame.getAttribute("src");
 
     // Update the address bar without ".html"
@@ -308,7 +308,7 @@ const renderIndexTemplate = async (content, config) => {
 
   document.addEventListener("turbo:before-frame-render", () => {
     if (turboFrame) {
-      turboFrame.style.display = "none"; // Hide initially
+      turboFrame.style.visibility = "hidden"; // Hide initially
     }
   });
 </script>
