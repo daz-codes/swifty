@@ -125,7 +125,7 @@ const applyLayoutAndWrapContent = async (page,content) => {
   const layoutContent = await getLayout(page.data.layout || page.layout);
   const [beforeLayout, afterLayout] = await applyLayout(layoutContent, page);
   return `
-<turbo-frame id="content" style="visibility: hidden">
+<turbo-frame id="content">
   <head><title>${page.title} || ${page.data.sitename}</title></head>
   ${beforeLayout}
   ${content}
@@ -268,6 +268,7 @@ const renderIndexTemplate = async (content, config) => {
   const turboFrame = document.querySelector("turbo-frame#content");
   function loadFrameContent() {
     const path = window.location.pathname;
+    if(path !== "/") turboFrame.style.visibility = "hidden";
     const pagePath = path.endsWith(".html") ? path : path + ".html";
     if (turboFrame) Turbo.visit(pagePath, { frame: "content" });
   }
