@@ -11,22 +11,15 @@
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
   const turboFrame = document.querySelector("turbo-frame#content");
-
   function loadFrameContent() {
     const path = window.location.pathname;
     const pagePath = path.endsWith(".html") ? path : path + ".html";
-    if (turboFrame) {
-      Turbo.visit(pagePath, { frame: "content" });
-    }
+    if (turboFrame) Turbo.visit(pagePath, { frame: "content" });
   }
-  // Load content into turbo-frame on initial page load
   loadFrameContent();
-
-  // Handle back/forward navigation
   window.addEventListener("popstate", loadFrameContent);
-
-  //update address bar after nagigatoing to a new page
   document.addEventListener("turbo:frame-load", event => {
+    turboframe.style.visibility = "visible:;
     const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");
@@ -34,13 +27,9 @@
         window.history.pushState({}, "", newPath);
       }
     }
-
     document.querySelectorAll('#content a[href]').forEach(link => {
       const href = link.getAttribute('href');
-
-      // Skip external and anchor links
       if (href.startsWith('#') || href.startsWith('http') || href === "/") return;
-
       link.setAttribute('data-turbo-frame', 'content');
       link.setAttribute('data-turbo-action', 'advance');
       link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
@@ -55,7 +44,7 @@
   </header>
     <main>
     
-<turbo-frame id="content">
+<turbo-frame id="content" style="visibility: hidden">
   <head><title>Home || Swifty</title></head>
   
   <section>
