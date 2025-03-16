@@ -27,6 +27,24 @@ const addToTagMap = (tag, page) => {
   tagsMap.get(tag).push({ title: page.title, url: page.url });
 };
 
+const partialCache = new Map();
+
+const loadPartial = async (partialName) => {
+  if (partialCache.has(partialName)) {
+    return partialCache.get(partialName);
+  }
+
+  const partialPath = path.join(dirs.partials, `${partialName}.md`);
+  if (await fsExtra.pathExists(partialPath)) {
+    const partialContent = await fs.readFile(partialPath, "utf-8");
+    partialCache.set(partialName, partialContent); // Store in cache
+    return partialContent;
+  } else {
+    console.warn(`Include "${partialName}" not found.`);
+    return `<p>Include "${partialName}" not found.</p>`;
+  }
+};
+
 // Valid file extensions for assets
 const validExtensions = {
   css: ['.css'],
@@ -159,9 +177,13 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const name = root ? "Home" : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
+      const layoutPath = parent ? parent.filename : "default";
+      const layoutFileExists = await fsExtra.pathExists(dirs.layouts + "/" + (parent ? parent.filename : "default") + ".html");
+      const layout = !root && layoutFileExists && layoutPath;
 
       const page = {
-        name, root,
+        name, root, layout,
+        filename: file.name.replace(/\.md$/, ""),
         path: finalPath,
         filepath: filePath,
         url: root ? "/" : finalPath + ".html",
@@ -345,15 +367,9 @@ const replacePlaceholders = async (template, values) => {
 
   // Replace partial includes
   template = await replaceAsync(template, partialRegex, async (match, partialName) => {
-    const partialPath = path.join(dirs.partials, `${partialName}.md`);
-    if (await fsExtra.pathExists(partialPath)) {
-      let partialContent = await fs.readFile(partialPath, "utf-8");
-      partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
-      return marked(partialContent); // Convert Markdown to HTML
-    } else {
-      console.warn(`Include "${partialName}" not found.`);
-      return `<p>Include "${partialName}" not found.</p>`;
-    }
+    let partialContent = await loadPartial(partialName);
+    partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
+    return marked(partialContent); // Convert Markdown to HTML
   });
 
   // Replace other placeholders **only outside of code blocks**
