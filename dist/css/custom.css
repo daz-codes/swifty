@@ -22,3 +22,23 @@ header{
   opacity: 0.85;
   padding: 0.5rem 0;
 }
+
+header div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+header a.logo{
+  text-decoration: none;
+  font-family: var(--fancy-font);
+  border-radius: var(--radius-m);
+  padding: 0 var(--padding-xs);
+}
+
+header a.logo:hover{
+  background: var(--primary);
+  color: white;
+}

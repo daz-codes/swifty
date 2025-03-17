@@ -334,8 +334,6 @@
   
   /* Use flexbox to allow items to wrap, as needed */
   header > nav,
-  header > nav,
-  .tabs,
   .tabs{
     align-content: space-around;
     align-items: center;
@@ -348,14 +346,12 @@
   
   /* List items are inline elements, make them behave more like blocks */
   header > nav > *,
-  header > nav > *,
-  .tabs > *,
   .tabs > * {
     display: inline-block;
   }
   
   header > nav a,
-  header > nav a:visited
+  header > nav a:visited,
   .tabs a,
   .tabs a:visited {
     margin: 0 var(--margin-xs);

@@ -3,7 +3,6 @@
     <div class="gradient-text display-s text-center margin-y">A Super Speedy Static Site Generator!</div>
 </section>
 
-
 <section class="highlight container text-center">
 
 ## Create a website in no time!

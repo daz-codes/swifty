@@ -247,12 +247,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     for (const [tag, pages] of tagsMap) {
           const page = { 
             name: tag,
-            title: `Pages tagged with ${capitalize(tag)}`,
+            title: tag,
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
             url:  `/tags/${tag}.html`,
             layout: tagLayout ? "tags" : "default",
-            data: {...config},
+            data: {...config, title: `Pages tagged with ${capitalize(tag)}`},
           };
           page.content = pages
           .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
@@ -275,7 +275,7 @@ const generateIndexPage = async page => {
     const content = await Promise.all(page.pages.map(child => replacePlaceholders(partial, child)));
     return content.join('\n');
   } else {
-    return `${page.pages.map(page => `* ${page.updated_at}: <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
+    return `${page.pages.map(page => `* <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
   }
 };
 
