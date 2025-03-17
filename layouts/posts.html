@@ -1,8 +1,10 @@
-<div class="serif-font container">
+<div class="container">
   <div class="breadcrumbs">{{ breadcrumbs }}</div>
-  <h1>{{ title }}</h1>
-  <div class="post-info italic text-xs">Posted by {{ author }} on {{ date }}</div>
-  <div class="tags">{{ links_to_tags }}</div>
-  <p class="text-s bold">{{ summary }}</p>
-  {{ content }}
+    <h1>{{ title }}</h1>
+    <div class="post-info italic text-xs">Posted by {{ author }} on {{ date }}</div>
+    <div class="tags">{{ links_to_tags }}</div>
+    <p class="text-s bold">{{ summary }}</p>
+  <div class="serif-font">
+    {{ content }}
+  </div>
 </div>
