@@ -21,6 +21,17 @@ const dirs = {
   partials: path.join(baseDir, 'partials'),
 };
 
+const lastBuildFile = path.join(dirs.dist, '.last_build.json');
+
+const loadLastBuildData = async () => {
+  try {
+    const data = await fs.readFile(lastBuildFile, 'utf-8');
+    return JSON.parse(data);
+  } catch (err) {
+    return {}; // Return empty object if file doesn't exist
+  }
+};
+
 const tagsMap = new Map();
 const addToTagMap = (tag, page) => {
   if (!tagsMap.has(tag)) tagsMap.set(tag, []);
@@ -177,12 +188,14 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const name = root ? "Home" : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
-      const layoutPath = parent ? parent.filename : "default";
-      const layoutFileExists = await fsExtra.pathExists(dirs.layouts + "/" + (parent ? parent.filename : "default") + ".html");
-      const layout = !root && layoutFileExists && layoutPath;
+      const assetPath = parent ? parent.filename : "default";
+      const layoutFileExists = await fsExtra.pathExists(dirs.layouts + "/" + assetPath + ".html");
+      const imageFileExists = await fsExtra.pathExists(dirs.images + "/" + assetPath + ".html");
+      const layout = !root && layoutFileExists && assetPath;
+      const image = !root && imageFileExists && assetPath;
 
       const page = {
-        name, root, layout,
+        name, root, layout, image,
         filename: file.name.replace(/\.md$/, ""),
         path: finalPath,
         filepath: filePath,
@@ -196,14 +209,16 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         date: new Date(stats.mtime).toLocaleDateString(undefined,config.dateFormat),
         data: root ? {...defaultConfig} : {...config}
       };
-      if (isDirectory) {
-        page.pages = await generatePages(filePath, baseDir, page);
-        page.content = await generateIndexPage(page);
-      } else if (path.extname(file.name) === ".md") {
+      if (path.extname(file.name) === ".md") {
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
         Object.assign(page, { data: { ...page.data, ...data }, content });
       }
+      if (isDirectory) {
+        page.pages = await generatePages(filePath, baseDir, page);
+        if(!page.content) page.content = await generateIndexPage(page);     
+      }
+
     // add tags
     if (page.data.tags) page.data.tags.forEach(tag => addToTagMap(tag, page));
     
