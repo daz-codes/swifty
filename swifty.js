@@ -231,6 +231,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
   // make Tags page
   if(!parent && tagsMap.size){
+    const tagLayout = await fsExtra.pathExists(dirs.layouts + "/tags.html");
     const tagPage = {
         path: "/tags",
         url: "/tags.html",
@@ -238,6 +239,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         folder: true,
         name: "Tags",
         title: "All Tags",
+        layout: "default",
         updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
         data: {...config},
     }
@@ -249,6 +251,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
             url:  `/tags/${tag}.html`,
+            layout: tagLayout ? "tags" : "default",
             data: {...config},
           };
           page.content = pages
@@ -339,13 +342,8 @@ const renderIndexTemplate = async (content, config) => {
 
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
-  let html = await render(page);
-  if(page.root){
-      const navLinks = pages.filter(page => page?.nav || page?.data?.nav).map(
-      page => `<a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`).join('\n');
-      page.data.nav = `<nav>${navLinks}</nav>`; 
-      html = await renderIndexTemplate(html,page.data);
-    }
+    let html = await render(page);
+    if(page.root) html = await renderIndexTemplate(html,page.data);
     const pagePath = path.join(distDir, page.root ? "/index.html" : page.url);
     // If it's a folder, create the directory and recurse into its pages
     if (page.folder) {
@@ -396,7 +394,7 @@ const replacePlaceholders = async (template, values) => {
 };
 
 const addLinks = (pages,parent) => {
-  const generateLink = ({title,url}) => `<div class="${defaultConfig.link_class}"><a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a></li>`
+  const generateLink = ({title,url}) => `<div class="${defaultConfig.link_class}"><a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a></div>`
   pages.forEach(page => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
@@ -408,6 +406,7 @@ const addLinks = (pages,parent) => {
     page.data.links_to_children = page.pages ? page.pages.map(child => generateLink(child)).join`` : "";
     page.data.links_to_siblings = pages.filter(p => p.url !== page.url).map(sibling => generateLink(sibling)).join``;
     page.data.links_to_self_and_siblings = pages.map(sibling => generateLink(sibling)).join``;
+    page.data.nav_links = pages.filter(p => p.nav).map(link => generateLink(link)).join``;
     if(page.pages) {
       addLinks(page.pages,page)
     }

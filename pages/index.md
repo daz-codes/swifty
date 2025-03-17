@@ -1,10 +1,10 @@
-<section>
+<section class="container text-center">
     <h1 class="display-l fancy-font logo"><a href="/">{{sitename}}</a></h1>
-    <div class="gradient-text display-m text-center">A Super Speedy Static Site Generator!</div>
+    <div class="gradient-text display-s text-center">A Super Speedy Static Site Generator!</div>
 </section>
 
 
-<section class="light-grey">
+<section class="highlight container text-center">
 
 ## Create a website in no time!
 
@@ -14,7 +14,7 @@ Swifty is the next generation of static site generator. It lets you write all yo
 
 </section>
 
-<section>
+<section class="container text-center">
 
 ## Super Flexible
 
@@ -24,7 +24,7 @@ You can conditionally add layouts to pages as well as using partials for content
 
 </section>
 
-<section class="light-grey">
+<section class="highlight container text-center">
 
 ## Extra Features
 

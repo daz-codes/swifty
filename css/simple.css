@@ -16,6 +16,7 @@
     /* Default (light) theme */
     --bg: #fff;
     --accent-bg: #ccedf5;
+    --highlight: var(--lightGrey);
     --text: var(--carbon);
     --text-light: var(--darkGrey);
     --border: var(--gray);
@@ -102,6 +103,7 @@
       color-scheme: dark;
       --bg: var(--black);
       --accent-bg: var(--graphite);
+      --highlight: var(--midnight);
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
@@ -146,30 +148,28 @@
     background-color: var(--bg);
     font-size: 1.15rem;
     line-height: 1.5;
-    display: grid;
-    grid-template-columns: 1fr var(--container-width) 1fr;
     margin: 0;
   }
-  body > * {
+
+  .container{
+    display: grid;
+    grid-template-columns: 1fr var(--container-width) 1fr;
+  }
+
+  .container > * {
     grid-column: 2;
   }
-  
+
+  .highlight{
+    background: var(--highlight);
+  }
+
   /* Make the header bg full width, but the content inline with body */
   body > header {
     background-color: var(--accent-bg);
     background-image: linear-gradient(var(--accent-bg), var(--bg));
     text-align: center;
-    padding: 0;
     grid-column: 1 / -1;
-  }
-  
-  body > header > *:only-child {
-    margin-block-start: 2rem;
-  }
-  
-  body > header p {
-    max-width: 40rem;
-    margin: var(--margin-s) auto;
   }
   
   /* Add a little padding to ensure spacing is correct between content and header > nav */
@@ -330,14 +330,13 @@
   header > nav,.tabs {
     font-size: 1rem;
     line-height: 2;
-    padding: var(--padding-s) 0 0 0;
   }
   
   /* Use flexbox to allow items to wrap, as needed */
-  header > nav ul,
-  header > nav ol,
-  .tabs ul,
-  .tabs ol{
+  header > nav,
+  header > nav,
+  .tabs,
+  .tabs{
     align-content: space-around;
     align-items: center;
     display: flex;
@@ -345,15 +344,13 @@
     flex-wrap: wrap;
     justify-content: center;
     list-style-type: none;
-    margin: 0;
-    padding: 0;
   }
   
   /* List items are inline elements, make them behave more like blocks */
-  header > nav ul li,
-  header > nav ol li,
-  .tabs ul li,
-  .tabs ol li {
+  header > nav > *,
+  header > nav > *,
+  .tabs > *,
+  .tabs > * {
     display: inline-block;
   }
   
@@ -361,12 +358,11 @@
   header > nav a:visited
   .tabs a,
   .tabs a:visited {
-    margin: 0 var(--margin-xs) var(--margin-s) var(--margin-xs);
-    border: var(--border-width-s) solid var(--border);
-    border-radius: var(--radius-m);
+    margin: 0 var(--margin-xs);
+    border-radius: var(--radius-l);
     color: var(--text);
     display: inline-block;
-    padding: 0.1rem 1rem;
+    padding: 0 0.4rem;
     text-decoration: none;
   }
   
@@ -378,7 +374,6 @@
   .tabs a.current,
   .tabs a[aria-current="page"],
   .tabs a[aria-current="true"] {
-    border-color: var(--primary);
     background-color: var(--primary);
     color: var(--bg);
     cursor: pointer;
@@ -1024,7 +1019,7 @@
   }
   
   .dropshadow{
-    box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
+    box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
   }
   
   .clearfix {
