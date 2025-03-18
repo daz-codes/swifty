@@ -266,8 +266,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 };
 
 const generateIndexPage = async page => {
-  const partial = `${page.path.split('/').pop()}.md`; // 'post.md' or 'list.md'
-    const partialPath = path.join(dirs.partials, partial);
+  const partial = `${page.filename}.md`;
+  const partialPath = path.join(dirs.partials, partial);
   // Check if either file exists in the 'partials' folder
   const fileExists = await fsExtra.pathExists(partialPath); // Use await here
   if (fileExists) {
@@ -420,6 +420,7 @@ const generateSite = async () => {
   await copyAssets();
   // Convert markdown in pages directory
   const pages = await generatePages(dirs.pages);
+  console.log(pages[1].pages)
   addLinks(pages);
   await createPages(pages);
 };

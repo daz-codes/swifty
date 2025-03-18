@@ -20,25 +20,25 @@ h1.logo a{
 
 header{
   opacity: 0.85;
-  padding: 0.5rem 0;
-}
-
-header div {
+  padding: 1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: var(--container-width);
-  margin: 0 auto;
 }
 
 header a.logo{
   text-decoration: none;
   font-family: var(--fancy-font);
-  border-radius: var(--radius-m);
-  padding: 0 var(--padding-xs);
+  border-radius:50%;
+  background: var(--primary);
+  color: white;
+  text-align: center;
+  vertical-align: middle;
+  height: 2em;
+  width: 2em;
+  line-height: 2;
 }
 
 header a.logo:hover{
-  background: var(--primary);
-  color: white;
+
 }

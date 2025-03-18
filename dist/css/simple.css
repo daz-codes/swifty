@@ -33,6 +33,7 @@
     --offWhite: #efefef;
     --black: #191919;
     --carbon: #292929;
+    --dropshadow: rgba(0,0,0,0.16);
     --grey: #a4a5a6;
     --gray: var(--grey);
     --lightGrey: #f5f5f5;
@@ -102,8 +103,9 @@
     :root {
       color-scheme: dark;
       --bg: var(--black);
+      --dropshadow: rgba(255,255,255,0.16);
       --accent-bg: var(--graphite);
-      --highlight: var(--midnight);
+      --highlight: var(--graphite);
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
@@ -356,7 +358,7 @@
   .tabs a:visited {
     margin: 0 var(--margin-xs);
     border-radius: var(--radius-l);
-    color: var(--text);
+    color: var(--primary);
     display: inline-block;
     padding: 0 0.4rem;
     text-decoration: none;
@@ -1015,7 +1017,7 @@
   }
   
   .dropshadow{
-    box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
+    box-shadow: 3px 3px 16px var(--dropshadow);
   }
   
   .clearfix {

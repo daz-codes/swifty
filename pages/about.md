@@ -1,13 +1,36 @@
 ---
-title: About This Site
+title: About Swifty
 number: 29
 tags:
   - swifty
-  - test
+  - about
 ---
 
-Some information about my website.
+Swifty is the next generation of static site generator.
 
-The content below is created with a partial:
+It makes it really simple to create a full website that loads pages almost instantly.
 
-{{ partial: number }}
+## Quick Start
+
+Install Swifty:
+
+```
+npm install swifty
+```
+
+Start a new project:
+
+```
+npm swifty:create
+```
+
+Add a template
+
+Add an index.md to the pages folder
+
+Add another page
+
+Start the server
+
+npm start
+
