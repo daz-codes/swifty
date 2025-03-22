@@ -316,6 +316,7 @@ const renderIndexTemplate = async (content, config) => {
   window.addEventListener("popstate", loadFrameContent);
   document.addEventListener("turbo:frame-load", event => {
     turboFrame.style.visibility = "visible";
+    window.scrollTo(0,0);
     const frameSrc = turboFrame.getAttribute("src");
     if (frameSrc && frameSrc.endsWith(".html")) {
       const newPath = frameSrc.replace(".html", "");

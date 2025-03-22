@@ -21,7 +21,7 @@ header a.logo{
   font-family: var(--fancy-font);
   border-radius:50%;
   background: var(--primary);
-  color: white;
+  color: var(--background);
   text-align: center;
   vertical-align: middle;
   height: 2em;
