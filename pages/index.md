@@ -1,6 +1,6 @@
 <section class="container text-center">
-    <h1 class="display-l fancy-font logo no-margin"><a href="/">{{sitename}}</a></h1>
-    <div class="gradient-text display-s text-center margin-y">A Super Speedy Static Site Generator!</div>
+    <h1 class="display-l fancy-font logo no-margin">{{sitename}}</h1>
+    <div class="gradient-text display-s text-center margin-y">The Super Speedy Static Site Generator!</div>
 </section>
 
 <section class="highlight container text-center">

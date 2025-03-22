@@ -6,6 +6,8 @@ tags:
   - about
 ---
 
+## Number: {{ number }}
+
 Swifty is the next generation of static site generator.
 
 It makes it really simple to create a full website that loads pages almost instantly.

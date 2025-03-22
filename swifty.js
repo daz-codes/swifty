@@ -386,10 +386,21 @@ const replacePlaceholders = async (template, values) => {
   });
 
   // Replace other placeholders **only outside of code blocks**
-  template = template.replace(
-    /(?<!`{3}[^]*?){{\s*([^}\s]+)\s*}}(?![^]*?`{3})/g,
-    (match, key) => (values.data && key in values?.data ? values.data[key] : key in values ? values[key] : match)
-  );
+  const codeBlockRegex = /```[\s\S]*?```|`[^`]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
+    const codeBlocks = [];
+    template = template.replace(codeBlockRegex, match => {
+        codeBlocks.push(match);
+        return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`; // Temporary placeholder
+    });
+
+    // Replace placeholders outside of code blocks
+    template = template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
+      return(values.data && key in values?.data ? values.data[key] : key in values ? values[key] : match)
+    });
+
+    // Restore code blocks
+    template = template.replace(/{{CODE_BLOCK_(\d+)}}/g, (_, index) => codeBlocks[index]);
+
   return template;
 };
 
@@ -420,7 +431,6 @@ const generateSite = async () => {
   await copyAssets();
   // Convert markdown in pages directory
   const pages = await generatePages(dirs.pages);
-  console.log(pages[1].pages)
   addLinks(pages);
   await createPages(pages);
 };

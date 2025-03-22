@@ -1,5 +1,5 @@
-h1.logo a{
-  text-decoration: none;
+h1.logo {
+  color: var(--primary);
   text-transform: none;
  }
  
@@ -19,11 +19,7 @@ h1.logo a{
 }
 
 header{
-  opacity: 0.85;
   padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 header a.logo{
@@ -37,8 +33,4 @@ header a.logo{
   height: 2em;
   width: 2em;
   line-height: 2;
-}
-
-header a.logo:hover{
-
 }
