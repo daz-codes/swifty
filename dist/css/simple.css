@@ -9,7 +9,7 @@
       "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     --mono-font: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
     --brand-font: "Monoton";
-    --heading-font: "Jost";
+    --heading-font: var(--sans-font);
     --fancy-font: "Pacifico";
     --slab-font:  "Holtwood One SC", serif;
   
@@ -374,7 +374,7 @@
     border-radius: var(--radius-l);
     color: var(--primary);
     display: inline-block;
-    padding: 0 0.4rem;
+    padding: 0 var(--padding-s);
     text-decoration: none;
   }
   

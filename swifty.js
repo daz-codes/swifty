@@ -190,12 +190,10 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const isDirectory = file.isDirectory();
       const assetPath = parent ? parent.filename : "default";
       const layoutFileExists = await fsExtra.pathExists(dirs.layouts + "/" + assetPath + ".html");
-      const imageFileExists = await fsExtra.pathExists(dirs.images + "/" + assetPath + ".html");
       const layout = !root && layoutFileExists && assetPath;
-      const image = !root && imageFileExists && assetPath;
 
       const page = {
-        name, root, layout, image,
+        name, root, layout,
         filename: file.name.replace(/\.md$/, ""),
         path: finalPath,
         filepath: filePath,
