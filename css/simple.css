@@ -374,7 +374,7 @@
     border-radius: var(--radius-l);
     color: var(--primary);
     display: inline-block;
-    padding: 0 var(--padding-s);
+    padding: 0.2rem var(--padding-s);
     text-decoration: none;
   }
   
