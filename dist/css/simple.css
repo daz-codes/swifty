@@ -22,7 +22,7 @@
     --border: var(--gray);
     --primary: var(--blue);
     --secondary: var(--slate);
-    --primary-hover: var(--teal);
+    --primary-hover: var(--pink);
     --accent-text: var(--bg);
     --code: var(--red);
     --preformatted: var(--graphite);
@@ -109,7 +109,7 @@
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
-      --primary-hover: var(--maroon);
+      --primary-hover: var(--yellow);
       --secondary: var(--aqua);
       --accent-text: var(--bg);
       --code: var(--yellow);
@@ -285,11 +285,13 @@
   
   button,
   .button,
-  a.button, /* extra specificity to override a */
+  a.button,
+  a.big-button, /* extra specificity to override a */
   input[type="submit"],
   input[type="reset"],
   input[type="button"] {
     border: var(--border-width-s) solid var(--primary);
+    border-radius: var(--radius-l);
     background-color: var(--primary);
     color: var(--accent-text);
     padding: var(--padding-xs) var(--padding-s);
@@ -297,7 +299,8 @@
     line-height: normal;
   }
   
-  .button[aria-disabled="true"], 
+  .button[aria-disabled="true"],
+  .big-button[aria-disabled="true"],
   input:disabled,
   textarea:disabled,
   select:disabled,
@@ -306,6 +309,10 @@
     background-color: var(--disabled);
     border-color: var(--disabled);
     color: var(--text-light);
+  }
+
+  .big-button{
+    font-size: 1.4em;
   }
   
   input[type="range"] {
@@ -321,6 +328,7 @@
   
   button:enabled:hover,
   .button:not([aria-disabled="true"]):hover,
+  .big-button:not([aria-disabled="true"]):hover,
   input[type="submit"]:enabled:hover,
   input[type="reset"]:enabled:hover,
   input[type="button"]:enabled:hover {
@@ -941,6 +949,10 @@
     display: flex;
     justify-content: space-between;
   }
+
+  .gap-s{ gap: var(--margin-s); }
+  .gap-m{ gap: var(--margin-m); }
+  .gap-l{ gap: var(--margin-l); }
   
   .inline{
     display: inline;
@@ -1139,10 +1151,6 @@
     .dark-yellow { background-color: var(--darkYellow) !important;}
     .dark-green { background-color: var(--darkGreen) !important;}
     .dark-blue { background-color: var(--darkBlue) !important;}
-
-
-
-
 
     .primary-text{ color: var(--primary) !important; }
     .secondary-text{ color: var(--secondary) !important; }
