@@ -92,7 +92,7 @@
     --border-width-m: calc(3*var(--border-unit));
     --border-width-l: calc(6*var(--border-unit));
 
-    --radius-unit: 4px;
+    --radius-unit: 1rem;
     --radius-s: var(--radius-unit);
     --radius-m: calc(2*var(--radius-unit));
     --radius-l: calc(3*var(--radius-unit));
@@ -294,13 +294,12 @@
     border-radius: var(--radius-l);
     background-color: var(--primary);
     color: var(--accent-text);
-    padding: var(--padding-xs) var(--padding-s);
+    padding: var(--padding-s) var(--padding-l);
     text-decoration: none;
     line-height: normal;
   }
   
   .button[aria-disabled="true"],
-  .big-button[aria-disabled="true"],
   input:disabled,
   textarea:disabled,
   select:disabled,
@@ -309,10 +308,6 @@
     background-color: var(--disabled);
     border-color: var(--disabled);
     color: var(--text-light);
-  }
-
-  .big-button{
-    font-size: 1.4em;
   }
   
   input[type="range"] {
@@ -328,7 +323,6 @@
   
   button:enabled:hover,
   .button:not([aria-disabled="true"]):hover,
-  .big-button:not([aria-disabled="true"]):hover,
   input[type="submit"]:enabled:hover,
   input[type="reset"]:enabled:hover,
   input[type="button"]:enabled:hover {
