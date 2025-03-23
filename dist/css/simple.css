@@ -374,7 +374,7 @@
     border-radius: var(--radius-l);
     color: var(--primary);
     display: inline-block;
-    padding: 0.2rem var(--padding-s);
+    padding: 0 var(--padding-s);
     text-decoration: none;
   }
   
@@ -395,14 +395,8 @@
   @media only screen and (max-width: 720px) {
     header > nav a {
       border: none;
-      padding: 0;
       text-decoration: underline;
       line-height: 1;
-    }
-
-    header > nav a:hover {
-      background: none;
-      color: var(--primary);
     }
   }
   
