@@ -93,6 +93,7 @@
     --border-width-l: calc(6*var(--border-unit));
 
     --radius-unit: 1rem;
+    --radius-xs: calc(0.5*var(--radius-unit));
     --radius-s: var(--radius-unit);
     --radius-m: calc(2*var(--radius-unit));
     --radius-l: calc(3*var(--radius-unit));
@@ -103,8 +104,8 @@
     :root {
       color-scheme: dark;
       --bg: var(--black);
-      --dropshadow: rgba(255,255,255,0.16);
-      --accent-bg: var(--graphite);
+      --dropshadow: rgba(0,0,0,0.42);
+      --accent-bg: var(--midnight);
       --highlight: var(--graphite);
       --text: var(--lightGrey);
       --text-light: var(--grey);
@@ -404,7 +405,7 @@
   aside, details, pre, progress {
     background-color: var(--accent-bg);
     border: 1px solid var(--border);
-    border-radius: var(--radius-m);
+    border-radius: var(--radius-xs);
     margin-bottom: var(--margin-s);
   }
   
@@ -645,7 +646,7 @@
     max-width: 100%;
     height: auto;
     display: block;
-    border-radius: var(--radius-m);
+    border-radius: var(--radius-s);
   }
   
   figure {
@@ -701,7 +702,7 @@
     color: var(--preformatted);
     border: 1px solid var(--preformatted);
     border-bottom: 3px solid var(--preformatted);
-    border-radius: var(--radius-m);
+    border-radius: var(--radius-s);
     padding: 0.1rem 0.4rem;
   }
   
@@ -1089,7 +1090,7 @@
     font-size: 0.8rem;
     margin: 0 0.2rem;
     border: 1px solid var(--border);
-    border-radius: var(--radius-s);
+    border-radius: var(--radius-xs);
     color: var(--text);
     display: inline-block;
     padding: 0.1rem var(--padding-xs);

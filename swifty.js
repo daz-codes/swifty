@@ -214,6 +214,15 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       }
       if (isDirectory) {
         page.pages = await generatePages(filePath, baseDir, page);
+        console.log(page.pages[0].name)
+        page.pages.sort((a, b) => {
+          console.log(a.name,a.data.position,b.name,b.data.position)
+          if (a.data.position && b.data.position) {
+            return a.data.position - b.data.position; // Sort by position first
+          }
+          return new Date(a.updated_at) - new Date(b.updated_at); // If position is the same, sort by date
+        });
+        console.log(page.pages[0].name)
         if(!page.content) page.content = await generateIndexPage(page);     
       }
 
