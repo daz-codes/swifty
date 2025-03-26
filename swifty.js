@@ -210,7 +210,13 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       if (path.extname(file.name) === ".md") {
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
-        Object.assign(page, { data: { ...page.data, ...data }, content });
+        const index = pages.findIndex(p => p.url === page.url);
+        if (index !== -1) {
+          console.log("DUPPPPP!!! page after folder",pages[index].name,page.isDirectory)
+          Object.assign(pages[index], { data: { ...page.data, ...data }, content });
+          continue;
+        }
+        else Object.assign(page, { data: { ...page.data, ...data }, content });
       }
       if (isDirectory) {
         page.pages = await generatePages(filePath, baseDir, page);
@@ -221,7 +227,13 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           }
           return new Date(a.updated_at) - new Date(b.updated_at); // If position is the same, sort by date
         });
-        if(!page.content) page.content = await generateLinkList(page.filename,page.pages);     
+        const index = pages.findIndex(p => p.url === page.url);
+        if (index !== -1) {
+          console.log("DUPPPPP!!! folder after page",pages[index].name,page.isDirectory)
+          page.content = pages[index].content;
+          pages.splice(index, 1);
+        }
+        else page.content = await generateLinkList(page.filename,page.pages);     
       }
 
     // add tags
@@ -416,13 +428,14 @@ const addLinks = async (pages,parent) => {
     page.data.links_to_tags = page?.data?.tags?.length
     ? `<div class="tags">${page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
     : "";
-    const crumb = page.root ? "" : ` &raquo; <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
+    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="${defaultConfig.breadcrumb_class}" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
-    page.data.links_to_children = await pages.pages ? generateLinkList(page.filename,page.pages) : "";
+    page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
     page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages",pages.filter(p => p.url !== page.url));
     page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages",pages);
     page.data.nav_links = await generateLinkList("nav",pages.filter(p => p.nav));
+    if(page.name === "docs") console.log("DOCCSSSSSS!!!!",page.data.links_to_children,page)
     if(page.pages) {
       addLinks(page.pages,page)
     }
