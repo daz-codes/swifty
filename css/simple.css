@@ -97,6 +97,7 @@
     --radius-s: var(--radius-unit);
     --radius-m: calc(2*var(--radius-unit));
     --radius-l: calc(3*var(--radius-unit));
+    --radius-xl: calc(4*var(--radius-unit));
   }
   
   /* Dark theme */

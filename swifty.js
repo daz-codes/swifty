@@ -216,14 +216,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         page.pages = await generatePages(filePath, baseDir, page);
         console.log(page.pages[0].name)
         page.pages.sort((a, b) => {
-          console.log(a.name,a.data.position,b.name,b.data.position)
           if (a.data.position && b.data.position) {
             return a.data.position - b.data.position; // Sort by position first
           }
           return new Date(a.updated_at) - new Date(b.updated_at); // If position is the same, sort by date
         });
-        console.log(page.pages[0].name)
-        if(!page.content) page.content = await generateIndexPage(page);     
+        if(!page.content) page.content = await generateLinkList(page.filename,page.pages);     
       }
 
     // add tags
@@ -266,23 +264,23 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           .join('\n');
           tagPage.pages.push(page);
     }
-    tagPage.content = await generateIndexPage(tagPage);
+    tagPage.content = await generateLinkList("tags",tagPage.pages);
     pages.push(tagPage);
   }
   return pages;
 };
 
-const generateIndexPage = async page => {
-  const partial = `${page.filename}.md`;
+const generateLinkList = async (name,pages) => {
+  const partial = `${name}.md`;
   const partialPath = path.join(dirs.partials, partial);
   // Check if either file exists in the 'partials' folder
   const fileExists = await fsExtra.pathExists(partialPath); // Use await here
   if (fileExists) {
     const partial = await fs.readFile(partialPath, "utf-8");
-    const content = await Promise.all(page.pages.map(child => replacePlaceholders(partial, child)));
+    const content = await Promise.all(pages.map(page => replacePlaceholders(partial, page)));
     return content.join('\n');
   } else {
-    return `${page.pages.map(page => `* <a href="${page.url}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
+    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
   }
 };
 
@@ -412,9 +410,8 @@ const replacePlaceholders = async (template, values) => {
   return template;
 };
 
-const addLinks = (pages,parent) => {
-  const generateLink = ({title,url}) => `<div class="${defaultConfig.link_class}"><a href="${url}" data-turbo-frame="content" data-turbo-action="advance">${title}</a></div>`
-  pages.forEach(page => {
+const addLinks = async (pages,parent) => {
+  pages.forEach(async page => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
     ? `<div class="tags">${page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
@@ -422,10 +419,10 @@ const addLinks = (pages,parent) => {
     const crumb = page.root ? "" : ` &raquo; <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="${defaultConfig.breadcrumb_class}" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
-    page.data.links_to_children = page.pages ? page.pages.map(child => generateLink(child)).join`` : "";
-    page.data.links_to_siblings = pages.filter(p => p.url !== page.url).map(sibling => generateLink(sibling)).join``;
-    page.data.links_to_self_and_siblings = pages.map(sibling => generateLink(sibling)).join``;
-    page.data.nav_links = pages.filter(p => p.nav).map(link => generateLink(link)).join``;
+    page.data.links_to_children = await pages.pages ? generateLinkList(page.filename,page.pages) : "";
+    page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages",pages.filter(p => p.url !== page.url));
+    page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages",pages);
+    page.data.nav_links = await generateLinkList("nav",pages.filter(p => p.nav));
     if(page.pages) {
       addLinks(page.pages,page)
     }
@@ -439,7 +436,7 @@ const generateSite = async () => {
   await copyAssets();
   // Convert markdown in pages directory
   const pages = await generatePages(dirs.pages);
-  addLinks(pages);
+  await addLinks(pages);
   await createPages(pages);
 };
 
