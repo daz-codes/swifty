@@ -12,25 +12,26 @@ It makes it really simple to create a full website that loads pages almost insta
 
 ## Quick Start
 
-Install Swifty:
+#### 1. Install Swifty:
 
 ```
 npm install swifty
 ```
 
-Start a new project:
+#### 2. Start a new project:
 
 ```
-npm swifty:create
+npm swifty
 ```
 
-Add a template
+#### 3. Add some more pages to the 'pages' folder (just write them in Markdown).
 
-Add an index.md to the pages folder
+Start the server:
 
-Add another page
-
-Start the server
-
+```
 npm start
+```
 
+#### 4. Visit [localhost:3000](http://localhost:3000/) to see your site in action.
+
+#### 5. [Learn More](/docs) about all the other features, including layouts, partials and front-matter configuration.
