@@ -1,17 +1,21 @@
 {
-  "name": "swifty",
-  "version": "1.1.0",
+  "name": "@daz4126/swifty",
+  "version": "1.0.0",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "swifty": "init.js"
+  },
   "scripts": {
     "test": "mocha",
     "build": "node swifty.js",
-    "start": "node swifty.js && serve dist"
+    "start": "node swifty.js && serve dist",
+    "init": "node init.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "DAZ",
+  "license": "MIT",
+  "description": "Super Speedy Static Site Generator",
   "dependencies": {
     "fs-extra": "^11.2.0",
     "gray-matter": "^4.0.3",
@@ -22,5 +26,16 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "mocha": "^11.1.0"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daz4126/swifty.git"
+  },
+  "bugs": {
+    "url": "https://github.com/daz4126/swifty/issues"
+  },
+  "homepage": "https://github.com/daz4126/swifty#readme"
 }
