@@ -7,6 +7,28 @@ position: 6
 summary: Using layouts
 ---
 
+Layouts define the structure of pages. They are stored in the layouts/ folder and use placeholders like {{ content }}.
+
+Example layouts/default.html:
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title }}</title>
+</head>
+<body>
+  <header>
+    <h1>{{ title }}</h1>
+  </header>
+  <main>
+    {{ content }}
+  </main>
+</body>
+</html>
+```
+
+
 Layouts are used to add content before and after the main page content.
 
 They go in the layouts folder and are always HTML files.
