@@ -4,35 +4,24 @@
   <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs.html" data-turbo-frame="content" data-turbo-action="advance">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/template.html" data-turbo-frame="content" data-turbo-action="advance">Template</a></div>
     <h1>The Template File</h1>
-    <div class="post-info italic text-xs">Posted by Taylor Swift on Wed, 26 Mar 2025</div>
-    <div class="tags"><div class="tags"><a class="tag" href="/tags/swifty.html" data-turbo-frame="content" data-turbo-action="advance">swifty</a><a class="tag" href="/tags/docs.html" data-turbo-frame="content" data-turbo-action="advance">docs</a><a class="tag" href="/tags/config.html" data-turbo-frame="content" data-turbo-action="advance">config</a></div></div>
+    <div class="tags"><a class="tag" href="/tags/swifty.html" data-turbo-frame="content" data-turbo-action="advance">swifty</a><a class="tag" href="/tags/docs.html" data-turbo-frame="content" data-turbo-action="advance">docs</a><a class="tag" href="/tags/config.html" data-turbo-frame="content" data-turbo-action="advance">config</a></div>
     <p class="text-s bold">Setting up the template file</p>
   <div class="serif-font">
     
-  <p>The template file (template.html) acts as the main structure of your site, wrapping all generated content. It includes:</p>
-<p>A <head> section for metadata, styles, and scripts.</p>
-<p>A <turbo-frame id="content"> wrapper for dynamic content loading.</p>
-<p>Example:</p>
-<pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-  &lt;title&gt;{{ title }}&lt;/title&gt;
-  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  <p>The template file (template.html) acts as the main structure of your site, wrapping all generated content. Everything in this page will be included on every page of the site, so it&#39;s a good place to put the HTML <code>&lt;head&gt;</code> and other set-up information.</p>
+<p>An example file is generated like the one below when you run <code>swifty init</code>:</p>
+<pre><code>  &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/styles.css&quot;&gt;
 &lt;/head&gt;
 &lt;body&gt;
   &lt;nav&gt;
     &lt;a href=&quot;/&quot; class=&quot;nav-link&quot;&gt;Home&lt;/a&gt;
   &lt;/nav&gt;
-  &lt;turbo-frame id=&quot;content&quot;&gt;
     {{ content }}
-  &lt;/turbo-frame&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre>
-<p>The template file is the main template that includes all of the html that is included in every page.</p>
-<p>This should contain the main HTML.</p>
-<p>The placeholder <code>{{ content }}</code> should go where the main content from any page will go.</p>
+<p>The placeholder <code>{{ content }}</code> should go where the content from each page will be inserted.</p>
 
   
   </div>

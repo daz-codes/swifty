@@ -1,6 +1,7 @@
 ---
 title: Swifty Test Page
 number: 29
+nav: false
 tags:
   - swifty
   - about

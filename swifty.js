@@ -4,6 +4,7 @@ import path from "path";
 import matter from "gray-matter";
 import { marked } from "marked";
 import yaml from "js-yaml";
+import sharp from "sharp";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,6 +89,37 @@ const copyAssets = async () => {
   await ensureAndCopy(dirs.css, path.join(dirs.dist, 'css'), validExtensions.css);
   await ensureAndCopy(dirs.js, path.join(dirs.dist, 'js'), validExtensions.js);
   await ensureAndCopy(dirs.images, path.join(dirs.dist, 'images'), validExtensions.images);
+};
+
+async function optimizeImages() {
+  try {
+    const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
+    const images_folder = path.join(dirs.dist, "images");
+    const files = await fs.readdir(images_folder);
+    
+    await Promise.all(files.map(async (file) => {
+      const filePath = path.join(images_folder, file);
+      const ext = path.extname(file).toLowerCase();
+      
+      if (!IMAGE_EXTENSIONS.includes(ext)) return;
+      
+      const optimizedPath = path.join(images_folder, `${path.basename(file, ext)}.webp`);
+      
+      // Ensure we are not overwriting the same file
+      if (filePath !== optimizedPath) {
+        await sharp(filePath)
+          .resize({ width: defaultConfig.max_image_size || 800 })
+          .toFormat('webp', { quality: 80 })
+          .toFile(optimizedPath);
+        
+        await fs.unlink(filePath);
+        
+        console.log(`Optimized ${file} -> ${optimizedPath}`);
+      }
+    }));
+  } catch (error) {
+    console.error('Error optimizing images:', error);
+  }
 };
 
 // Utility: Generate HTML imports for assets
@@ -188,7 +220,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const name = root ? "Home" : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
-      const assetPath = parent ? parent.filename : "default";
+      const assetPath = parent ? parent.filename : "pages";
       const layoutFileExists = await fsExtra.pathExists(dirs.layouts + "/" + assetPath + ".html");
       const layout = !root && layoutFileExists && assetPath;
 
@@ -212,7 +244,6 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         const { data, content } = matter(markdownContent);
         const index = pages.findIndex(p => p.url === page.url);
         if (index !== -1) {
-          console.log("DUPPPPP!!! page after folder",pages[index].name,page.isDirectory)
           Object.assign(pages[index], { data: { ...page.data, ...data }, content });
           continue;
         }
@@ -220,7 +251,6 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       }
       if (isDirectory) {
         page.pages = await generatePages(filePath, baseDir, page);
-        console.log(page.pages[0].name)
         page.pages.sort((a, b) => {
           if (a.data.position && b.data.position) {
             return a.data.position - b.data.position; // Sort by position first
@@ -229,7 +259,6 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         });
         const index = pages.findIndex(p => p.url === page.url);
         if (index !== -1) {
-          console.log("DUPPPPP!!! folder after page",pages[index].name,page.isDirectory)
           page.content = pages[index].content;
           pages.splice(index, 1);
         }
@@ -238,7 +267,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
     // add tags
     if (page.data.tags) page.data.tags.forEach(tag => addToTagMap(tag, page));
-    
+
     pages.push(page);
     }
 
@@ -256,7 +285,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         folder: true,
         name: "Tags",
         title: "All Tags",
-        layout: "default",
+        layout: "pages",
         updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
         data: {...config},
     }
@@ -268,7 +297,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
             path: `/tags/${tag}`,
             url:  `/tags/${tag}.html`,
-            layout: tagLayout ? "tags" : "default",
+            layout: tagLayout ? "tags" : "pages",
             data: {...config, title: `Pages tagged with ${capitalize(tag)}`},
           };
           page.content = pages
@@ -402,7 +431,8 @@ const replacePlaceholders = async (template, values) => {
     partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
     return marked(partialContent); // Convert Markdown to HTML
   });
-
+  // replace image extensions with optimized extension
+  template = template.replace(/\.(png|jpe?g|webp)/gi, ".webp");
   // Replace other placeholders **only outside of code blocks**
   const codeBlockRegex = /```[\s\S]*?```|`[^`]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
     const codeBlocks = [];
@@ -410,12 +440,10 @@ const replacePlaceholders = async (template, values) => {
         codeBlocks.push(match);
         return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`; // Temporary placeholder
     });
-
     // Replace placeholders outside of code blocks
     template = template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
       return(values.data && key in values?.data ? values.data[key] : key in values ? values[key] : match)
     });
-
     // Restore code blocks
     template = template.replace(/{{CODE_BLOCK_(\d+)}}/g, (_, index) => codeBlocks[index]);
 
@@ -426,16 +454,14 @@ const addLinks = async (pages,parent) => {
   pages.forEach(async page => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
-    ? `<div class="tags">${page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join``}</div>`
-    : "";
+    ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join`` : "";
     const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="${defaultConfig.breadcrumb_class}" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
     page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
     page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages",pages.filter(p => p.url !== page.url));
     page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages",pages);
-    page.data.nav_links = await generateLinkList("nav",pages.filter(p => p.nav));
-    if(page.name === "docs") console.log("DOCCSSSSSS!!!!",page.data.links_to_children,page)
+    page.data.nav_links = await generateLinkList("nav",pages.filter(p => (p.nav && p.data.nav !== false) || p.data.nav));
     if(page.pages) {
       addLinks(page.pages,page)
     }
@@ -447,6 +473,7 @@ const generateSite = async () => {
   console.log('Starting build process...');
   // Copy images, CSS, and JS files
   await copyAssets();
+  await optimizeImages();
   // Convert markdown in pages directory
   const pages = await generatePages(dirs.pages);
   await addLinks(pages);

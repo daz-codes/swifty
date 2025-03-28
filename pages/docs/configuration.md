@@ -9,12 +9,20 @@ summary: Configuration options
 
 Swifty supports configuration via config.json, config.yaml, or config.yml located in the project root. The configuration file allows you to specify global settings like the site name, date format, and layout preferences.
 
-Example config.yaml:
+This is the default config.yaml that it starts with and shows you all the different configuration options:
 
 ```
-site_name: My Awesome Site
-date_format: '%Y-%m-%d'
-default_layout: default
-link_class: "nav-link"
+sitename: Swifty
+author: Taylor Swift
+breadcrumb_separator: "&raquo;"
+breadcrumb_class: swifty_breadcrumb
+link_class: swifty_link
+tag_class: tag
+
+dateFormat: 
+  weekday: short
+  month: short
+  day: numeric
+  year: numeric
 ```
 

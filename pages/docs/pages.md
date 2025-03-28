@@ -13,12 +13,20 @@ Example pages/about.md:
 
 ```
 ---
-title: About Us
-layout: default
-tags: [team, company]
+title: About Our Team
+layout: about
+tags: 
+  - team
+  - company
 ---
 
 ## About Our Team
 Welcome to our company!
 ```
+
+## Front Matter & Data Variables
+
+## Convention over Configuration
+
+This is a concept borrowed from [Ruby on rails](https://rubyonrails.org). Any layouts that are named after a folder will automatically be applied to any pages in that folder, without having to specify the layout explicitly. So any pages inside a folder called 'blog' will use the layout called 'blog.html' by default (if it exists).
 

@@ -4,22 +4,26 @@
   <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs.html" data-turbo-frame="content" data-turbo-action="advance">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/pages.html" data-turbo-frame="content" data-turbo-action="advance">Pages</a></div>
     <h1>Pages</h1>
-    <div class="post-info italic text-xs">Posted by Taylor Swift on Wed, 26 Mar 2025</div>
-    <div class="tags"><div class="tags"><a class="tag" href="/tags/swifty.html" data-turbo-frame="content" data-turbo-action="advance">swifty</a><a class="tag" href="/tags/docs.html" data-turbo-frame="content" data-turbo-action="advance">docs</a><a class="tag" href="/tags/config.html" data-turbo-frame="content" data-turbo-action="advance">config</a></div></div>
+    <div class="tags"><a class="tag" href="/tags/swifty.html" data-turbo-frame="content" data-turbo-action="advance">swifty</a><a class="tag" href="/tags/docs.html" data-turbo-frame="content" data-turbo-action="advance">docs</a><a class="tag" href="/tags/config.html" data-turbo-frame="content" data-turbo-action="advance">config</a></div>
     <p class="text-s bold">Creating pages</p>
   <div class="serif-font">
     
   <p>All Markdown files in the pages/ folder are converted to HTML pages. Each page can define metadata in front matter.</p>
 <p>Example pages/about.md:</p>
 <pre><code>---
-title: About Us
-layout: default
-tags: [team, company]
+title: About Our Team
+layout: about
+tags: 
+  - team
+  - company
 ---
 
 ## About Our Team
 Welcome to our company!
 </code></pre>
+<h2>Front Matter &amp; Data Variables</h2>
+<h2>Convention over Configuration</h2>
+<p>This is a concept borrowed from <a href="https://rubyonrails.org">Ruby on rails</a>. Any layouts that are named after a folder will automatically be applied to any pages in that folder, without having to specify the layout explicitly. So any pages inside a folder called &#39;blog&#39; will use the layout called &#39;blog.html&#39; by default (if it exists).</p>
 
   
   </div>

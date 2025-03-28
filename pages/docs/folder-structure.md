@@ -18,7 +18,7 @@ To keep your project organized, structure your files as follows:
  ├── config.yaml   # Site configuration
  ├── templage.html # Main template file
 
-Any pages placed insdie a folder will become sub-pages of that folder. The path to these pages will reflect the folder structure.
+Any pages placed inside a folder will become sub-pages of that folder. The path to these pages will reflect the folder structure.
 
 So if there are two pages .
 
