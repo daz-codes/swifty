@@ -6,6 +6,12 @@ tags:
   - roadmap
 ---
 
+## Add full Tutorial
+
+On About page
+
+Build full site and use every feature.
+
 ## Pagination
 
 Have a setting for the number of pages per index and construct pages.

@@ -26,12 +26,12 @@ npm swifty
 
 #### 3. Add some more pages to the 'pages' folder (just write them in Markdown).
 
-Start the server:
+#### 4. Start the server:
 
 ```
 npm start
 ```
 
-#### 4. Visit [localhost:3000](http://localhost:3000/) to see your site in action.
+Visit [localhost:3000](http://localhost:3000/) to see your site in action.
 
 #### 5. [Learn More](/docs) about all the other features, including layouts, partials and front-matter configuration.
