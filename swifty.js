@@ -38,7 +38,7 @@ const addToTagMap = (tag, page) => {
   if (!tagsMap.has(tag)) tagsMap.set(tag, []);
   tagsMap.get(tag).push({ title: page.title, url: page.url });
 };
-
+const pageIndex = [];
 const partialCache = new Map();
 
 const loadPartial = async (partialName) => {
@@ -269,6 +269,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     if (page.data.tags) page.data.tags.forEach(tag => addToTagMap(tag, page));
 
     pages.push(page);
+    pageIndex.push({url: page.url, title: page.title || page.title, nav: page.nav})
     }
 
   } catch (err) {
@@ -461,9 +462,9 @@ const addLinks = async (pages,parent) => {
     page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
     page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages",pages.filter(p => p.url !== page.url));
     page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages",pages);
-    page.data.nav_links = await generateLinkList("nav",pages.filter(p => (p.nav && p.data.nav !== false) || p.data.nav));
+    page.data.nav_links = await generateLinkList("nav",pageIndex.filter(p => p.nav));
     if(page.pages) {
-      addLinks(page.pages,page)
+      await addLinks(page.pages,page)
     }
   });
 }

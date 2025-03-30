@@ -16,7 +16,7 @@
     /* Default (light) theme */
     --bg: #fff;
     --accent-bg: #ccedf5;
-    --highlight: var(--lightGrey);
+    --highlight: rgba(0,0,0,0.05);
     --text: var(--carbon);
     --text-light: var(--darkGrey);
     --border: var(--gray);
@@ -107,7 +107,7 @@
       --bg: var(--black);
       --dropshadow: rgba(0,0,0,0.42);
       --accent-bg: var(--midnight);
-      --highlight: var(--graphite);
+      --highlight: rgba(255,255,255,0.05);
       --text: var(--lightGrey);
       --text-light: var(--grey);
       --primary: var(--pink);
@@ -397,8 +397,9 @@
   @media only screen and (max-width: 720px) {
     header > nav a {
       border: none;
-      text-decoration: underline;
-      line-height: 1;
+      line-height: 2;
+      padding: 0 var(--padding-xs);
+      margin: 0;
     }
   }
   
