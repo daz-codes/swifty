@@ -366,6 +366,8 @@
   header > nav > *,
   .tabs > * {
     display: inline-block;
+    margin: 0;
+    padding: 0;
   }
   
   header > nav a,
@@ -395,7 +397,7 @@
   
   /* Reduce nav side on mobile */
   @media only screen and (max-width: 720px) {
-    header > nav a {
+    header > nav a,.tabs a {
       border: none;
       line-height: 2;
       padding: 0 var(--padding-xs);
