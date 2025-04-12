@@ -10,18 +10,17 @@
     
   <p>The template file (template.html) acts as the main structure of your site, wrapping all generated content. Everything in this page will be included on every page of the site, so it&#39;s a good place to put the HTML <code>&lt;head&gt;</code> and other set-up information.</p>
 <p>An example file is generated like the one below when you run <code>swifty init</code>:</p>
-<pre><code>  &lt;meta charset=&quot;UTF-8&quot;&gt;
-  &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/styles.css&quot;&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;nav&gt;
-    &lt;a href=&quot;/&quot; class=&quot;nav-link&quot;&gt;Home&lt;/a&gt;
-  &lt;/nav&gt;
-    {{ content }}
-&lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-<p>The placeholder <code>{{ content }}</code> should go where the content from each page will be inserted.</p>
+<pre><code><span class="language-xml">  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;UTF-8&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">link</span> <span class="hljs-attr">rel</span>=<span class="hljs-string">&quot;stylesheet&quot;</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;/css/styles.css&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">nav</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;/&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;nav-link&quot;</span>&gt;</span>Home<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
+    </span><span class="hljs-template-variable">{{ <span class="hljs-name">content</span> }}</span><span class="language-xml">
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></span>
+</code></pre><p>The placeholder <code>{{ content }}</code> should go where the content from each page will be inserted.</p>
 
   
   </div>

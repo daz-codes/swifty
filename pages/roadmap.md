@@ -6,6 +6,24 @@ tags:
   - roadmap
 ---
 
+## Automatic Code Highlighting
+
+```javascript
+const test = 11
+[1,2,3].map(x => x * test)
+```
+
+A little bit of Ruby ...
+
+```
+class Blog < ActiveRecord
+
+has_many :posts
+
+end
+
+```
+
 ## Add full Tutorial
 
 On About page

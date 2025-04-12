@@ -14,7 +14,7 @@ It makes it really simple to create a full website that loads pages almost insta
 
 #### 1. Install Swifty:
 
-```
+```bash
 npm install swifty
 ```
 

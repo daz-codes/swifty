@@ -24,7 +24,6 @@
     --secondary: var(--slate);
     --primary-hover: var(--pink);
     --accent-text: var(--bg);
-    --code: var(--red);
     --preformatted: var(--graphite);
     --marked: var(--yellow);
     --disabled: var(--offWhite);
@@ -114,7 +113,6 @@
       --primary-hover: var(--yellow);
       --secondary: var(--aqua);
       --accent-text: var(--bg);
-      --code: var(--yellow);
       --preformatted: var(--lightGrey);
       --disabled: var(--black);
     }
@@ -407,10 +405,13 @@
   
   /* Consolidate box styling */
   aside, details, pre, progress {
-    background-color: var(--accent-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-xs);
     margin-bottom: var(--margin-s);
+  }
+
+  aside, details, progress {
+    background-color: var(--accent-bg);
   }
   
   aside {
@@ -699,11 +700,9 @@
   kbd,
   samp {
     font-family: var(--mono-font);
-    color: var(--code);
   }
   
   kbd {
-    color: var(--preformatted);
     border: 1px solid var(--preformatted);
     border-bottom: 3px solid var(--preformatted);
     border-radius: var(--radius-s);
@@ -711,18 +710,20 @@
   }
   
   pre {
-    padding: 1rem 1.4rem;
+    padding: 0;
     max-width: 100%;
-    overflow: auto;
-    color: var(--preformatted);
   }
   
   /* Fix embedded code within pre */
   pre code {
-    color: var(--preformatted);
-    background: none;
     margin: 0;
-    padding: 0;
+    padding: 1em;
+    border-radius: var(--radius-xs);
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+    background: #23241f;
+    color: #f8f8f2;
   }
   
   /* Progress bars */

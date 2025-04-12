@@ -2,10 +2,25 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import matter from "gray-matter";
-import { marked } from "marked";
 import yaml from "js-yaml";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
+import { marked } from "marked";
+import { markedHighlight } from "marked-highlight";
+import hljs from 'highlight.js';
+
+marked.use(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight: (code, lang) => {
+      if (lang && hljs.getLanguage(lang)) {
+        return hljs.highlight(code, { language: lang }).value;
+      } else {
+        return hljs.highlightAuto(code).value; // Auto-detect the language
+      }
+    },
+  })
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,17 +35,6 @@ const dirs = {
   css: path.join(baseDir, 'css'),
   js: path.join(baseDir, 'js'),
   partials: path.join(baseDir, 'partials'),
-};
-
-const lastBuildFile = path.join(dirs.dist, '.last_build.json');
-
-const loadLastBuildData = async () => {
-  try {
-    const data = await fs.readFile(lastBuildFile, 'utf-8');
-    return JSON.parse(data);
-  } catch (err) {
-    return {}; // Return empty object if file doesn't exist
-  }
 };
 
 const tagsMap = new Map();
@@ -328,7 +332,8 @@ const generateLinkList = async (name,pages) => {
 
 const render = async page => {
   const replacedContent = await replacePlaceholders(page.content, page);
-  const htmlContent = marked.parse(replacedContent, { gfm: true, breaks: true }); // Markdown processed once
+  const htmlContent = marked.parse(replacedContent); // Markdown processed once
+
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   return wrappedContent;
 };
@@ -345,7 +350,8 @@ const renderIndexTemplate = async (content, config) => {
   const js = await getJsImports();
   const imports = css + js;
 
-  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n</head>`);
+  const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
+  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n${highlightCSS}\n</head>`);
   templateContent = await replacePlaceholders(templateContent,{...defaultConfig,...config,content})
 
   // Add the missing script to the template
