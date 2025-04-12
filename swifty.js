@@ -9,6 +9,24 @@ import { marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from 'highlight.js';
 
+// Directories
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Determine the project root directory
+const isInstalled = process.cwd() !== __dirname;
+const baseDir = isInstalled ? process.cwd() : __dirname;
+
+const dirs = {
+  pages: path.join(baseDir, 'pages'),
+  images: path.join(baseDir, 'images'),
+  dist: path.join(baseDir, 'dist'),
+  layouts: path.join(baseDir, 'layouts'),
+  css: path.join(baseDir, 'css'),
+  js: path.join(baseDir, 'js'),
+  partials: path.join(baseDir, 'partials'),
+};
+
 marked.use(
   markedHighlight({
     langPrefix: 'hljs language-',
@@ -21,21 +39,6 @@ marked.use(
     },
   })
 );
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Directories
-const baseDir = __dirname;
-const dirs = {
-  pages: path.join(baseDir, 'pages'),
-  images: path.join(baseDir, 'images'),
-  dist: path.join(baseDir, 'dist'),
-  layouts: path.join(baseDir, 'layouts'),
-  css: path.join(baseDir, 'css'),
-  js: path.join(baseDir, 'js'),
-  partials: path.join(baseDir, 'partials'),
-};
 
 const tagsMap = new Map();
 const addToTagMap = (tag, page) => {
