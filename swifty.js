@@ -344,7 +344,7 @@ const render = async page => {
 // Function to read and render the index template
 const renderIndexTemplate = async (content, config) => {
   // Read the template from pages folder
-  const templatePath = path.join(__dirname, 'template.html');
+  const templatePath = path.join(baseDir, 'template.html');
   let templateContent = await fs.readFile(templatePath, 'utf-8');
 
   // Add the meta tag for Turbo refresh method
