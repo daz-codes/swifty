@@ -17,6 +17,10 @@
   "license": "MIT",
   "description": "Super Speedy Static Site Generator",
   "dependencies": {
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mocha": "^11.1.0",
     "fs-extra": "^11.2.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
@@ -25,10 +29,6 @@
     "marked-highlight": "^2.2.1",
     "serve": "^14.2.4",
     "sharp": "^0.33.5"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "mocha": "^11.1.0"
   },
   "directories": {
     "test": "test"

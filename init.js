@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+// Needed to emulate __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Define the structure
 const structure = {
@@ -28,14 +34,12 @@ const structure = {
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
-    <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
   </footer>
 </body>
 </html>
   `
 };
 
-// Function to create files and folders
 function createStructure(basePath, structure) {
   Object.entries(structure).forEach(([filePath, content]) => {
     const fullPath = path.join(basePath, filePath);
@@ -48,7 +52,6 @@ function createStructure(basePath, structure) {
   });
 }
 
-// Execute script
 const projectRoot = process.cwd();
 createStructure(projectRoot, structure);
 
