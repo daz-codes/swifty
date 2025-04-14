@@ -9,7 +9,7 @@ It also uses convention over configuration to make is super simple to build site
 
 ## Quickstart
 
-1. `npm install swifty`
+1. `npm install @daz4126/swifty`
 2. `npx swifty init`
 3. `npx swifty build` to build the site
 4. Edit the `template.html` file to match your default layout
