@@ -17,7 +17,7 @@ const structure = {
   "css/": null,
   "js/": null,
   "images/": null,
-  "config.yaml": "site_name: My Swifty Site",
+  "config.yaml": "sitename: My Swifty Site",
   "template.html": `<!DOCTYPE html>
 <html lang="en">
 <head>
