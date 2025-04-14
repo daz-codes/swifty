@@ -1,6 +1,6 @@
 {
   "name": "@daz4126/swifty",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "main": "index.js",
   "type": "module",
   "bin": {
