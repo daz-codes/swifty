@@ -492,5 +492,5 @@ const generateSite = async () => {
 
 // Run the site generation process
 generateSite()
-  .then(() => console.log('Site generated successfully!'))
-  .catch(err => console.error('Error generating site:', err));
+  .then(() => console.log('🚀 Site generated successfully! 🥳'))
+  .catch(err => console.error('🛑 Error generating site:', err));
