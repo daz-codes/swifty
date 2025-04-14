@@ -107,20 +107,25 @@ async function optimizeImages() {
     await Promise.all(files.map(async (file) => {
       const filePath = path.join(images_folder, file);
       const ext = path.extname(file).toLowerCase();
-      
+    
       if (!IMAGE_EXTENSIONS.includes(ext)) return;
-      
+    
       const optimizedPath = path.join(images_folder, `${path.basename(file, ext)}.webp`);
-      
-      // Ensure we are not overwriting the same file
+    
       if (filePath !== optimizedPath) {
-        await sharp(filePath)
-          .resize({ width: defaultConfig.max_image_size || 800 })
+        const image = sharp(filePath);
+        const metadata = await image.metadata();
+        const originalWidth = metadata.width || 0;
+        const maxWidth = defaultConfig.max_image_size || 800;
+        const resizeWidth = Math.min(originalWidth, maxWidth);
+    
+        await image
+          .resize({ width: resizeWidth })
           .toFormat('webp', { quality: 80 })
           .toFile(optimizedPath);
-        
+    
         await fs.unlink(filePath);
-        
+    
         console.log(`Optimized ${file} -> ${optimizedPath}`);
       }
     }));
@@ -135,6 +140,7 @@ const generateAssetImports = async (dir, tagTemplate, validExts) => {
   const files = await fs.readdir(dir);
   return files
     .filter(file => validExts.includes(path.extname(file).toLowerCase()))
+    .sort() 
     .map(file => tagTemplate(file))
     .join('\n');
 };
