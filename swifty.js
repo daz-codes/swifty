@@ -329,9 +329,10 @@ const generateLinkList = async (name,pages) => {
   const partialPath = path.join(dirs.partials, partial);
   const pagesPath = path.join(dirs.partials, "pages.md");
   // Check if either file exists in the 'partials' folder
-  const fileExists = await fsExtra.pathExists(partialPath || pagesPath);
+  const fileExists = await fsExtra.pathExists(partialPath);
+  const defaultExists = await fsExtra.pathExists(pagesPath);
   if (fileExists) {
-    const partial = await fs.readFile(partialPath, "utf-8");
+    const partial = await fs.readFile(fileExists ? partialPath : pagesPath, "utf-8");
     const content = await Promise.all(pages.map(page => replacePlaceholders(partial, page)));
     return content.join('\n');
   } else {
