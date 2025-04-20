@@ -1,4 +1,5 @@
-# Swifty
+# Swifty ![swiftyy-logo-pink-s png](https://github.com/user-attachments/assets/22fde975-7e2d-48e3-a253-41ea464d27f4)
+
 ## Super Speedy Static Site Generator
 
 Swifty is the next generation of static site generator.
