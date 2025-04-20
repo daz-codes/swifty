@@ -177,7 +177,6 @@ const getLayout = async (layoutName) => {
       const layoutContent = await fs.readFile(layoutPath, 'utf-8');
       layoutCache.set(layoutName, layoutContent);
     } else {
-      console.warn(`Layout "${layoutName}" not found.`);
       return null;
     }
   }
@@ -328,8 +327,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 const generateLinkList = async (name,pages) => {
   const partial = `${name}.md`;
   const partialPath = path.join(dirs.partials, partial);
+  const pagesPath = path.join(dirs.partials, "pages.md");
   // Check if either file exists in the 'partials' folder
-  const fileExists = await fsExtra.pathExists(partialPath); // Use await here
+  const fileExists = await fsExtra.pathExists(partialPath || pagesPath);
   if (fileExists) {
     const partial = await fs.readFile(partialPath, "utf-8");
     const content = await Promise.all(pages.map(page => replacePlaceholders(partial, page)));
