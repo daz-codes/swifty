@@ -17,4 +17,4 @@ It also uses convention over configuration to make is super simple to build site
 5. Change the `sitename` in `config.yaml`
 6. Add some markdown files to the 'pages' directory
 7. `npx swifty start` to rebuild and start the server
-8. Visit [http://localhost:3000] to see your site
+8. Visit [http://localhost:3000](http://localhost:3000) to see your site
