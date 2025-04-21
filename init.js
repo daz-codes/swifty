@@ -17,7 +17,19 @@ const structure = {
   "css/": null,
   "js/": null,
   "images/": null,
-  "config.yaml": "sitename: My Swifty Site",
+  "config.yaml": `sitename: Swifty
+author: Taylor Swift
+breadcrumb_separator: "&raquo;"
+breadcrumb_class: swifty_breadcrumb
+link_class: swifty_link
+tag_class: tag
+max_image_size: 800
+
+dateFormat: 
+  weekday: short
+  month: short
+  day: numeric
+  year: numeric`,
   "template.html": `<!DOCTYPE html>
 <html lang="en">
 <head>
