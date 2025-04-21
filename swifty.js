@@ -343,8 +343,17 @@ const generateLinkList = async (name,pages) => {
 const render = async page => {
   const replacedContent = await replacePlaceholders(page.content, page);
   const htmlContent = marked.parse(replacedContent); // Markdown processed once
+  turboHTML = htmlContent.replace(
+    /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
+    (match, beforeHref, href, afterHref) => {
+      // Don't double-add .html
+      const fullHref = href.endsWith('.html') ? href : `${href}.html`;
+  
+      return `<a ${beforeHref}href="${fullHref}" data-turbo-frame="content" data-turbo-action="advance"${afterHref}>`;
+    }
+  );
 
-  const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
+  const wrappedContent = await applyLayoutAndWrapContent(page, turboHTML);
   return wrappedContent;
 };
 
@@ -389,13 +398,6 @@ const renderIndexTemplate = async (content, config) => {
         window.history.pushState({}, "", newPath);
       }
     }
-    document.querySelectorAll('#content a[href]').forEach(link => {
-      const href = link.getAttribute('href');
-      if (href.startsWith('#') || href.startsWith('http') || href === "/") return;
-      link.setAttribute('data-turbo-frame', 'content');
-      link.setAttribute('data-turbo-action', 'advance');
-      link.setAttribute('href', href.endsWith(".html") ? href : href + ".html");
-    });
   });
 </script>
 `;
