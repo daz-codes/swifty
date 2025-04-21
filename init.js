@@ -18,7 +18,6 @@ const structure = {
   "js/": null,
   "images/": null,
   "config.yaml": `sitename: Swifty
-author: Taylor Swift
 breadcrumb_separator: "&raquo;"
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link
