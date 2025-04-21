@@ -343,7 +343,7 @@ const generateLinkList = async (name,pages) => {
 const render = async page => {
   const replacedContent = await replacePlaceholders(page.content, page);
   const htmlContent = marked.parse(replacedContent); // Markdown processed once
-  turboHTML = htmlContent.replace(
+  const turboHTML = htmlContent.replace(
     /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
     (match, beforeHref, href, afterHref) => {
       // Don't double-add .html
