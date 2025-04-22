@@ -1,0 +1,12 @@
+sitename: Swifty
+breadcrumb_separator: "&raquo;"
+breadcrumb_class: swifty_breadcrumb
+link_class: swifty_link
+tag_class: tag
+max_image_size: 800
+
+dateFormat: 
+  weekday: short
+  month: short
+  day: numeric
+  year: numeric

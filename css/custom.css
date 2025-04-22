@@ -1,0 +1,30 @@
+h1.logo {
+  color: var(--primary);
+  text-transform: none;
+ }
+
+.post-info{
+  margin-top: -1rem;
+}
+
+.post{
+  margin: 1rem;
+  border-bottom: 1px dotted var(--grey);
+}
+
+header{
+  padding: 1rem 2rem;
+}
+
+header a.logo{
+  text-decoration: none;
+  font-family: var(--fancy-font);
+  border-radius:50%;
+  background: var(--primary);
+  color: var(--bg);
+  text-align: center;
+  vertical-align: middle;
+  height: 2em;
+  width: 2em;
+  line-height: 2;
+}

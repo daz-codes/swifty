@@ -1,0 +1,24 @@
+
+<turbo-frame id="content">
+  <head><title>Partials || Swifty</title></head>
+  <div class="container">
+  <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs.html" data-turbo-frame="content" data-turbo-action="advance" data-turbo-frame="content" data-turbo-action="advance">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/partials.html" data-turbo-frame="content" data-turbo-action="advance" data-turbo-frame="content" data-turbo-action="advance">Partials</a></div>
+    <h1>Partials</h1>
+    <div class="tags"><a class="tag" href="/tags/swifty.html" data-turbo-frame="content" data-turbo-action="advance" data-turbo-frame="content" data-turbo-action="advance">swifty</a><a class="tag" href="/tags/docs.html" data-turbo-frame="content" data-turbo-action="advance" data-turbo-frame="content" data-turbo-action="advance">docs</a><a class="tag" href="/tags/config.html" data-turbo-frame="content" data-turbo-action="advance" data-turbo-frame="content" data-turbo-action="advance">config</a></div>
+    <p class="text-s bold">Using partials to reuse content</p>
+  <div class="serif-font">
+    
+  <p>Partials are reusable snippets stored in partials/ and can be included in pages using {{ include partial_name }}.</p>
+<p>Example partials/footer.md:</p>
+<pre><code><span class="hljs-meta">---
+</span>
+<span class="hljs-string">©</span> <span class="hljs-number">2025 </span><span class="hljs-string">Made</span> <span class="hljs-string">With</span> <span class="hljs-string">Swifty.</span> <span class="hljs-string">All</span> <span class="hljs-string">rights</span> <span class="hljs-string">reserved.</span>
+</code></pre><p>Including a partial in a page:</p>
+<pre><code><span class="hljs-template-variable">{{ <span class="hljs-name">include</span> footer }}</span><span class="language-xml">
+``</span>
+</code></pre>
+  
+  </div>
+</div>
+</turbo-frame>
+  
