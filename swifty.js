@@ -343,7 +343,9 @@ const generateLinkList = async (name,pages) => {
 const render = async page => {
   const replacedContent = await replacePlaceholders(page.content, page);
   const htmlContent = marked.parse(replacedContent); // Markdown processed once
-  const turboHTML = htmlContent.replace(
+
+  const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
+  const turboHTML = wrappedContent.replace(
     /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
     (match, beforeHref, href, afterHref) => {
       // Don't double-add .html
@@ -352,9 +354,7 @@ const render = async page => {
       return `<a ${beforeHref}href="${fullHref}" data-turbo-frame="content" data-turbo-action="advance"${afterHref}>`;
     }
   );
-
-  const wrappedContent = await applyLayoutAndWrapContent(page, turboHTML);
-  return wrappedContent;
+  return turboHTML;
 };
 
 // Function to read and render the index template
