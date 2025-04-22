@@ -232,7 +232,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const name = root ? "Home" : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
-      const assetPath = parent ? parent.filename : "layout";
+      const assetPath = parent ? parent.filename : "pages";
       const layoutFileExists = await fsExtra.pathExists(dirs.layouts + "/" + assetPath + ".html");
       const layout = !root && layoutFileExists && assetPath;
 
