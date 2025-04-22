@@ -1,23 +1,27 @@
 {
   "name": "@daz4126/swifty",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "main": "index.js",
   "type": "module",
   "bin": {
     "swifty": "./cli.js"
   },
-"files": [
-  "swifty.js",
-  "cli.js",
-  "init.js"
-],
-"scripts": {
-  "test": "mocha",
-  "build": "node swifty.js",
-  "start": "node swifty.js && serve dist",
-  "init": "node init.js"
-},
-  "keywords": ["static","site","generator"],
+  "files": [
+    "swifty.js",
+    "cli.js",
+    "init.js"
+  ],
+  "scripts": {
+    "test": "mocha",
+    "build": "node swifty.js",
+    "start": "node swifty.js && serve dist",
+    "init": "node init.js"
+  },
+  "keywords": [
+    "static",
+    "site",
+    "generator"
+  ],
   "author": "DAZ",
   "license": "MIT",
   "description": "Super Speedy Static Site Generator",
