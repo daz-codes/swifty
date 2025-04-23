@@ -195,7 +195,7 @@ const applyLayout = async (layoutContent, config) => {
 
 // Utility: Apply layout and wrap content in a Turbo Frame
 const applyLayoutAndWrapContent = async (page,content) => {
-  const layoutContent = await getLayout(page.data.layout !== undefined ? page.data.layout || page.layout);
+  const layoutContent = await getLayout(page.data.layout !== undefined ? page.data.layout : page.layout);
   const [beforeLayout, afterLayout] = await applyLayout(layoutContent, page);
   return `
 <turbo-frame id="content">
