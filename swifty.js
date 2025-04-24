@@ -185,6 +185,12 @@ const createTemplate = async () => {
   const turboScript = `
 <script type="module">
   import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+  document.addEventListener("DOMContentLoaded", () => {
+    if (location.pathname.endsWith(".html")) {
+      const cleanPath = location.pathname.replace(/\.html$/, "");
+      window.history.replaceState({}, "", cleanPath + location.search + location.hash);
+    }
+  });
 </script>
 `;
   // Inject the script at the end of the template
