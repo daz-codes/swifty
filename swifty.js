@@ -246,11 +246,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const layout = layoutFileExists ? parent.filename : parent ? parent.layout : "pages";
 
       const page = {
-        name, root, layout,
+        name, root, layout, filePath,
         filename: file.name.replace(/\.md$/, ""),
-        path: finalPath,
-        filepath: filePath,
-        url: root ? "/" : finalPath + ".html",
+        url: root ? "/" : finalPath,
         nav: !parent && !root,
         parent: parent ? {title: parent.data.title, url: parent.url} : undefined,
         folder: isDirectory,
@@ -301,8 +299,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   if(!parent && tagsMap.size){
     const tagLayout = await fsExtra.pathExists(dirs.layouts + "/tags.html");
     const tagPage = {
-        path: "/tags",
-        url: "/tags.html",
+        url: "/tags",
         nav: false,
         folder: true,
         name: "Tags",
@@ -317,8 +314,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             name: tag,
             title: tag,
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
-            path: `/tags/${tag}`,
-            url:  `/tags/${tag}.html`,
+            url:  `/tags/${tag}`,
             layout: tagLayout ? "tags" : "pages",
             data: {...config, title: `Pages tagged with ${capitalize(tag)}`},
           };
@@ -360,11 +356,11 @@ const render = async page => {
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
     let html = await render(page);
-    const pagePath = path.join(distDir, page.root ? "/index.html" : page.url);
+    const pagePath = path.join(distDir, page.root ? "/index.html" : (page.url + ".html"));
     // If it's a folder, create the directory and recurse into its pages
     if (page.folder) {
-      if (!(await fsExtra.pathExists(path.join(distDir, page.path)))) {
-        await fs.mkdir(path.join(distDir, page.path), { recursive: true });
+      if (!(await fsExtra.pathExists(path.join(distDir, page.url)))) {
+        await fs.mkdir(path.join(distDir, page.url), { recursive: true });
       }
         // Recurse into pages inside the directory
         await createPages(page.pages); // Process nested pages inside the folder
@@ -420,10 +416,10 @@ const addLinks = async (pages,parent) => {
   pages.forEach(async page => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
-    ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}.html" data-turbo-frame="content" data-turbo-action="advance">${tag}</a>`).join`` : "";
-    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
+    ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`).join`` : "";
+    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
-    : `<a class="${defaultConfig.breadcrumb_class}" href="/" data-turbo-frame="content" data-turbo-action="advance">Home</a>` + crumb;
+    : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` + crumb;
     page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
     page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages",pages.filter(p => p.url !== page.url));
     page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages",pages);
