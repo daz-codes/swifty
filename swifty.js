@@ -237,11 +237,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const layout = layoutFileExists ? parent.filename : parent ? parent.layout : "pages";
 
       const page = {
-        name, root, layout,
+        name, root, layout, filepath,
         filename: file.name.replace(/\.md$/, ""),
-        path: finalPath,
-        filepath: filePath,
-        url: root ? "/" : finalPath + ".html",
+        url: root ? "/" : finalPath,
         nav: !parent && !root,
         parent: parent ? {title: parent.data.title, url: parent.url} : undefined,
         folder: isDirectory,
@@ -292,8 +290,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   if(!parent && tagsMap.size){
     const tagLayout = await fsExtra.pathExists(dirs.layouts + "/tags.html");
     const tagPage = {
-        path: "/tags",
-        url: "/tags.html",
+        url: "/tags",
         nav: false,
         folder: true,
         name: "Tags",
@@ -308,13 +305,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             name: tag,
             title: tag,
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
-            path: `/tags/${tag}`,
-            url:  `/tags/${tag}.html`,
+            url:  `/tags/${tag}`,
             layout: tagLayout ? "tags" : "pages",
             data: {...config, title: `Pages tagged with ${capitalize(tag)}`},
           };
           page.content = pages
-          .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
+          .map(page =>`* <a href="${page.url}">${page.title}</a>`)
           .join('\n');
           tagPage.pages.push(page);
     }
@@ -336,7 +332,7 @@ const generateLinkList = async (name,pages) => {
     const content = await Promise.all(pages.map(page => replacePlaceholders(partial, page)));
     return content.join('\n');
   } else {
-    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
+    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`).join`\n`}`
   }
 };
 
@@ -344,16 +340,7 @@ const render = async page => {
   const htmlContent = marked.parse(page.content); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   const htmlWithTemplate = template.replace(/\{\{\s*content\s*\}\}/g, wrappedContent);
-  const htmlWithLinks = htmlWithTemplate.replace(
-    /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
-    (match, beforeHref, href, afterHref) => {
-      // Don't double-add .html
-      const fullHref = href.endsWith('.html') ? href : `${href}.html`;
-  
-      return `<a ${beforeHref}href="${fullHref}"${afterHref}>`;
-    }
-  );
-  const finalContent = await replacePlaceholders(htmlWithLinks, page);
+  const finalContent = await replacePlaceholders(htmlWithTemplate, page);
   return finalContent;
 };
 
@@ -422,7 +409,7 @@ const addLinks = async (pages,parent) => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
     ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`).join`` : "";
-    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
+    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` + crumb;
     page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
