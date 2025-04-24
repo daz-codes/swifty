@@ -353,20 +353,9 @@ const render = async page => {
   const htmlContent = marked.parse(page.content); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   const htmlWithTemplate = template.replace(/\{\{\s*content\s*\}\}/g, wrappedContent);
-  const htmlWithLinks = htmlWithTemplate.replace(
-    /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
-    (match, beforeHref, href, afterHref) => {
-      // Don't double-add .html
-      const fullHref = href.endsWith('.html') ? href : `${href}.html`;
-  
-      return `<a ${beforeHref}href="${fullHref}"${afterHref}>`;
-    }
-  );
-  const finalContent = await replacePlaceholders(htmlWithLinks, page);
-
+  const finalContent = await replacePlaceholders(htmlWithTemplate, page);
   return finalContent;
 };
-
 
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
@@ -392,15 +381,12 @@ const createPages = async (pages, distDir=dirs.dist) => {
 
 const replacePlaceholders = async (template, values) => {
   const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
-
-  // Async replace function
   const replaceAsync = async (str, regex, asyncFn) => {
     const matches = [];
     str.replace(regex, (match, ...args) => {
       matches.push(asyncFn(match, ...args));
       return match;
     });
-
     const results = await Promise.all(matches);
     return str.replace(regex, () => results.shift());
   };
