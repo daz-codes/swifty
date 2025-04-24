@@ -359,7 +359,7 @@ const render = async page => {
       // Don't double-add .html
       const fullHref = href.endsWith('.html') ? href : `${href}.html`;
   
-      return `<a ${beforeHref}href="${fullHref}" data-turbo-frame="content" data-turbo-action="advance"${afterHref}>`;
+      return `<a ${beforeHref}href="${fullHref}.html"${afterHref}>`;
     }
   );
   const finalContent = await replacePlaceholders(htmlWithLinks, page);
