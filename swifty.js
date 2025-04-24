@@ -174,27 +174,12 @@ const createTemplate = async () => {
 
   // Add the meta tag for Turbo refresh method
   const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
+  const turboScript = `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`;
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
-
   const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
-  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n${highlightCSS}\n</head>`);
-
-  // Add the missing script to the template
-  const turboScript = `
-<script type="module">
-  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
-  document.addEventListener("DOMContentLoaded", () => {
-    if (location.pathname.endsWith(".html")) {
-      const cleanPath = location.pathname.replace(/\.html$/, "");
-      window.history.replaceState({}, "", cleanPath + location.search + location.hash);
-    }
-  });
-</script>
-`;
-  // Inject the script at the end of the template
-  templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
+  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${turboScript}\n${highlightCSS}\n${imports}\n</head>`);
   return templateContent;
 };
 
@@ -375,14 +360,10 @@ const render = async page => {
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
     let html = await render(page);
-    const pagePath = path.join(distDir, page.root ? "/index.html" : page.url);
-    // If it's a folder, create the directory and recurse into its pages
-    if (page.folder) {
-      if (!(await fsExtra.pathExists(path.join(distDir, page.path)))) {
-        await fs.mkdir(path.join(distDir, page.path), { recursive: true });
-      }
-        // Recurse into pages inside the directory
-        await createPages(page.pages); // Process nested pages inside the folder
+    const pagePath = path.join(distDir, page.root ? "/index.html" : (page.path + "/index.html"));
+    const folderExists = await fsExtra.pathExists(path.join(distDir, page.path));
+    if (!folderExists) {
+      await fs.mkdir(path.join(distDir, page.path), { recursive: true });
     }
     // create an HTML file
     try {
@@ -390,6 +371,11 @@ const createPages = async (pages, distDir=dirs.dist) => {
       console.log(`Created file: ${pagePath}`);
     } catch (err) {
       console.error(`Error writing file ${pagePath}:`, err);
+    }
+    // If it's a folder, create the directory and recurse into its pages
+    if (page.folder) {
+        // Recurse into pages inside the directory
+        await createPages(page.pages); // Process nested pages inside the folder
     }
   }
 };
