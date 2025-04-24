@@ -246,9 +246,11 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const layout = layoutFileExists ? parent.filename : parent ? parent.layout : "pages";
 
       const page = {
-        name, root, layout, filePath,
+        name, root, layout,
         filename: file.name.replace(/\.md$/, ""),
-        url: root ? "/" : finalPath,
+        path: finalPath,
+        filepath: filePath,
+        url: root ? "/" : finalPath + ".html",
         nav: !parent && !root,
         parent: parent ? {title: parent.data.title, url: parent.url} : undefined,
         folder: isDirectory,
@@ -299,7 +301,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   if(!parent && tagsMap.size){
     const tagLayout = await fsExtra.pathExists(dirs.layouts + "/tags.html");
     const tagPage = {
-        url: "/tags",
+        path: "/tags",
+        url: "/tags.html",
         nav: false,
         folder: true,
         name: "Tags",
@@ -314,12 +317,13 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             name: tag,
             title: tag,
             updated_at: new Date().toLocaleDateString(undefined,defaultConfig.dateFormat),
-            url:  `/tags/${tag}`,
+            path: `/tags/${tag}`,
+            url:  `/tags/${tag}.html`,
             layout: tagLayout ? "tags" : "pages",
             data: {...config, title: `Pages tagged with ${capitalize(tag)}`},
           };
           page.content = pages
-          .map(page =>`* <a href="${page.url}">${page.title}</a>`)
+          .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
           .join('\n');
           tagPage.pages.push(page);
     }
@@ -341,7 +345,7 @@ const generateLinkList = async (name,pages) => {
     const content = await Promise.all(pages.map(page => replacePlaceholders(partial, page)));
     return content.join('\n');
   } else {
-    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`).join`\n`}`
+    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
   }
 };
 
@@ -356,11 +360,11 @@ const render = async page => {
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
     let html = await render(page);
-    const pagePath = path.join(distDir, page.root ? "/index.html" : (page.url + ".html"));
+    const pagePath = path.join(distDir, page.root ? "/index.html" : page.url);
     // If it's a folder, create the directory and recurse into its pages
     if (page.folder) {
-      if (!(await fsExtra.pathExists(path.join(distDir, page.url)))) {
-        await fs.mkdir(path.join(distDir, page.url), { recursive: true });
+      if (!(await fsExtra.pathExists(path.join(distDir, page.path)))) {
+        await fs.mkdir(path.join(distDir, page.path), { recursive: true });
       }
         // Recurse into pages inside the directory
         await createPages(page.pages); // Process nested pages inside the folder
@@ -417,7 +421,7 @@ const addLinks = async (pages,parent) => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
     ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`).join`` : "";
-    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
+    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
     : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` + crumb;
     page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
