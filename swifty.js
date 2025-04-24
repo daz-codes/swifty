@@ -237,7 +237,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const layout = layoutFileExists ? parent.filename : parent ? parent.layout : "pages";
 
       const page = {
-        name, root, layout, filepath,
+        name, root, layout, filePath,
         filename: file.name.replace(/\.md$/, ""),
         url: root ? "/" : finalPath,
         nav: !parent && !root,
@@ -347,10 +347,10 @@ const render = async page => {
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
     let html = await render(page);
-    const pagePath = path.join(distDir, page.root ? "/index.html" : (page.path + "/index.html"));
-    const folderExists = await fsExtra.pathExists(path.join(distDir, page.path));
+    const pagePath = path.join(distDir, page.root ? "/index.html" : (page.url + "/index.html"));
+    const folderExists = await fsExtra.pathExists(path.join(distDir, page.url));
     if (!folderExists) {
-      await fs.mkdir(path.join(distDir, page.path), { recursive: true });
+      await fs.mkdir(path.join(distDir, page.url), { recursive: true });
     }
     // create an HTML file
     try {
