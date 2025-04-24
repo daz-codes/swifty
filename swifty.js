@@ -319,7 +319,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             data: {...config, title: `Pages tagged with ${capitalize(tag)}`},
           };
           page.content = pages
-          .map(page =>`* <a href="${page.url}" data-turbo-frame="content" data-turbo-action="advance">${page.title}</a>`)
+          .map(page =>`* <a href="${page.url}">${page.title}</a>`)
           .join('\n');
           tagPage.pages.push(page);
     }
@@ -341,7 +341,7 @@ const generateLinkList = async (name,pages) => {
     const content = await Promise.all(pages.map(page => replacePlaceholders(partial, page)));
     return content.join('\n');
   } else {
-    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}" data-turbo-frame="content">${page.title}</a></li>`).join`\n`}`
+    return `${pages.map(page => `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`).join`\n`}`
   }
 };
 
