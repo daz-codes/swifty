@@ -353,7 +353,16 @@ const render = async page => {
   const htmlContent = marked.parse(page.content); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   const htmlWithTemplate = template.replace(/\{\{\s*content\s*\}\}/g, wrappedContent);
-  const finalContent = await replacePlaceholders(htmlWithTemplate, page);
+  const htmlWithLinks = htmlWithTemplate.replace(
+    /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
+    (match, beforeHref, href, afterHref) => {
+      // Don't double-add .html
+      const fullHref = href.endsWith('.html') ? href : `${href}.html`;
+  
+      return `<a ${beforeHref}href="${fullHref}" data-turbo-frame="content" data-turbo-action="advance"${afterHref}>`;
+    }
+  );
+  const finalContent = await replacePlaceholders(htmlWithLinks, page);
   return finalContent;
 };
 
