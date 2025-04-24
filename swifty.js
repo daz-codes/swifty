@@ -167,6 +167,33 @@ const loadConfig = async (dir) => {
 // Default configuration
 const defaultConfig = await loadConfig(baseDir);
 
+const createTemplate = async () => {
+  // Read the template from pages folder
+  const templatePath = path.join(baseDir, 'template.html');
+  let templateContent = await fs.readFile(templatePath, 'utf-8');
+
+  // Add the meta tag for Turbo refresh method
+  const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
+  const css = await getCssImports();
+  const js = await getJsImports();
+  const imports = css + js;
+
+  const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
+  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n${highlightCSS}\n</head>`);
+
+  // Add the missing script to the template
+  const turboScript = `
+<script type="module">
+  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
+</script>
+`;
+  // Inject the script at the end of the template
+  templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
+  return templateContent;
+};
+
+const template = await createTemplate();
+
 // Utility: Cache and load layouts
 const layoutCache = new Map();
 const getLayout = async (layoutName) => {
@@ -183,28 +210,11 @@ const getLayout = async (layoutName) => {
   return layoutCache.get(layoutName);
 };
 
-// Apply layout content to a page
-const applyLayout = async (layoutContent, config) => {
-  if (!layoutContent) return ['', ''];
-  const [before, after] = layoutContent.split(/{{\s*content\s*}}/);
-  return [
-    await replacePlaceholders(before || '', config),
-    await replacePlaceholders(after || '', config),
-  ];
-};
-
 // Utility: Apply layout and wrap content in a Turbo Frame
 const applyLayoutAndWrapContent = async (page,content) => {
   const layoutContent = await getLayout(page.data.layout !== undefined ? page.data.layout : page.layout);
-  const [beforeLayout, afterLayout] = await applyLayout(layoutContent, page);
-  return `
-<turbo-frame id="content">
-  <head><title>${page.title} || ${page.data.sitename}</title></head>
-  ${beforeLayout}
-  ${content}
-  ${afterLayout}
-</turbo-frame>
-  `;
+  if (!layoutContent) return content;
+  return layoutContent.replace(/\{\{\s*content\s*\}\}/g, content);
 };
 
 const isValid = async (filePath) => {
@@ -340,75 +350,27 @@ const generateLinkList = async (name,pages) => {
 };
 
 const render = async page => {
-  const replacedContent = await replacePlaceholders(page.content, page);
-  const htmlContent = marked.parse(replacedContent); // Markdown processed once
-
+  const htmlContent = marked.parse(page.content); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
-  const turboHTML = wrappedContent.replace(
+  const htmlWithTemplate = template.replace(/\{\{\s*content\s*\}\}/g, wrappedContent);
+  const htmlWithLinks = htmlWithTemplate.replace(
     /<a\s+([^>]*?)href="(\/[^"#?]+?)"(.*?)>/g,
     (match, beforeHref, href, afterHref) => {
       // Don't double-add .html
       const fullHref = href.endsWith('.html') ? href : `${href}.html`;
   
-      return `<a ${beforeHref}href="${fullHref}" data-turbo-frame="content" data-turbo-action="advance"${afterHref}>`;
+      return `<a ${beforeHref}href="${fullHref}"${afterHref}>`;
     }
   );
-  return turboHTML;
+  const finalContent = await replacePlaceholders(htmlWithLinks, page);
+
+  return finalContent;
 };
 
-// Function to read and render the index template
-const renderIndexTemplate = async (content, config) => {
-  // Read the template from pages folder
-  const templatePath = path.join(baseDir, 'template.html');
-  let templateContent = await fs.readFile(templatePath, 'utf-8');
-
-  // Add the meta tag for Turbo refresh method
-  const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
-  const css = await getCssImports();
-  const js = await getJsImports();
-  const imports = css + js;
-
-  const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
-  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${imports}\n${highlightCSS}\n</head>`);
-  templateContent = await replacePlaceholders(templateContent,{...defaultConfig,...config,content})
-
-  // Add the missing script to the template
-  const turboScript = `
-<script type="module">
-  import * as Turbo from 'https://esm.sh/@hotwired/turbo';
-  const turboFrame = document.querySelector("turbo-frame#content");
-  function loadFrameContent() {
-    const path = window.location.pathname;
-    if(path !== "/") {
-      turboFrame.style.visibility = "hidden";
-      const pagePath = path.endsWith(".html") ? path : path + ".html";
-      if (turboFrame) Turbo.visit(pagePath, { frame: "content" });
-    }
-  }
-  loadFrameContent();
-  window.addEventListener("popstate", loadFrameContent);
-  document.addEventListener("turbo:frame-load", event => {
-    turboFrame.style.visibility = "visible";
-    window.scrollTo(0,0);
-    const frameSrc = turboFrame.getAttribute("src");
-    if (frameSrc && frameSrc.endsWith(".html")) {
-      const newPath = frameSrc.replace(".html", "");
-      if (window.location.pathname !== newPath) {
-        window.history.pushState({}, "", newPath);
-      }
-    }
-  });
-</script>
-`;
-  // Inject the script at the end of the template
-  templateContent = templateContent.replace('</body>', `${turboScript}</body>`);
-  return templateContent;
-};
 
 const createPages = async (pages, distDir=dirs.dist) => {
   for (const page of pages) {
     let html = await render(page);
-    if(page.root) html = await renderIndexTemplate(html,page.data);
     const pagePath = path.join(distDir, page.root ? "/index.html" : page.url);
     // If it's a folder, create the directory and recurse into its pages
     if (page.folder) {

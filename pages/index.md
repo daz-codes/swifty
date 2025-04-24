@@ -1,3 +1,7 @@
+---
+layout: false
+---
+
 <section class="container text-center no-margin">
     <h1 class="display-l fancy-font logo no-margin">{{sitename}}</h1>
     <div class="gradient-text display-s text-center margin-y">Super Speedy Static Site Generator!</div>
