@@ -22,17 +22,14 @@ const getLayout = async (layoutName) => {
 const createTemplate = async () => {
   // Read the template from pages folder
   const templatePath = path.join(baseDir, 'template.html');
-  let templateContent = await fs.readFile(templatePath, 'utf-8');
-
-  // Add the meta tag for Turbo refresh method
-  const turboMetaTag = `<meta name="turbo-refresh-method" content="morph">`;
+  const templateContent = await fs.readFile(templatePath, 'utf-8');
   const turboScript = `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`;
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
   const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
-  templateContent = templateContent.replace('</head>', `${turboMetaTag}\n${turboScript}\n${highlightCSS}\n${imports}\n</head>`);
-  return templateContent;
+  const template = templateContent.replace('</head>', `${turboMetaTag}\n${turboScript}\n${highlightCSS}\n${imports}\n</head>`);
+  return template;
 };
 
 const applyLayoutAndWrapContent = async (page,content) => {
