@@ -6,7 +6,6 @@ async function buildSite() {
   await copyAssets();
   await optimizeImages();
   const pages = await generatePages(dirs.pages);
-  console.log(pages.length)
   await addLinks(pages);
   await createPages(pages);
 }

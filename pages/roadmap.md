@@ -21,10 +21,6 @@ Have a setting for the number of pages per index and construct pages.
 
 Check which files have changed and only build those.
 
-## Hot Reloading
-
-Use something to instroduce hot reloading.
-
 ## Templating Languages
 
 Include support for using Liquid or similar.

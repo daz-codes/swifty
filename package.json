@@ -6,12 +6,15 @@
   "bin": {
     "swifty": "./src/cli.js"
   },
- "files": ["src/"],
+  "files": [
+    "src/"
+  ],
   "scripts": {
     "test": "mocha",
-    "build": "node build.js",
-    "start": "node build.js && serve dist",
-    "init": "node init.js"
+    "build": "node src/build.js",
+    "start": "node src/build.js && serve dist",
+    "init": "node src/init.js",
+    "watch": "node src/watcher.js"
   },
   "keywords": [
     "static",
@@ -32,7 +35,9 @@
     "sharp": "^0.33.5"
   },
   "devDependencies": {
-    "mocha": "^11.1.0"
+    "chokidar-cli": "^3.0.0",
+    "mocha": "^11.1.0",
+    "npm-run-all": "^4.1.5"
   },
   "directories": {
     "test": "test"

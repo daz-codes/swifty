@@ -24,7 +24,6 @@ const loadPartial = async (partialName) => {
 };
 
 const replacePlaceholders = async (template, values) => {
-  console.log(values)
   const partialRegex = /{{\s*partial:\s*([\w-]+)\s*}}/g;
   const replaceAsync = async (str, regex, asyncFn) => {
     const matches = [];

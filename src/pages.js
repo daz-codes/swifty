@@ -145,13 +145,11 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     tagPage.content = await generateLinkList("tags", tagPage.pages);
     pages.push(tagPage);
   }
-  console.log(pageIndex.length,pageIndex)
   return pages;
 };
 
 
 const generateLinkList = async (name,pages) => {
-  if(name="nav") console.log("nav_links")
   const partial = `${name}.md`;
   const partialPath = path.join(dirs.partials, partial);
   const linksPath = path.join(dirs.partials, "links.md");
@@ -191,24 +189,22 @@ const createPages = async (pages, distDir = dirs.dist) => {
   }));
 };
 
-const addLinks = async (pages,parent) => {
-    pages.forEach(async page => {
-      console.log("addLinks: ",page.name)
-      page.data ||= {};
-      page.data.links_to_tags = page?.data?.tags?.length
+const addLinks = async (pages, parent) => {
+  for (const page of pages) {
+    page.data ||= {};
+    page.data.links_to_tags = page?.data?.tags?.length
       ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`).join`` : "";
-      const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
-      page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
+    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
+    page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
       : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` + crumb;
-      page.data.links_to_children = page.pages ? await generateLinkList(page.filename,page.pages) : "";
-      page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages",pages.filter(p => p.url !== page.url));
-      page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages",pages);
-      page.data.nav_links = await generateLinkList("nav",pageIndex.filter(p => p.nav));
-      console.log(page.data.nav_links)
-      if(page.pages) {
-        await addLinks(page.pages,page)
-      }
-    });
+    page.data.links_to_children = page.pages ? await generateLinkList(page.filename, page.pages) : "";
+    page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages", pages.filter(p => p.url !== page.url));
+    page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages", pages);
+    page.data.nav_links = await generateLinkList("nav", pageIndex.filter(p => p.nav));
+    if (page.pages) {
+      await addLinks(page.pages, page);  // Recursive call
+    }
   }
+};
 
 export { generatePages, createPages, pageIndex, addLinks };
