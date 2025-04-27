@@ -14,8 +14,8 @@
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
       <a href="/" class="logo">S</a>
       <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
-<li><a href="/docs" class="swifty_link">Docs</a></li>
-<li><a href="/roadmap" class="swifty_link">Roadmap</a></li></nav>
+<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
+<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
   </header>
     <main>
     <div class="container">
@@ -26,17 +26,18 @@
   <div class="serif-font">
     <p>All Markdown files in the pages/ folder are converted to HTML pages. Each page can define metadata in front matter.</p>
 <p>Example pages/about.md:</p>
-<pre><code><span class="hljs-meta">---</span>
-<span class="hljs-attr">title:</span> <span class="hljs-string">About</span> <span class="hljs-string">Our</span> <span class="hljs-string">Team</span>
-<span class="hljs-attr">layout:</span> <span class="hljs-string">about</span>
-<span class="hljs-attr">tags:</span> 
-  <span class="hljs-bullet">-</span> <span class="hljs-string">team</span>
-  <span class="hljs-bullet">-</span> <span class="hljs-string">company</span>
-<span class="hljs-meta">---
-</span>
-<span class="hljs-comment">## About Our Team</span>
-<span class="hljs-string">Welcome</span> <span class="hljs-string">to</span> <span class="hljs-string">our</span> <span class="hljs-string">company!</span>
-</code></pre><h2>Front Matter &amp; Data Variables</h2>
+<pre><code>---
+title: About Our Team
+layout: about
+tags: 
+  - team
+  - company
+---
+
+## About Our Team
+Welcome to our company!
+</code></pre>
+<h2>Front Matter &amp; Data Variables</h2>
 <h2>Convention over Configuration</h2>
 <p>This is a concept borrowed from <a href="https://rubyonrails.org">Ruby on rails</a>. Any layouts that are named after a folder will automatically be applied to any pages in that folder, without having to specify the layout explicitly. So any pages inside a folder called &#39;blog&#39; will use the layout called &#39;blog.html&#39; by default (if it exists).</p>
 

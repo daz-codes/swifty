@@ -23,18 +23,7 @@ Check which files have changed and only build those.
 
 ## Hot Reloading
 
-Use Hotwire Spark or something similar to instroduce hot reloading.
-
-## Make Code modular
-
-Separate into different files
-
-## CLI
-
-Allow choice of `dist` folder
-Build script that creates the files
-Watch mode
-
+Use something to instroduce hot reloading.
 
 ## Templating Languages
 
@@ -42,6 +31,6 @@ Include support for using Liquid or similar.
 
 ## Searching
 
-Add search functinality to search for pages.
+Add search functionality to search for pages.
 
 

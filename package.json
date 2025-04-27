@@ -4,17 +4,13 @@
   "main": "index.js",
   "type": "module",
   "bin": {
-    "swifty": "./cli.js"
+    "swifty": "./src/cli.js"
   },
-  "files": [
-    "swifty.js",
-    "cli.js",
-    "init.js"
-  ],
+ "files": ["src/"],
   "scripts": {
     "test": "mocha",
-    "build": "node swifty.js",
-    "start": "node swifty.js && serve dist",
+    "build": "node build.js",
+    "start": "node build.js && serve dist",
     "init": "node init.js"
   },
   "keywords": [
