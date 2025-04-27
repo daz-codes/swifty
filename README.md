@@ -11,10 +11,10 @@ It also uses convention over configuration to make is super simple to build site
 ## Quickstart
 
 1. `npm install @daz4126/swifty`
-2. `npx swifty init`
+2. `npx swifty init` to create a new site
+3. Edit the `template.html` file to match your default layout
+4. Change the `sitename` in `config.yaml`
+5. Add some markdown files to the 'pages' directory
 3. `npx swifty build` to build the site
-4. Edit the `template.html` file to match your default layout
-5. Change the `sitename` in `config.yaml`
-6. Add some markdown files to the 'pages' directory
-7. `npx swifty start` to rebuild and start the server
+7. `npx swifty start` to start the server
 8. Visit [http://localhost:3000](http://localhost:3000) to see your site
