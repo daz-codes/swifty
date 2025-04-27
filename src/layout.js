@@ -28,7 +28,7 @@ const createTemplate = async () => {
   const js = await getJsImports();
   const imports = css + js;
   const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
-  const template = templateContent.replace('</head>', `${turboMetaTag}\n${turboScript}\n${highlightCSS}\n${imports}\n</head>`);
+  const template = templateContent.replace('</head>', `${turboScript}\n${highlightCSS}\n${imports}\n</head>`);
   return template;
 };
 
