@@ -197,7 +197,8 @@ const generateLinkList = async (name, pages) => {
 };
 
 const render = async (page) => {
-  const htmlContent = marked.parse(page.content); // Markdown processed once
+  const replacedContent = await replacePlaceholders(page.content, page);
+  const htmlContent = marked.parse(replacedContent); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   const htmlWithTemplate = template.replace(
     /\{\{\s*content\s*\}\}/g,
@@ -213,11 +214,8 @@ const createPages = async (pages, distDir = dirs.dist) => {
       const html = await render(page);
       const pageDir = path.join(distDir, page.url);
       const pagePath = path.join(distDir, page.url, "index.html");
-
       await fsExtra.ensureDir(pageDir);
       await fs.writeFile(pagePath, html);
-      console.log(`Created file: ${pagePath}`);
-
       if (page.folder) {
         await createPages(page.pages, distDir); // Recursive still needs to await
       }

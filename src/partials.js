@@ -6,7 +6,6 @@ import { marked } from "marked";
 
 const partialCache = new Map();
 
-
 const loadPartial = async (partialName) => {
   if (partialCache.has(partialName)) {
     return partialCache.get(partialName);
@@ -36,27 +35,38 @@ const replacePlaceholders = async (template, values) => {
   };
 
   // Replace partial includes
-  template = await replaceAsync(template, partialRegex, async (match, partialName) => {
-    let partialContent = await loadPartial(partialName);
-    partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
-    return marked(partialContent); // Convert Markdown to HTML
+  template = await replaceAsync(
+    template,
+    partialRegex,
+    async (match, partialName) => {
+      let partialContent = await loadPartial(partialName);
+      partialContent = await replacePlaceholders(partialContent, values); // Recursive replacement
+      return marked(partialContent); // Convert Markdown to HTML
+    },
+  );
+  // Replace other placeholders **only outside of code blocks**
+  const codeBlockRegex =
+    /```[\s\S]*?```|`[^`]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
+  const codeBlocks = [];
+  template = template.replace(codeBlockRegex, (match) => {
+    codeBlocks.push(match);
+    return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`; // Temporary placeholder
   });
+  // Replace placeholders outside of code blocks
+  template = template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
+    return values.data && key in values?.data
+      ? values.data[key]
+      : key in values
+        ? values[key]
+        : match;
+  });
+  // Restore code blocks
+  template = template.replace(
+    /{{CODE_BLOCK_(\d+)}}/g,
+    (_, index) => codeBlocks[index],
+  );
   // replace image extensions with optimized extension
   template = template.replace(/\.(png|jpe?g|webp)/gi, ".webp");
-  // Replace other placeholders **only outside of code blocks**
-  const codeBlockRegex = /```[\s\S]*?```|`[^`]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
-    const codeBlocks = [];
-    template = template.replace(codeBlockRegex, match => {
-        codeBlocks.push(match);
-        return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`; // Temporary placeholder
-    });
-    // Replace placeholders outside of code blocks
-    template = template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
-      return(values.data && key in values?.data ? values.data[key] : key in values ? values[key] : match)
-    });
-    // Restore code blocks
-    template = template.replace(/{{CODE_BLOCK_(\d+)}}/g, (_, index) => codeBlocks[index]);
-
   return template;
 };
 
