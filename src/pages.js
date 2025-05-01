@@ -123,7 +123,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       }
 
       pages.push(page);
-      pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
+      if (!pageIndex.some((p) => p.url === page.url)) {
+        pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
+      }
     });
 
     // Await all directory recursion
@@ -141,7 +143,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       folder: true,
       name: "Tags",
       title: "All Tags",
-      layout: "pages",
+      layout: tagLayout ? "tags" : defaultConfig.default_layout_name,
       updated_at: new Date().toLocaleDateString(
         undefined,
         defaultConfig.dateFormat,
@@ -159,16 +161,13 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           defaultConfig.dateFormat,
         ),
         url: `/tags/${tag}`,
-        layout: tagLayout ? "tags" : "pages",
+        layout: tagLayout ? "tags" : defaultConfig.default_layout_name,
         data: { ...config, title: `Pages tagged with ${capitalize(tag)}` },
       };
-      page.content = pagesForTag
-        .map((p) => `* <a href="${p.url}">${p.title}</a>`)
-        .join("\n");
+      page.content = await generateLinkList("tags", pagesForTag);
 
       tagPage.pages.push(page);
     }
-
     tagPage.content = await generateLinkList("tags", tagPage.pages);
     pages.push(tagPage);
   }

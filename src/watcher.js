@@ -39,5 +39,5 @@ export default async function startWatcher(outDir = "dist") {
     }
   });
 
-  console.log(`👀 Watching for changes in ${outDir}...`);
+  console.log(`👀 Watching for changes...`);
 }
