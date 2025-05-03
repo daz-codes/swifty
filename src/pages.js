@@ -47,7 +47,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
       const layoutFileExists = parent && await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`);
-      const layout = layoutFileExists ? parent.filename : parent ? parent.layout : config.default_layout_name;
+      const layout = layoutFileExists ? parent.filename : parent ? parent.layout : config.default_layout_name || "site";
 
       const page = {
         name, root, layout, filePath,
@@ -152,7 +152,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 const generateLinkList = async (name,pages) => {
   const partial = `${name}.md`;
   const partialPath = path.join(dirs.partials, partial);
-  const linksPath = path.join(dirs.partials, defaultConfig.default_link_name);
+  const linksPath = path.join(dirs.partials, defaultConfig.default_link_name || "links");
   // Check if either file exists in the 'partials' folder
   const fileExists = await fsExtra.pathExists(partialPath);
   const defaultExists = await fsExtra.pathExists(linksPath);
@@ -194,7 +194,7 @@ const addLinks = async (pages, parent) => {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
       ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`).join`` : "";
-    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
+    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator || "&raquo;"} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
     page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
       : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` + crumb;
     page.data.links_to_children = page.pages ? await generateLinkList(page.filename, page.pages) : "";
