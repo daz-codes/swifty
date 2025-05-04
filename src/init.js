@@ -42,7 +42,7 @@ dateFormat:
   <link rel="apple-touch-icon" href="path/to/apple-touch-icon.png">
   <link rel="icon" sizes="192x192" href="android-chrome-192x19.png">
   <link rel="icon" sizes="512x512" href="android-chrome-512x512.png">
-  <title>{{sitename}}</title>
+  <title>{{ sitename }} || {{ title }}</title>
 </head>
 <body>
   <header>

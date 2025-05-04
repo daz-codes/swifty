@@ -48,10 +48,6 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
       const stats = await fs.stat(filePath);
       const isDirectory = file.isDirectory();
-<<<<<<< HEAD
-      const layoutFileExists = parent && await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`);
-      const layout = layoutFileExists ? parent.filename : parent ? parent.layout : config.default_layout_name || "site";
-=======
       const layoutFileExists =
         parent &&
         (await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`));
@@ -60,7 +56,6 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         : parent
           ? parent.layout
           : config.default_layout_name;
->>>>>>> 61ad6f94b646a80d5857c84b58250ea7f00f2758
 
       const page = {
         name,
@@ -231,16 +226,6 @@ const addLinks = async (pages, parent) => {
   for (const page of pages) {
     page.data ||= {};
     page.data.links_to_tags = page?.data?.tags?.length
-<<<<<<< HEAD
-      ? page.data.tags.map(tag => `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`).join`` : "";
-    const crumb = page.root ? "" : ` ${defaultConfig.breadcrumb_separator || "&raquo;"} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
-    page.data.breadcrumbs = parent ? parent.data.breadcrumbs + crumb
-      : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` + crumb;
-    page.data.links_to_children = page.pages ? await generateLinkList(page.filename, page.pages) : "";
-    page.data.links_to_siblings = await generateLinkList(page.parent?.filename || "pages", pages.filter(p => p.url !== page.url));
-    page.data.links_to_self_and_siblings = await generateLinkList(page.parent?.filename || "pages", pages);
-    page.data.nav_links = await generateLinkList("nav", pageIndex.filter(p => p.nav));
-=======
       ? page.data.tags.map(
           (tag) =>
             `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`,
@@ -268,7 +253,6 @@ const addLinks = async (pages, parent) => {
       "nav",
       pageIndex.filter((p) => p.nav),
     );
->>>>>>> 61ad6f94b646a80d5857c84b58250ea7f00f2758
     if (page.pages) {
       await addLinks(page.pages, page); // Recursive call
     }
