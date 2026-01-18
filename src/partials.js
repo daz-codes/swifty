@@ -45,8 +45,9 @@ const replacePlaceholders = async (template, values) => {
     },
   );
   // Replace other placeholders **only outside of code blocks**
+  // Fenced blocks require closing ``` to be at start of line (after newline)
   const codeBlockRegex =
-    /```[\s\S]*?```|`[^`]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
+    /```[\s\S]*?\n```|`[^`\n]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
   const codeBlocks = [];
   template = template.replace(codeBlockRegex, (match) => {
     codeBlocks.push(match);

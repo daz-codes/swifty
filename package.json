@@ -25,6 +25,7 @@
   "license": "MIT",
   "description": "Super Speedy Static Site Generator",
   "dependencies": {
+    "chokidar": "^4.0.0",
     "fs-extra": "^11.2.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
