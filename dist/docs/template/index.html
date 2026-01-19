@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
@@ -27,23 +28,90 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/template">Template</a></div>
     <h1>The Template File</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/config">config</a></div>
-    <p class="text-s bold">Setting up the template file</p>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/template">template</a></div>
+    <p class="text-s bold">The master wrapper for your entire site.</p>
   <div class="serif-font">
-    <p>The template file (template.html) acts as the main structure of your site, wrapping all generated content. Everything in this page will be included on every page of the site, so it&#39;s a good place to put the HTML <code>&lt;head&gt;</code> and other set-up information.</p>
-<p>An example file is generated like the one below when you run <code>swifty init</code>:</p>
-<pre><code>  &lt;meta charset=&quot;UTF-8&quot;&gt;
-  &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/styles.css&quot;&gt;
+    <p>The template file is the big boss - it wraps around <em>everything</em>. While layouts wrap individual page content, the template wraps the whole shebang, including the layout.</p>
+<p>Think of it as your site&#39;s skeleton: the <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, and <code>&lt;body&gt;</code> tags that every page shares.</p>
+<h2>The Basic Template</h2>
+<p>Create a <code>template.html</code> in your project root:</p>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+  &lt;title&gt;{{ title }} | {{ sitename }}&lt;/title&gt;
 &lt;/head&gt;
 &lt;body&gt;
   &lt;nav&gt;
-    &lt;a href=&quot;/&quot; class=&quot;nav-link&quot;&gt;Home&lt;/a&gt;
+    &lt;a href=&quot;/&quot;&gt;{{ sitename }}&lt;/a&gt;
+    {{ nav_links }}
   &lt;/nav&gt;
+
+  &lt;main&gt;
     {{ content }}
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;p&gt;&amp;copy; 2025 {{ sitename }}&lt;/p&gt;
+  &lt;/footer&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre>
-<p>The placeholder <code>{{ content }}</code> should go where the content from each page will be inserted.</p>
+<p>The <code>{{ content }}</code> placeholder is where all your page content (including layouts) gets inserted.</p>
+<h2>What Swifty Auto-Injects</h2>
+<p>You might notice your CSS and JS files magically appear in the built pages. That&#39;s because Swifty automatically injects:</p>
+<ul>
+<li><strong>All CSS files</strong> from your <code>css/</code> folder (alphabetically sorted)</li>
+<li><strong>All JS files</strong> from your <code>js/</code> folder (alphabetically sorted)</li>
+<li><strong>Syntax highlighting styles</strong> for code blocks</li>
+<li><strong>Turbo script</strong> (if enabled in config)</li>
+<li><strong>LiveReload script</strong> (only during development with <code>swifty start</code>)</li>
+</ul>
+<p>These get added just before the closing <code>&lt;/head&gt;</code> tag. You don&#39;t need to manually link your stylesheets or scripts - just drop files in the right folders and they&#39;re included.</p>
+<h2>Template Variables</h2>
+<p>Use any config values or built-in variables in your template:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>{{ sitename }}</code></td>
+<td>Your site&#39;s name from config</td>
+</tr>
+<tr>
+<td><code>{{ title }}</code></td>
+<td>Current page&#39;s title</td>
+</tr>
+<tr>
+<td><code>{{ content }}</code></td>
+<td>The page content (required!)</td>
+</tr>
+<tr>
+<td><code>{{ nav_links }}</code></td>
+<td>Auto-generated navigation</td>
+</tr>
+<tr>
+<td><code>{{ breadcrumbs }}</code></td>
+<td>Breadcrumb trail</td>
+</tr>
+<tr>
+<td><code>{{ author }}</code></td>
+<td>Author from config or page</td>
+</tr>
+</tbody></table>
+<h2>Pro Tips</h2>
+<p><strong>Name your CSS files strategically</strong>: Since they&#39;re loaded alphabetically, prefix with numbers for control:</p>
+<pre><code>css/
+├── 1-reset.css
+├── 2-base.css
+└── 3-components.css
+</code></pre>
+<p><strong>Keep it lean</strong>: The template appears on every page, so keep it minimal. Put section-specific stuff in layouts instead.</p>
+<p><strong>Test your template</strong>: Since it wraps everything, a broken template breaks your whole site. Start simple and build up.</p>
 
   </div>
 </div>

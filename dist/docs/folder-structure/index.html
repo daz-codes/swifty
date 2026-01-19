@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
@@ -27,23 +28,92 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/folder-structure">Folder Structure</a></div>
     <h1>Folder Structure</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a></div>
-    <p class="text-s bold">How to structure folders</p>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/structure">structure</a></div>
+    <p class="text-s bold">How to organize your Swifty project.</p>
   <div class="serif-font">
-    <p>To keep your project organized, structure your files as follows:</p>
-<p>/project-root
- ├── pages/        # Markdown content files
- ├── layouts/      # Layout templates
- ├── partials/     # Reusable content snippets
- ├── css/          # CSS stylesheets
- ├── js/           # JavaScript files
- ├── images/       # Static images
- ├── config.yaml   # Site configuration
- ├── templage.html # Main template file</p>
-<p>Any pages placed inside a folder will become sub-pages of that folder. The path to these pages will reflect the folder structure.</p>
-<p>So if there are two pages .</p>
-<p>Order of Pages</p>
-<p>Index Partials</p>
+    <p>Swifty loves a tidy project. Here&#39;s how to organize your files so everything just works.</p>
+<h2>The Standard Structure</h2>
+<pre><code>your-site/
+├── pages/           # Your content lives here
+│   ├── index.md     # Homepage
+│   ├── about.md     # → /about
+│   └── blog/        # A section
+│       ├── index.md # → /blog
+│       └── post.md  # → /blog/post
+├── layouts/         # Page wrappers
+│   ├── default.html # Fallback layout
+│   └── blog.html    # Auto-used for /blog pages
+├── partials/        # Reusable snippets
+│   └── footer.md
+├── css/             # Stylesheets (auto-injected)
+│   └── styles.css
+├── js/              # Scripts (auto-injected)
+│   └── app.js
+├── images/          # Images (auto-optimized)
+│   └── hero.webp
+├── template.html    # The master wrapper
+├── config.yaml      # Site configuration
+└── dist/            # Built output (generated)
+</code></pre>
+<h2>What Each Folder Does</h2>
+<h3>pages/</h3>
+<p>This is where your content lives. Every <code>.md</code> file becomes a page. Subfolders become URL paths. It&#39;s that simple.</p>
+<h3>layouts/</h3>
+<p>HTML templates that wrap your page content. Name them after folders for automatic matching - <code>blog.html</code> wraps pages in <code>pages/blog/</code>.</p>
+<h3>partials/</h3>
+<p>Reusable content snippets. Include them anywhere with <code>&lt;p&gt;Include &quot;name&quot; not found.&lt;/p&gt;</code>. Great for footers, CTAs, author bios, and link formats.</p>
+<h3>css/</h3>
+<p>Drop your stylesheets here. They&#39;re automatically added to every page, sorted alphabetically. Prefix with numbers to control load order.</p>
+<h3>js/</h3>
+<p>Same deal as CSS. All JavaScript files are auto-injected into every page.</p>
+<h3>images/</h3>
+<p>Your images go here. JPG, PNG, and JPEG files are automatically converted to WebP and resized for the web. SVGs and GIFs pass through unchanged.</p>
+<h3>dist/</h3>
+<p>The output folder. Don&#39;t edit files here - they get overwritten on every build. This is what you deploy.</p>
+<h2>URLs Mirror Folders</h2>
+<p>Your folder structure <em>is</em> your site structure:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pages/index.md</code></td>
+<td><code>/</code></td>
+</tr>
+<tr>
+<td><code>pages/about.md</code></td>
+<td><code>/about</code></td>
+</tr>
+<tr>
+<td><code>pages/blog/index.md</code></td>
+<td><code>/blog</code></td>
+</tr>
+<tr>
+<td><code>pages/blog/hello.md</code></td>
+<td><code>/blog/hello</code></td>
+</tr>
+<tr>
+<td><code>pages/docs/getting-started.md</code></td>
+<td><code>/docs/getting-started</code></td>
+</tr>
+</tbody></table>
+<p>No routing config needed. Just organize your files how you want your URLs.</p>
+<h2>Files You Can Skip</h2>
+<p>All folders are optional. Start with just:</p>
+<pre><code>your-site/
+├── pages/
+│   └── index.md
+└── template.html
+</code></pre>
+<p>Add the others as you need them. Swifty won&#39;t complain about missing folders.</p>
+<h2>Custom Output Directory</h2>
+<p>By default, Swifty builds to <code>dist/</code>. Want it somewhere else?</p>
+<pre><code class="language-bash">npx swifty build --out public
+</code></pre>
+<p>Now your site builds to <code>public/</code> instead.</p>
 
   </div>
 </div>

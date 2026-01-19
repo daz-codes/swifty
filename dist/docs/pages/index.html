@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
@@ -27,25 +28,139 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/pages">Pages</a></div>
     <h1>Pages</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/config">config</a></div>
-    <p class="text-s bold">Creating pages</p>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/pages">pages</a></div>
+    <p class="text-s bold">Create pages with Markdown and front matter.</p>
   <div class="serif-font">
-    <p>All Markdown files in the pages/ folder are converted to HTML pages. Each page can define metadata in front matter.</p>
-<p>Example pages/about.md:</p>
-<pre><code>---
-title: About Our Team
-layout: about
-tags: 
-  - team
-  - company
+    <p>Pages are where your content lives. Write them in Markdown, drop them in the <code>pages/</code> folder, and Swifty turns them into beautiful HTML. Simple as that.</p>
+<h2>Your First Page</h2>
+<p>Create a Markdown file in <code>pages/</code>:</p>
+<p><strong>pages/hello.md</strong></p>
+<pre><code class="language-markdown">---
+title: Hello World
 ---
 
-## About Our Team
-Welcome to our company!
+# Welcome!
+
+This is my first Swifty page. *Exciting times.*
 </code></pre>
-<h2>Front Matter &amp; Data Variables</h2>
-<h2>Convention over Configuration</h2>
-<p>This is a concept borrowed from <a href="https://rubyonrails.org">Ruby on rails</a>. Any layouts that are named after a folder will automatically be applied to any pages in that folder, without having to specify the layout explicitly. So any pages inside a folder called &#39;blog&#39; will use the layout called &#39;blog.html&#39; by default (if it exists).</p>
+<p>Build your site and visit <code>/hello</code> - your page is live!</p>
+<h2>Front Matter</h2>
+<p>That stuff between the <code>---</code> lines at the top? That&#39;s front matter. It&#39;s YAML that defines metadata about your page:</p>
+<pre><code class="language-markdown">---
+title: My Awesome Post
+layout: blog
+tags:
+  - tutorial
+  - swifty
+position: 1
+author: Your Name
+anything_you_want: totally works
+---
+</code></pre>
+<h3>Built-in Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>title</code></td>
+<td>Page title (also used in navigation)</td>
+</tr>
+<tr>
+<td><code>layout</code></td>
+<td>Which layout to use (see <a href="/docs/layouts">Layouts</a>)</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>List of tags for categorization</td>
+</tr>
+<tr>
+<td><code>position</code></td>
+<td>Sort order in navigation (lower = first)</td>
+</tr>
+</tbody></table>
+<h3>Custom Properties</h3>
+<p>Here&#39;s the fun part: add <em>any</em> property you like and use it in your content:</p>
+<pre><code class="language-markdown">---
+title: Product Page
+price: $29.99
+rating: 5 stars
+---
+
+# {{ title }}
+
+**Price:** {{ price }}
+**Rating:** {{ rating }}
+</code></pre>
+<p>Your custom properties become template variables. Neat, right?</p>
+<h2>URLs Follow Folders</h2>
+<p>Your folder structure <em>is</em> your URL structure:</p>
+<pre><code>pages/
+├── index.md          → /
+├── about.md          → /about
+├── blog/
+│   ├── index.md      → /blog
+│   ├── first-post.md → /blog/first-post
+│   └── second-post.md→ /blog/second-post
+└── docs/
+    └── getting-started.md → /docs/getting-started
+</code></pre>
+<p>No config files, no route definitions. Just folders and files.</p>
+<h2>Convention Over Configuration</h2>
+<p>This is a concept borrowed from <a href="https://rubyonrails.org">Ruby on Rails</a>. Swifty makes smart assumptions so you don&#39;t have to configure everything:</p>
+<ul>
+<li>Pages in <code>blog/</code> automatically use <code>layouts/blog.html</code> (if it exists)</li>
+<li>Pages in <code>docs/</code> automatically use <code>layouts/docs.html</code> (if it exists)</li>
+<li>Navigation is generated from your folder structure</li>
+<li>Tags create their own pages automatically</li>
+</ul>
+<p>You <em>can</em> override these defaults, but you often won&#39;t need to.</p>
+<h2>Auto-Generated Goodness</h2>
+<p>Every page automatically gets some handy variables:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>What you get</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>{{ breadcrumbs }}</code></td>
+<td>Breadcrumb navigation links</td>
+</tr>
+<tr>
+<td><code>{{ nav_links }}</code></td>
+<td>Top-level navigation links</td>
+</tr>
+<tr>
+<td><code>{{ links_to_children }}</code></td>
+<td>Links to child pages (for folder index pages)</td>
+</tr>
+<tr>
+<td><code>{{ links_to_siblings }}</code></td>
+<td>Links to sibling pages</td>
+</tr>
+<tr>
+<td><code>{{ links_to_tags }}</code></td>
+<td>Links to this page&#39;s tags</td>
+</tr>
+<tr>
+<td><code>{{ date }}</code></td>
+<td>Formatted last-modified date</td>
+</tr>
+<tr>
+<td><code>{{ created_at }}</code></td>
+<td>Formatted creation date</td>
+</tr>
+<tr>
+<td><code>{{ updated_at }}</code></td>
+<td>Formatted update date</td>
+</tr>
+</tbody></table>
+<p>Just drop these into your layouts or pages wherever you need them.</p>
 
   </div>
 </div>

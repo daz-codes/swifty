@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
@@ -27,106 +28,62 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/layouts">Layouts</a></div>
     <h1>Layouts</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/config">config</a></div>
-    <p class="text-s bold">Using layouts</p>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/layouts">layouts</a></div>
+    <p class="text-s bold">Wrap your pages in reusable layouts.</p>
   <div class="serif-font">
-    <p>Layouts define the structure of pages. They are stored in the layouts/ folder and use placeholders like 
-Layouts define the structure of pages. They are stored in the layouts/ folder and use placeholders like 
-Layouts define the structure of pages. They are stored in the layouts/ folder and use placeholders like {{ content }}.
-
-Example layouts/default.html:
-
-```
-<!DOCTYPE html>
-<html>
-<head>
-  <title>{{ title }}</title>
-</head>
-<body>
-  <header>
-    <h1>{{ title }}</h1>
-  </header>
-  <main>
-    {{ content }}
-  </main>
-</body>
-</html>
-```
-
-
-Layouts are used to add content before and after the main page content.
-
-They go in the layouts folder and are always HTML files.
-
-Place `{{ content }}` at the point where you want the page content to be inserted.
-
-## Default layouts
-
-By default every page tries to apply the layout named after the folder they are in. So if a page is inside a folder called 'posts' then it will try to apply a layout called 'posts.html', otherwise it will apply the layout called 'default.html'. Top level pages apply the 'default.html' layout. 
-
-You can specify a particular layout for a page by adding the 'layout' propety to the front matter data of a page. The following will try to apply the layout called 'special_layout.html':
-
-```
----
-layout: special_layout
----
-```
-
-If a layout file doesn't exist then it is no layout will be applied..</p>
-<p>Example layouts/default.html:</p>
-<pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-  &lt;title&gt;{{ title }}&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
+    <p>Layouts are like picture frames for your content. They wrap around your page content and give it structure - headers, footers, sidebars, whatever you fancy.</p>
+<h2>Creating a Layout</h2>
+<p>Layouts live in the <code>layouts/</code> folder and are always HTML files. Here&#39;s a simple example:</p>
+<p><strong>layouts/default.html</strong></p>
+<pre><code class="language-html">&lt;article class=&quot;page&quot;&gt;
   &lt;header&gt;
     &lt;h1&gt;{{ title }}&lt;/h1&gt;
+    &lt;p class=&quot;meta&quot;&gt;{{ date }}&lt;/p&gt;
   &lt;/header&gt;
   &lt;main&gt;
     {{ content }}
   &lt;/main&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+&lt;/article&gt;
 </code></pre>
-<p>Layouts are used to add content before and after the main page content.</p>
-<p>They go in the layouts folder and are always HTML files.</p>
-<p>Place <code>{{ content }}</code> at the point where you want the page content to be inserted.</p>
-<h2>Default layouts</h2>
-<p>By default every page tries to apply the layout named after the folder they are in. So if a page is inside a folder called &#39;posts&#39; then it will try to apply a layout called &#39;posts.html&#39;, otherwise it will apply the layout called &#39;default.html&#39;. Top level pages apply the &#39;default.html&#39; layout. </p>
-<p>You can specify a particular layout for a page by adding the &#39;layout&#39; propety to the front matter data of a page. The following will try to apply the layout called &#39;special_layout.html&#39;:</p>
-<pre><code>---
-layout: special_layout
+<p>The magic happens with <code>{{ content }}</code> - that&#39;s where your page content gets inserted. You can also use any front matter variables like <code>{{ title }}</code> or config values like <code>{{ sitename }}</code>.</p>
+<h2>How Layouts Are Applied</h2>
+<p>Swifty uses <strong>convention over configuration</strong> (borrowed from Ruby on Rails) to automatically pick layouts:</p>
+<ol>
+<li><strong>Folder-matched layouts</strong>: Pages in a folder called <code>blog/</code> automatically use <code>layouts/blog.html</code> if it exists</li>
+<li><strong>Default fallback</strong>: If no matching layout exists, pages use <code>layouts/default.html</code></li>
+<li><strong>Explicit override</strong>: Set <code>layout: special</code> in front matter to use <code>layouts/special.html</code></li>
+</ol>
+<p>This means you can create different looks for different sections without configuring anything. Just name your layout file after your folder!</p>
+<h2>Choosing a Specific Layout</h2>
+<p>Want a page to use a particular layout? Just say so in the front matter:</p>
+<pre><code class="language-markdown">---
+title: My Special Page
+layout: fancy
 ---
+
+This page will use layouts/fancy.html
 </code></pre>
-<p>If a layout file doesn&#39;t exist then it is no layout will be applied..</p>
-<p>Example layouts/default.html:</p>
-<pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-  &lt;title&gt;{{ title }}&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;header&gt;
-    &lt;h1&gt;{{ title }}&lt;/h1&gt;
-  &lt;/header&gt;
-  &lt;main&gt;
-    {{ content }}
-  &lt;/main&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-<p>Layouts are used to add content before and after the main page content.</p>
-<p>They go in the layouts folder and are always HTML files.</p>
-<p>Place <code>{{ content }}</code> at the point where you want the page content to be inserted.</p>
-<h2>Default layouts</h2>
-<p>By default every page tries to apply the layout named after the folder they are in. So if a page is inside a folder called &#39;posts&#39; then it will try to apply a layout called &#39;posts.html&#39;, otherwise it will apply the layout called &#39;default.html&#39;. Top level pages apply the &#39;default.html&#39; layout. </p>
-<p>You can specify a particular layout for a page by adding the &#39;layout&#39; propety to the front matter data of a page. The following will try to apply the layout called &#39;special_layout.html&#39;:</p>
-<pre><code>---
-layout: special_layout
+<h2>Going Layout-Free</h2>
+<p>Sometimes you want full control. Set <code>layout: false</code> to skip the layout entirely:</p>
+<pre><code class="language-markdown">---
+layout: false
 ---
+
+&lt;div class=&quot;custom-page&quot;&gt;
+  This content won&#39;t be wrapped in any layout.
+&lt;/div&gt;
 </code></pre>
-<p>If a layout file doesn&#39;t exist then it is no layout will be applied.</p>
+<p>This is handy for landing pages or anything with a completely custom structure.</p>
+<h2>Nesting Content</h2>
+<p>Layouts are applied <em>after</em> your Markdown is converted to HTML, so you get the full formatted content. The flow goes:</p>
+<ol>
+<li>Your Markdown page is parsed</li>
+<li>Front matter variables are extracted</li>
+<li>Markdown converts to HTML</li>
+<li>Layout wraps around the HTML</li>
+<li>Template wraps around everything</li>
+</ol>
+<p>It&#39;s layouts all the way down!</p>
 
   </div>
 </div>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico" sizes="48x48" type="image/x-icon">
+  <link rel="icon" href="favicon-16x16.webp" sizes="16x16" type="image/x-icon">
+  <link rel="icon" href="favicon-32x32.webp" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="path/to/apple-touch-icon.webp">
+  <link rel="icon" sizes="192x192" href="android-chrome-192x19.webp">
+  <link rel="icon" sizes="512x512" href="android-chrome-512x512.webp">
+
+  <title>Swifty</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
+<link rel="stylesheet" href="/css/custom.css" />
+<link rel="stylesheet" href="/css/simple.css" />
+
+</head>
+<body>
+  <header class="sticky dropshadow opacity-9 align-vertical space-between">
+      <a href="/" class="logo">S</a>
+      <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
+<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
+<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
+  </header>
+    <main>
+    <div class="container">
+  <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/tutorial">Tutorial</a></div>
+    <h1>Build a Brochure Site</h1>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/tutorial">tutorial</a></div>
+    <p class="text-s bold">Step-by-step guide to building a complete site.</p>
+  <div class="serif-font">
+    <p>Let&#39;s build a website from scratch! We&#39;ll create a brochure site for a fictional bakery called <strong>Sweet Crumbs</strong>. By the end, you&#39;ll have used every major Swifty feature.</p>
+<h2>What We&#39;re Building</h2>
+<p>A small business site with:</p>
+<ul>
+<li>Homepage with hero section</li>
+<li>About page</li>
+<li>Menu section with subpages for different categories</li>
+<li>Contact page</li>
+<li>Consistent header/footer across all pages</li>
+<li>Custom styling</li>
+</ul>
+<p>Ready? Let&#39;s bake!</p>
+<hr>
+<h2>Step 1: Project Setup</h2>
+<p>First, create a new folder and set up Swifty:</p>
+<pre><code class="language-bash">mkdir sweet-crumbs
+cd sweet-crumbs
+npm init -y
+npm install @daz4126/swifty
+npx swifty init
+</code></pre>
+<p>You now have a starter structure. Let&#39;s clear it out and start fresh. Delete the contents of <code>pages/</code> (keep the folder) and we&#39;ll build our own.</p>
+<hr>
+<h2>Step 2: The Template</h2>
+<p>Open <code>template.html</code> and replace it with our site skeleton:</p>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+  &lt;title&gt;{{ title }} | {{ sitename }}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header class=&quot;site-header&quot;&gt;
+    &lt;nav class=&quot;container&quot;&gt;
+      &lt;a href=&quot;/&quot; class=&quot;logo&quot;&gt;{{ sitename }}&lt;/a&gt;
+      &lt;div class=&quot;nav-links&quot;&gt;
+        {{ nav_links }}
+      &lt;/div&gt;
+    &lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main&gt;
+    {{ content }}
+  &lt;/main&gt;
+
+  &lt;footer class=&quot;site-footer&quot;&gt;
+    &lt;p&gt;Include &quot;footer&quot; not found.&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>Notice we&#39;re using <code>&lt;p&gt;Include &quot;footer&quot; not found.&lt;/p&gt;</code> - we&#39;ll create that partial soon.</p>
+<hr>
+<h2>Step 3: Configuration</h2>
+<p>Open <code>config.yaml</code> and set up our site:</p>
+<pre><code class="language-yaml">sitename: Sweet Crumbs Bakery
+author: The Sweet Crumbs Team
+tagline: Freshly baked happiness since 2020
+address: 123 Baker Street, Tastyville
+
+breadcrumb_separator: &quot; &gt; &quot;
+link_class: nav-link
+turbo: false
+</code></pre>
+<p>We&#39;ve added custom properties (<code>tagline</code>, <code>address</code>) that we can use anywhere on the site.</p>
+<hr>
+<h2>Step 4: The Homepage</h2>
+<p>Create <code>pages/index.md</code>:</p>
+<pre><code class="language-markdown">---
+layout: false
+title: Home
+---
+
+&lt;section class=&quot;hero&quot;&gt;
+  &lt;div class=&quot;container&quot;&gt;
+    &lt;h1&gt;{{ sitename }}&lt;/h1&gt;
+    &lt;p class=&quot;tagline&quot;&gt;{{ tagline }}&lt;/p&gt;
+    &lt;a href=&quot;/menu&quot; class=&quot;button&quot;&gt;View Our Menu&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+
+&lt;section class=&quot;intro container&quot;&gt;
+
+## Welcome to Sweet Crumbs!
+
+We&#39;re a family-run bakery crafting delicious treats with love and the finest ingredients. From flaky croissants to decadent cakes, everything is baked fresh daily.
+
+&lt;/section&gt;
+
+&lt;section class=&quot;features&quot;&gt;
+  &lt;div class=&quot;container&quot;&gt;
+    &lt;div class=&quot;feature&quot;&gt;
+      &lt;h3&gt;Fresh Daily&lt;/h3&gt;
+      &lt;p&gt;Everything baked from scratch each morning.&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;feature&quot;&gt;
+      &lt;h3&gt;Local Ingredients&lt;/h3&gt;
+      &lt;p&gt;We source from local farms whenever possible.&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;feature&quot;&gt;
+      &lt;h3&gt;Made with Love&lt;/h3&gt;
+      &lt;p&gt;Family recipes passed down through generations.&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;
+</code></pre>
+<p>We&#39;re using <code>layout: false</code> because the homepage has a custom structure. Notice how we use config values like <code>{{ sitename }}</code> and <code>{{ tagline }}</code>.</p>
+<hr>
+<h2>Step 5: The About Page</h2>
+<p>Create <code>pages/about.md</code>:</p>
+<pre><code class="language-markdown">---
+title: About Us
+---
+
+# Our Story
+
+Sweet Crumbs started in 2020 when Maria and Tom decided to turn their passion for baking into something the whole neighbourhood could enjoy.
+
+What began as weekend farmers&#39; market stalls quickly grew into our cozy shop on Baker Street. Today, we&#39;re proud to serve hundreds of happy customers every week.
+
+## Our Promise
+
+Every item in our display case is:
+
+- **Baked fresh** that morning
+- **Made from scratch** using traditional methods
+- **Crafted with care** by our small team
+
+We never use preservatives or artificial flavours. Just real ingredients, real skill, and real love.
+
+## Visit Us
+
+Find us at **{{ address }}**. We&#39;re open Tuesday through Sunday, 7am to 6pm.
+
+Pop in for a coffee and a pastry - we&#39;d love to meet you!
+</code></pre>
+<p>This page will automatically use <code>layouts/default.html</code> (which we&#39;ll create next).</p>
+<hr>
+<h2>Step 6: Create the Default Layout</h2>
+<p>Create <code>layouts/default.html</code>:</p>
+<pre><code class="language-html">&lt;article class=&quot;page container&quot;&gt;
+  &lt;nav class=&quot;breadcrumbs&quot;&gt;
+    {{ breadcrumbs }}
+  &lt;/nav&gt;
+
+  &lt;div class=&quot;page-content&quot;&gt;
+    {{ content }}
+  &lt;/div&gt;
+&lt;/article&gt;
+</code></pre>
+<p>Simple! This wraps our content pages with breadcrumb navigation.</p>
+<hr>
+<h2>Step 7: The Menu Section</h2>
+<p>Now for something more interesting - a section with subpages.</p>
+<p>Create <code>pages/menu/index.md</code>:</p>
+<pre><code class="language-markdown">---
+title: Our Menu
+---
+
+# What&#39;s Baking?
+
+We offer a delicious range of freshly baked goods. Browse our categories below to see what&#39;s available.
+
+{{ links_to_children }}
+
+*Prices may vary. Some items are seasonal or made to order.*
+</code></pre>
+<p>The <code>{{ links_to_children }}</code> variable automatically lists all pages in this folder!</p>
+<p>Now create some menu category pages:</p>
+<p><strong>pages/menu/breads.md</strong></p>
+<pre><code class="language-markdown">---
+title: Artisan Breads
+position: 1
+---
+
+# Fresh Breads
+
+Our breads are made with long fermentation times for better flavour and texture.
+
+| Item | Price |
+|------|-------|
+| Sourdough Loaf | $8 |
+| Baguette | $4 |
+| Ciabatta | $5 |
+| Whole Wheat | $7 |
+| Olive Focaccia | $9 |
+
+All breads are best enjoyed on the day of purchase, but can be frozen for up to a month.
+</code></pre>
+<p><strong>pages/menu/pastries.md</strong></p>
+<pre><code class="language-markdown">---
+title: Pastries
+position: 2
+---
+
+# Sweet Pastries
+
+Flaky, buttery, and utterly irresistible.
+
+| Item | Price |
+|------|-------|
+| Butter Croissant | $4 |
+| Pain au Chocolat | $5 |
+| Almond Croissant | $6 |
+| Danish (various) | $5 |
+| Cinnamon Roll | $5 |
+
+*Croissants are best enjoyed warm - ask us to heat one up!*
+</code></pre>
+<p><strong>pages/menu/cakes.md</strong></p>
+<pre><code class="language-markdown">---
+title: Cakes &amp; Treats
+position: 3
+---
+
+# Cakes &amp; Sweet Treats
+
+For celebrations or just because.
+
+| Item | Price |
+|------|-------|
+| Slice of Cake | $6 |
+| Whole Cake (8&quot;) | $45 |
+| Brownies | $4 |
+| Cookies (each) | $3 |
+| Macarons (box of 6) | $18 |
+
+**Custom cakes available!** Order at least 3 days in advance. Ask at the counter for details.
+</code></pre>
+<hr>
+<h2>Step 8: Menu Layout</h2>
+<p>Let&#39;s give menu pages their own look. Create <code>layouts/menu.html</code>:</p>
+<pre><code class="language-html">&lt;article class=&quot;menu-page container&quot;&gt;
+  &lt;nav class=&quot;breadcrumbs&quot;&gt;
+    {{ breadcrumbs }}
+  &lt;/nav&gt;
+
+  &lt;div class=&quot;menu-content&quot;&gt;
+    {{ content }}
+  &lt;/div&gt;
+
+  &lt;aside class=&quot;menu-sidebar&quot;&gt;
+    &lt;h4&gt;Menu Categories&lt;/h4&gt;
+    {{ links_to_siblings }}
+  &lt;/aside&gt;
+&lt;/article&gt;
+</code></pre>
+<p>Because this layout is named <code>menu.html</code>, it automatically applies to all pages inside <code>pages/menu/</code>. The sidebar shows links to sibling pages so visitors can easily browse between categories.</p>
+<hr>
+<h2>Step 9: Contact Page</h2>
+<p>Create <code>pages/contact.md</code>:</p>
+<pre><code class="language-markdown">---
+title: Contact Us
+---
+
+# Get in Touch
+
+We&#39;d love to hear from you!
+
+## Visit Our Bakery
+
+**{{ address }}**
+
+**Hours:**
+- Tuesday - Friday: 7am - 6pm
+- Saturday: 8am - 5pm
+- Sunday: 8am - 2pm
+- Monday: Closed
+
+## Order Ahead
+
+For custom cake orders or large catering requests, please call us at **(555) 123-4567** or email **hello@sweetcrumbs.com**.
+
+We recommend ordering custom cakes at least 3 days in advance, and catering orders at least 1 week ahead.
+
+## Find Us
+
+We&#39;re located in the heart of downtown Tastyville, just two blocks from the central square. Street parking is available, and we&#39;re a 5-minute walk from the Tastyville Metro station.
+</code></pre>
+<hr>
+<h2>Step 10: Create the Footer Partial</h2>
+<p>Create <code>partials/footer.md</code>:</p>
+<pre><code class="language-markdown">&lt;div class=&quot;container footer-content&quot;&gt;
+  &lt;p&gt;&lt;strong&gt;{{ sitename }}&lt;/strong&gt;&lt;/p&gt;
+  &lt;p&gt;{{ address }}&lt;/p&gt;
+  &lt;p&gt;&amp;copy; 2025 {{ sitename }}. Baked with love.&lt;/p&gt;
+&lt;/div&gt;
+</code></pre>
+<p>This appears on every page thanks to <code>&lt;p&gt;Include &quot;footer&quot; not found.&lt;/p&gt;</code> in our template.</p>
+<hr>
+<h2>Step 11: Navigation Partial</h2>
+<p>Let&#39;s customize how nav links look. Create <code>partials/nav.md</code>:</p>
+<pre><code class="language-html">&lt;a href=&quot;{{ url }}&quot; class=&quot;nav-link&quot;&gt;{{ title }}&lt;/a&gt;
+</code></pre>
+<p>Swifty uses this partial when generating <code>{{ nav_links }}</code>.</p>
+<hr>
+<h2>Step 12: Add Some Style</h2>
+<p>Create <code>css/styles.css</code>:</p>
+<pre><code class="language-css">/* Reset &amp; Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header */
+.site-header {
+  background: #8B4513;
+  padding: 15px 0;
+}
+
+.site-header nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(rgba(139, 69, 19, 0.8), rgba(139, 69, 19, 0.8));
+  color: white;
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 1.3rem;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+.button {
+  display: inline-block;
+  background: white;
+  color: #8B4513;
+  padding: 12px 30px;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.button:hover {
+  background: #f5f5f5;
+}
+
+/* Content Sections */
+.intro, .features {
+  padding: 60px 20px;
+}
+
+.features {
+  background: #f9f5f0;
+}
+
+.features .container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+.feature {
+  text-align: center;
+}
+
+.feature h3 {
+  color: #8B4513;
+  margin-bottom: 10px;
+}
+
+/* Pages */
+.page, .menu-page {
+  padding: 40px 0;
+}
+
+.breadcrumbs {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.page-content h1, .menu-content h1 {
+  color: #8B4513;
+  margin-bottom: 20px;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #f9f5f0;
+}
+
+/* Menu Layout */
+.menu-page {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 40px;
+}
+
+.menu-sidebar {
+  background: #f9f5f0;
+  padding: 20px;
+  border-radius: 8px;
+  height: fit-content;
+}
+
+.menu-sidebar h4 {
+  margin-bottom: 15px;
+  color: #8B4513;
+}
+
+.menu-sidebar a {
+  display: block;
+  padding: 8px 0;
+  color: #333;
+  text-decoration: none;
+}
+
+.menu-sidebar a:hover {
+  color: #8B4513;
+}
+
+/* Footer */
+.site-footer {
+  background: #333;
+  color: white;
+  padding: 40px 0;
+  margin-top: 60px;
+}
+
+.footer-content {
+  text-align: center;
+}
+
+.footer-content p {
+  margin: 5px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .menu-page {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+}
+</code></pre>
+<hr>
+<h2>Step 13: Fire It Up!</h2>
+<p>Start the development server:</p>
+<pre><code class="language-bash">npx swifty start
+</code></pre>
+<p>Visit <a href="http://localhost:3000">localhost:3000</a> and explore your bakery site!</p>
+<p>Try editing a file - the browser refreshes automatically. Make some CSS tweaks and watch them appear instantly.</p>
+<hr>
+<h2>Step 14: Build for Production</h2>
+<p>Happy with your site? Build the production version:</p>
+<pre><code class="language-bash">npx swifty build
+</code></pre>
+<p>Your optimized site is now in the <code>dist/</code> folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.</p>
+<hr>
+<h2>What We Covered</h2>
+<p>Congratulations! You just built a complete website using:</p>
+<ul>
+<li><strong>Template</strong> - The site-wide HTML wrapper</li>
+<li><strong>Config</strong> - Site settings and custom variables</li>
+<li><strong>Pages</strong> - Markdown content with front matter</li>
+<li><strong>Layouts</strong> - Different wrappers for different sections</li>
+<li><strong>Partials</strong> - Reusable content snippets</li>
+<li><strong>Auto-generated links</strong> - Navigation, breadcrumbs, child/sibling links</li>
+<li><strong>Convention over configuration</strong> - Layouts matching folder names</li>
+<li><strong>CSS</strong> - Automatically injected stylesheets</li>
+<li><strong>Development server</strong> - Live reload for fast iteration</li>
+<li><strong>Production build</strong> - Clean output for deployment</li>
+</ul>
+<p>Not bad for a few files and zero configuration!</p>
+<hr>
+<h2>Next Steps</h2>
+<p>Now that you&#39;ve got the basics, try:</p>
+<ul>
+<li>Adding images to <code>images/</code> and referencing them in pages</li>
+<li>Creating more complex layouts with sidebars or grids</li>
+<li>Using tags to categorize content</li>
+<li>Enabling Turbo for SPA-like transitions</li>
+<li>Adding JavaScript for interactive features</li>
+</ul>
+<p>Most importantly: build something real! Swifty gets out of your way so you can focus on content. Happy building!</p>
+
+  </div>
+</div>
+  </main>
+    <footer>
+    <p>This site was built with Swifty, the super speedy static site generator.</p>
+    <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
+  </footer>
+</body>
+</html>
+  

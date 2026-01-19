@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
@@ -31,17 +32,21 @@
 <p>It makes it really simple to create a full website that loads pages almost instantly.</p>
 <h2>Quick Start</h2>
 <h4>1. Install Swifty:</h4>
-<pre><code class="language-bash">npm install swifty
+<pre><code class="language-bash">npm install @daz4126/swifty
 </code></pre>
 <h4>2. Start a new project:</h4>
-<pre><code>npm swifty
+<pre><code class="language-bash">npx swifty init
 </code></pre>
 <h4>3. Add some more pages to the &#39;pages&#39; folder (just write them in Markdown).</h4>
-<h4>4. Start the server:</h4>
-<pre><code>npm start
+<h4>4. Start the development server:</h4>
+<pre><code class="language-bash">npx swifty start
 </code></pre>
-<p>Visit <a href="http://localhost:3000/">localhost:3000</a> to see your site in action.</p>
-<h4>5. <a href="/docs">Learn More</a> about all the other features, including layouts, partials and front-matter configuration.</h4>
+<p>Visit <a href="http://localhost:3000/">localhost:3000</a> to see your site in action. The development server includes live reload - your browser will automatically refresh when you make changes.</p>
+<h4>5. Build for production:</h4>
+<pre><code class="language-bash">npx swifty build
+</code></pre>
+<p>This creates a clean build in the <code>dist/</code> folder ready for deployment (without any development scripts).</p>
+<h4>6. <a href="/docs">Learn More</a> about all the other features, including layouts, partials and front-matter configuration.</h4>
 
 </div>
   </main>

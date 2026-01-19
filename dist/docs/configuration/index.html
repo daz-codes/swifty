@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
+
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
@@ -28,16 +29,20 @@
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/configuration">Configuration</a></div>
     <h1>Configuration</h1>
     <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/config">config</a></div>
-    <p class="text-s bold">Configuration options</p>
+    <p class="text-s bold">Customize Swifty to your liking.</p>
   <div class="serif-font">
-    <p>Swifty supports configuration via config.json, config.yaml, or config.yml located in the project root. The configuration file allows you to specify global settings like the site name, date format, and layout preferences.</p>
-<p>This is the default config.yaml that it starts with and shows you all the different configuration options:</p>
+    <p>Swifty believes in sensible defaults, but when you want to tweak things, the config file is your friend. Create a <code>config.yaml</code> (or <code>config.yml</code> or <code>config.json</code> if that&#39;s your jam) in your project root.</p>
+<h2>The Full Config Menu</h2>
+<p>Here&#39;s everything you can configure, with the defaults shown:</p>
 <pre><code class="language-yaml">sitename: Swifty
 author: Taylor Swift
 breadcrumb_separator: &quot;&amp;raquo;&quot;
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link
 tag_class: tag
+default_layout_name: default
+default_link_name: links
+max_image_size: 800
 turbo: false
 
 dateFormat:
@@ -46,12 +51,73 @@ dateFormat:
   day: numeric
   year: numeric
 </code></pre>
-<h2>Turbo</h2>
-<p>By default, Swifty generates plain static HTML pages with standard browser navigation. If you want SPA-like page transitions with prefetching on hover, you can enable <a href="https://turbo.hotwired.dev/">Turbo</a>:</p>
+<h2>What Does What?</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>sitename</code></td>
+<td>Your site&#39;s name - use <code>{{ sitename }}</code> anywhere to display it</td>
+</tr>
+<tr>
+<td><code>author</code></td>
+<td>Your name (or whoever&#39;s taking credit)</td>
+</tr>
+<tr>
+<td><code>breadcrumb_separator</code></td>
+<td>The character between breadcrumb links</td>
+</tr>
+<tr>
+<td><code>breadcrumb_class</code></td>
+<td>CSS class for breadcrumb links</td>
+</tr>
+<tr>
+<td><code>link_class</code></td>
+<td>CSS class for auto-generated links</td>
+</tr>
+<tr>
+<td><code>tag_class</code></td>
+<td>CSS class for tag links</td>
+</tr>
+<tr>
+<td><code>default_layout_name</code></td>
+<td>The fallback layout when no other applies</td>
+</tr>
+<tr>
+<td><code>default_link_name</code></td>
+<td>The partial used for generating link lists</td>
+</tr>
+<tr>
+<td><code>max_image_size</code></td>
+<td>Maximum width for optimized images (in pixels)</td>
+</tr>
+<tr>
+<td><code>turbo</code></td>
+<td>Enable Turbo for SPA-like navigation</td>
+</tr>
+<tr>
+<td><code>dateFormat</code></td>
+<td>How dates are formatted throughout your site</td>
+</tr>
+</tbody></table>
+<h2>Using Config Values in Pages</h2>
+<p>Any config value can be dropped into your pages or layouts using double curly braces:</p>
+<pre><code class="language-markdown">Welcome to {{ sitename }}!
+Written by {{ author }}.
+</code></pre>
+<p>Simple as that.</p>
+<h2>Turbo Mode</h2>
+<p>By default, Swifty generates good old-fashioned HTML pages. But if you want that slick single-page-app feel with instant page transitions, flip on Turbo:</p>
 <pre><code class="language-yaml">turbo: true
 </code></pre>
-<p>When enabled, Turbo will intercept link clicks, fetch pages via AJAX, and morph the DOM for smooth transitions. It also prefetches links on hover, making navigation feel instant.</p>
-<p>For most sites, plain HTML navigation is already fast enough and keeps your pages lighter.</p>
+<p>When enabled, <a href="https://turbo.hotwired.dev/">Turbo</a> intercepts link clicks, fetches pages in the background, and smoothly swaps content. It even prefetches links when you hover over them. Your visitors will think you&#39;re some kind of wizard.</p>
+<p>For most sites though, plain HTML is already plenty fast. Only enable Turbo if you really want those buttery transitions.</p>
+<h2>Folder-Level Config</h2>
+<p>Here&#39;s a neat trick: you can add a <code>config.yaml</code> inside any folder in <code>pages/</code> to set defaults for all pages in that folder. Great for giving a whole section its own author or layout without repeating yourself.</p>
 
   </div>
 </div>
