@@ -2,19 +2,51 @@
 
 ## Super Speedy Static Site Generator
 
-Swifty is the next generation of static site generator.
+Swifty uses convention over configuration to make it super simple to build blazingly fast static sites.
 
-It uses the power of Turbo and morphing to build sites that are blazingly fast.
+## Features
 
-It also uses convention over configuration to make is super simple to build sites.
+- **Markdown pages** with YAML front matter
+- **Automatic image optimization** to WebP
+- **Layouts and partials** for reusable templates
+- **Auto-injected CSS/JS** from your css/ and js/ folders
+- **Code syntax highlighting** via highlight.js
+- **Tags and navigation** generated automatically
+- **Optional [Turbo](https://turbo.hotwired.dev/)** for SPA-like transitions
 
 ## Quickstart
 
-1. `npm install @daz4126/swifty`
-2. `npx swifty init` to create a new site
-3. Edit the `template.html` file to match your default layout
-4. Change the `sitename` in `config.yaml`
-5. Add some markdown files to the 'pages' directory
-3. `npx swifty build` to build the site
-7. `npx swifty start` to start the server
-8. Visit [http://localhost:3000](http://localhost:3000) to see your site
+```bash
+npm install @daz4126/swifty
+npx swifty init
+npx swifty start
+```
+
+Then visit [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+your-site/
+├── pages/          # Markdown content (folder structure = URLs)
+├── layouts/        # HTML layout templates
+├── partials/       # Reusable content snippets
+├── css/            # Stylesheets (auto-injected)
+├── js/             # JavaScript (auto-injected)
+├── images/         # Images (auto-optimized to WebP)
+├── template.html   # Base HTML template
+└── config.yaml     # Site configuration
+```
+
+## Commands
+
+```bash
+npx swifty init             # Create new project structure
+npx swifty build            # Build static site to dist/
+npx swifty start            # Build, watch, and serve at localhost:3000
+npx swifty build --out dir  # Build to custom output directory
+```
+
+## Documentation
+
+See the [full documentation](https://daz4126.github.io/swifty/) for details on configuration, layouts, partials, and more.

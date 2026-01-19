@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
-import { dirs, baseDir } from "./config.js";
+import { dirs, baseDir, defaultConfig } from "./config.js";
 import { getCssImports, getJsImports } from "./assets.js";
 
 const layoutCache = new Map();
@@ -23,7 +23,9 @@ const createTemplate = async () => {
   // Read the template from pages folder
   const templatePath = path.join(baseDir, 'template.html');
   const templateContent = await fs.readFile(templatePath, 'utf-8');
-  const turboScript = `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`;
+  const turboScript = defaultConfig.turbo
+    ? `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`
+    : '';
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
@@ -35,7 +37,8 @@ const createTemplate = async () => {
 const applyLayoutAndWrapContent = async (page,content) => {
     const layoutContent = await getLayout(page.data.layout !== undefined ? page.data.layout : page.layout);
     if (!layoutContent) return content;
-    return layoutContent.replace(/\{\{\s*content\s*\}\}/g, content);
+    // Use function to avoid $` special replacement patterns in content
+    return layoutContent.replace(/\{\{\s*content\s*\}\}/g, () => content);
   };
 
 const template = await createTemplate();

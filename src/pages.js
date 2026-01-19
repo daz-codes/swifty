@@ -199,9 +199,10 @@ const render = async (page) => {
   const replacedContent = await replacePlaceholders(page.content, page);
   const htmlContent = marked.parse(replacedContent); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
+  // Use function to avoid $` special replacement patterns in content
   const htmlWithTemplate = template.replace(
     /\{\{\s*content\s*\}\}/g,
-    wrappedContent,
+    () => wrappedContent,
   );
   const finalContent = await replacePlaceholders(htmlWithTemplate, page);
   return finalContent;
