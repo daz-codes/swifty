@@ -29,6 +29,9 @@ async function main() {
       break;
     }
     case "start": {
+      // Set watch mode so livereload script is injected into pages
+      process.env.SWIFTY_WATCH = "true";
+
       const build = await import("./build.js");
       if (typeof build.default === "function") {
         await build.default(outDir);

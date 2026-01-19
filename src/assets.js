@@ -102,4 +102,57 @@ const getJsImports = () =>
     validExtensions.js,
   );
 
-export { copyAssets, optimizeImages, getCssImports, getJsImports };
+// Copy a single asset file (CSS or JS)
+const copySingleAsset = async (filePath, outputDir = dirs.dist) => {
+  const filename = path.basename(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+
+  let destDir;
+  if (validExtensions.css.includes(ext)) {
+    destDir = path.join(outputDir, "css");
+  } else if (validExtensions.js.includes(ext)) {
+    destDir = path.join(outputDir, "js");
+  } else {
+    return false;
+  }
+
+  await fsExtra.ensureDir(destDir);
+  await fsExtra.copy(filePath, path.join(destDir, filename));
+  console.log(`Copied ${filename}`);
+  return true;
+};
+
+// Process a single image
+const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
+  const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+  const filename = path.basename(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+  const imagesFolder = path.join(outputDir, "images");
+
+  await fsExtra.ensureDir(imagesFolder);
+
+  // For non-optimizable images (svg, webp, gif), just copy
+  if (!IMAGE_EXTENSIONS.includes(ext)) {
+    await fsExtra.copy(filePath, path.join(imagesFolder, filename));
+    console.log(`Copied ${filename}`);
+    return true;
+  }
+
+  // Optimize jpg/jpeg/png to webp
+  const optimizedPath = path.join(imagesFolder, `${path.basename(filename, ext)}.webp`);
+  const image = sharp(filePath);
+  const metadata = await image.metadata();
+  const originalWidth = metadata.width || 0;
+  const maxWidth = defaultConfig.max_image_size || 800;
+  const resizeWidth = Math.min(originalWidth, maxWidth);
+
+  await image
+    .resize({ width: resizeWidth })
+    .toFormat("webp", { quality: 80 })
+    .toFile(optimizedPath);
+
+  console.log(`Optimized ${filename} -> ${path.basename(optimizedPath)}`);
+  return true;
+};
+
+export { copyAssets, optimizeImages, getCssImports, getJsImports, copySingleAsset, optimizeSingleImage };

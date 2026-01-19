@@ -10,6 +10,7 @@ layout: false
 <div class="align-center gap-s">
     <a class="button" href="/about">Get Started</a>
     <a class="button" href="/docs">Learn Swifty</a>
+    <a class="button" href="/docs/tutorial">Tutorial</a>
 </div>
 
 

@@ -2,49 +2,79 @@
 tags:
   - swifty
   - docs
-  - config
+  - layouts
 position: 6
-summary: Using layouts
+summary: Wrap your pages in reusable layouts.
 ---
 
-Layouts define the structure of pages. They are stored in the layouts/ folder and use placeholders like {{ content }}.
+Layouts are like picture frames for your content. They wrap around your page content and give it structure - headers, footers, sidebars, whatever you fancy.
 
-Example layouts/default.html:
+## Creating a Layout
 
-```
-<!DOCTYPE html>
-<html>
-<head>
-  <title>{{ title }}</title>
-</head>
-<body>
+Layouts live in the `layouts/` folder and are always HTML files. Here's a simple example:
+
+**layouts/default.html**
+```html
+<article class="page">
   <header>
     <h1>{{ title }}</h1>
+    <p class="meta">{{ date }}</p>
   </header>
   <main>
     {{ content }}
   </main>
-</body>
-</html>
+</article>
 ```
 
+The magic happens with `{{ content }}` - that's where your page content gets inserted. You can also use any front matter variables like `{{ title }}` or config values like `{{ sitename }}`.
 
-Layouts are used to add content before and after the main page content.
+## How Layouts Are Applied
 
-They go in the layouts folder and are always HTML files.
+Swifty uses **convention over configuration** (borrowed from Ruby on Rails) to automatically pick layouts:
 
-Place `{{ content }}` at the point where you want the page content to be inserted.
+1. **Folder-matched layouts**: Pages in a folder called `blog/` automatically use `layouts/blog.html` if it exists
+2. **Default fallback**: If no matching layout exists, pages use `layouts/default.html`
+3. **Explicit override**: Set `layout: special` in front matter to use `layouts/special.html`
 
-## Default layouts
+This means you can create different looks for different sections without configuring anything. Just name your layout file after your folder!
 
-By default every page tries to apply the layout named after the folder they are in. So if a page is inside a folder called 'posts' then it will try to apply a layout called 'posts.html', otherwise it will apply the layout called 'default.html'. Top level pages apply the 'default.html' layout. 
+## Choosing a Specific Layout
 
-You can specify a particular layout for a page by adding the 'layout' propety to the front matter data of a page. The following will try to apply the layout called 'special_layout.html':
+Want a page to use a particular layout? Just say so in the front matter:
 
-```
+```markdown
 ---
-layout: special_layout
+title: My Special Page
+layout: fancy
 ---
+
+This page will use layouts/fancy.html
 ```
 
-If a layout file doesn't exist then it is no layout will be applied.
+## Going Layout-Free
+
+Sometimes you want full control. Set `layout: false` to skip the layout entirely:
+
+```markdown
+---
+layout: false
+---
+
+<div class="custom-page">
+  This content won't be wrapped in any layout.
+</div>
+```
+
+This is handy for landing pages or anything with a completely custom structure.
+
+## Nesting Content
+
+Layouts are applied *after* your Markdown is converted to HTML, so you get the full formatted content. The flow goes:
+
+1. Your Markdown page is parsed
+2. Front matter variables are extracted
+3. Markdown converts to HTML
+4. Layout wraps around the HTML
+5. Template wraps around everything
+
+It's layouts all the way down!

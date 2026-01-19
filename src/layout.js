@@ -26,11 +26,14 @@ const createTemplate = async () => {
   const turboScript = defaultConfig.turbo
     ? `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`
     : '';
+  const livereloadScript = process.env.SWIFTY_WATCH
+    ? `<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>`
+    : '';
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
   const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
-  const template = templateContent.replace('</head>', `${turboScript}\n${highlightCSS}\n${imports}\n</head>`);
+  const template = templateContent.replace('</head>', `${turboScript}\n${highlightCSS}\n${imports}\n${livereloadScript}\n</head>`);
   return template;
 };
 

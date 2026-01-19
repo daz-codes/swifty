@@ -1,39 +1,143 @@
 import chokidar from "chokidar";
+import livereload from "livereload";
 import path from "path";
+import fs from "fs";
 
-// Define files to watch, resolving relative to the current working directory
-const filesToWatch = [
-  "pages/**/*.{md,html}",
-  "layouts/**/*.html",
-  "images/**/*",
-  "css/**/*.css",
-  "js/**/*.js",
-  "partials/**/*.{md,html}",
-  "template.html",
-  "config.yaml",
-  "config.yml",
-  "config.json",
-].map((pattern) => path.join(process.cwd(), pattern));
+// Directory to extension mapping for filtering
+const dirExtensions = {
+  pages: [".md", ".html"],
+  layouts: [".html"],
+  images: null, // null means all files
+  css: [".css"],
+  js: [".js"],
+  partials: [".md", ".html"],
+};
+
+// Build watch paths
+function getWatchPaths() {
+  const cwd = process.cwd();
+  const watchPaths = [];
+
+  // Add directories that exist
+  for (const dir of Object.keys(dirExtensions)) {
+    const dirPath = path.join(cwd, dir);
+    if (fs.existsSync(dirPath)) {
+      watchPaths.push(dirPath);
+    }
+  }
+
+  // Add specific config files that exist
+  const configFiles = ["template.html", "config.yaml", "config.yml", "config.json"];
+  for (const file of configFiles) {
+    const filePath = path.join(cwd, file);
+    if (fs.existsSync(filePath)) {
+      watchPaths.push(filePath);
+    }
+  }
+
+  return watchPaths;
+}
+
+// Check if a file should trigger a rebuild
+function shouldTriggerBuild(filePath) {
+  const cwd = process.cwd();
+  const relativePath = path.relative(cwd, filePath);
+  const parts = relativePath.split(path.sep);
+  const topDir = parts[0];
+
+  // Config files at root level
+  if (parts.length === 1) {
+    return true;
+  }
+
+  // Check against directory extension mapping
+  if (dirExtensions[topDir] !== undefined) {
+    const allowedExts = dirExtensions[topDir];
+    // null means all files allowed
+    if (allowedExts === null) {
+      return true;
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    return allowedExts.includes(ext);
+  }
+
+  return false;
+}
+
+// Determine what type of change this is
+function getChangeType(filePath) {
+  const cwd = process.cwd();
+  const relativePath = path.relative(cwd, filePath);
+  const parts = relativePath.split(path.sep);
+  const topDir = parts[0];
+
+  if (topDir === "css") return "css";
+  if (topDir === "js") return "js";
+  if (topDir === "images") return "image";
+  return "full"; // pages, layouts, partials, config files
+}
 
 export default async function watch(outDir = "dist") {
   const build = await import("./build.js");
+  const { copySingleAsset, optimizeSingleImage } = await import("./assets.js");
+  const watchPaths = getWatchPaths();
 
-  // Initialize watcher
-  const watcher = chokidar.watch(filesToWatch, {
+  if (watchPaths.length === 0) {
+    console.log("No directories or files to watch.");
+    return;
+  }
+
+  // Start livereload server
+  const lrServer = livereload.createServer({
+    usePolling: true,
+    delay: 100,
+  });
+  const outPath = path.join(process.cwd(), outDir);
+  lrServer.watch(outPath);
+  console.log("LiveReload server started on port 35729");
+
+  // Initialize watcher (chokidar 4.x)
+  // usePolling needed for network/cloud drives that don't emit native fs events
+  const watcher = chokidar.watch(watchPaths, {
     persistent: true,
     ignoreInitial: true,
+    usePolling: true,
+    interval: 500,
     awaitWriteFinish: {
       stabilityThreshold: 200,
       pollInterval: 100,
     },
   });
 
-  // Rebuild function
-  async function triggerBuild(event, filePath) {
-    console.log(`File ${event}: ${filePath}. Running build...`);
+  // Handle file changes with incremental builds where possible
+  async function handleFileChange(event, filePath) {
+    if (!shouldTriggerBuild(filePath)) {
+      return;
+    }
+
+    const changeType = getChangeType(filePath);
+    const filename = path.basename(filePath);
+
     try {
-      await build.default(outDir);
-      console.log("Build complete.");
+      if (event === "deleted") {
+        // For deletions, do a full rebuild to clean up
+        console.log(`File deleted: ${filename}. Running full build...`);
+        await build.default(outDir);
+      } else if (changeType === "css" || changeType === "js") {
+        // Incremental: just copy the changed asset
+        console.log(`Asset ${event}: ${filename}`);
+        await copySingleAsset(filePath, outDir);
+      } else if (changeType === "image") {
+        // Incremental: just process the changed image
+        console.log(`Image ${event}: ${filename}`);
+        await optimizeSingleImage(filePath, outDir);
+      } else {
+        // Full rebuild for pages, layouts, partials, config
+        console.log(`File ${event}: ${filename}. Running full build...`);
+        await build.default(outDir);
+      }
+      // Trigger browser refresh
+      lrServer.refresh("/");
     } catch (error) {
       console.error(`Build failed: ${error.message}`);
     }
@@ -41,9 +145,10 @@ export default async function watch(outDir = "dist") {
 
   // Set up event listeners
   watcher
-    .on("change", (filePath) => triggerBuild("changed", filePath))
-    .on("add", (filePath) => triggerBuild("added", filePath))
-    .on("unlink", (filePath) => triggerBuild("deleted", filePath));
+    .on("change", (filePath) => handleFileChange("changed", filePath))
+    .on("add", (filePath) => handleFileChange("added", filePath))
+    .on("unlink", (filePath) => handleFileChange("deleted", filePath))
+    .on("error", (error) => console.error("Watcher error:", error));
 
   console.log("Watching for file changes...");
 }

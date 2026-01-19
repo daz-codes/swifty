@@ -42,10 +42,15 @@ your-site/
 
 ```bash
 npx swifty init             # Create new project structure
-npx swifty build            # Build static site to dist/
-npx swifty start            # Build, watch, and serve at localhost:3000
+npx swifty build            # Build static site to dist/ (for production)
+npx swifty start            # Build, watch, and serve at localhost:3000 (for development)
 npx swifty build --out dir  # Build to custom output directory
 ```
+
+### Development vs Production
+
+- **`swifty start`** - For development. Includes live reload (auto-refreshes browser on file changes) and file watching with incremental builds for CSS/JS/images.
+- **`swifty build`** - For production deployment. Produces clean output without any development scripts.
 
 ## Documentation
 

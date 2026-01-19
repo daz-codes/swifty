@@ -13,8 +13,15 @@ npm test                    # Run tests (mocha)
 npm run build               # Build static site to dist/
 npm start                   # Build and serve at http://localhost:3000
 npx swifty init             # Create new project structure
+npx swifty build            # Build for production (no dev scripts)
+npx swifty start            # Development server with live reload
 npx swifty build --out dir  # Build to custom output directory
 ```
+
+### Development vs Production
+
+- `swifty start` - Development mode with live reload and file watching. Injects livereload script into pages.
+- `swifty build` - Production build with clean output (no livereload script). Use this before deploying.
 
 ## Architecture
 

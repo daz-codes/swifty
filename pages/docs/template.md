@@ -3,26 +3,81 @@ title: The Template File
 tags:
   - swifty
   - docs
-  - config
+  - template
 position: 4
-summary: Setting up the template file
+summary: The master wrapper for your entire site.
 ---
 
-The template file (template.html) acts as the main structure of your site, wrapping all generated content. Everything in this page will be included on every page of the site, so it's a good place to put the HTML `<head>` and other set-up information.
+The template file is the big boss - it wraps around *everything*. While layouts wrap individual page content, the template wraps the whole shebang, including the layout.
 
-An example file is generated like the one below when you run `swifty init`:
+Think of it as your site's skeleton: the `<html>`, `<head>`, and `<body>` tags that every page shares.
 
-```
+## The Basic Template
+
+Create a `template.html` in your project root:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="/css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} | {{ sitename }}</title>
 </head>
 <body>
   <nav>
-    <a href="/" class="nav-link">Home</a>
+    <a href="/">{{ sitename }}</a>
+    {{ nav_links }}
   </nav>
+
+  <main>
     {{ content }}
+  </main>
+
+  <footer>
+    <p>&copy; 2025 {{ sitename }}</p>
+  </footer>
 </body>
 </html>
 ```
 
-The placeholder `{{ content }}` should go where the content from each page will be inserted.
+The `{{ content }}` placeholder is where all your page content (including layouts) gets inserted.
+
+## What Swifty Auto-Injects
+
+You might notice your CSS and JS files magically appear in the built pages. That's because Swifty automatically injects:
+
+- **All CSS files** from your `css/` folder (alphabetically sorted)
+- **All JS files** from your `js/` folder (alphabetically sorted)
+- **Syntax highlighting styles** for code blocks
+- **Turbo script** (if enabled in config)
+- **LiveReload script** (only during development with `swifty start`)
+
+These get added just before the closing `</head>` tag. You don't need to manually link your stylesheets or scripts - just drop files in the right folders and they're included.
+
+## Template Variables
+
+Use any config values or built-in variables in your template:
+
+| Variable | What it does |
+|----------|--------------|
+| `{{ sitename }}` | Your site's name from config |
+| `{{ title }}` | Current page's title |
+| `{{ content }}` | The page content (required!) |
+| `{{ nav_links }}` | Auto-generated navigation |
+| `{{ breadcrumbs }}` | Breadcrumb trail |
+| `{{ author }}` | Author from config or page |
+
+## Pro Tips
+
+**Name your CSS files strategically**: Since they're loaded alphabetically, prefix with numbers for control:
+```
+css/
+├── 1-reset.css
+├── 2-base.css
+└── 3-components.css
+```
+
+**Keep it lean**: The template appears on every page, so keep it minimal. Put section-specific stuff in layouts instead.
+
+**Test your template**: Since it wraps everything, a broken template breaks your whole site. Start simple and build up.
