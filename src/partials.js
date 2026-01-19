@@ -34,7 +34,17 @@ const replacePlaceholders = async (template, values) => {
     return str.replace(regex, () => results.shift());
   };
 
-  // Replace partial includes
+  // Protect code blocks BEFORE any placeholder replacement
+  // Fenced blocks require closing ``` to be at start of line (after newline)
+  const codeBlockRegex =
+    /```[\s\S]*?\n```|`[^`\n]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
+  const codeBlocks = [];
+  template = template.replace(codeBlockRegex, (match) => {
+    codeBlocks.push(match);
+    return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`; // Temporary placeholder
+  });
+
+  // Replace partial includes (now only outside code blocks)
   template = await replaceAsync(
     template,
     partialRegex,
@@ -44,16 +54,8 @@ const replacePlaceholders = async (template, values) => {
       return marked(partialContent); // Convert Markdown to HTML
     },
   );
-  // Replace other placeholders **only outside of code blocks**
-  // Fenced blocks require closing ``` to be at start of line (after newline)
-  const codeBlockRegex =
-    /```[\s\S]*?\n```|`[^`\n]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
-  const codeBlocks = [];
-  template = template.replace(codeBlockRegex, (match) => {
-    codeBlocks.push(match);
-    return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`; // Temporary placeholder
-  });
-  // Replace placeholders outside of code blocks
+
+  // Replace other placeholders outside of code blocks
   template = template.replace(/{{\s*([^}\s]+)\s*}}/g, (match, key) => {
     return values.data && key in values?.data
       ? values.data[key]
@@ -61,6 +63,7 @@ const replacePlaceholders = async (template, values) => {
         ? values[key]
         : match;
   });
+
   // Restore code blocks
   template = template.replace(
     /{{CODE_BLOCK_(\d+)}}/g,
