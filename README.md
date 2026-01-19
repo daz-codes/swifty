@@ -49,4 +49,4 @@ npx swifty build --out dir  # Build to custom output directory
 
 ## Documentation
 
-See the [full documentation](https://daz4126.github.io/swifty/) for details on configuration, layouts, partials, and more.
+See the [full documentation](https://swifty-oo3v.onrender.com/docs) for details on configuration, layouts, partials, and more.

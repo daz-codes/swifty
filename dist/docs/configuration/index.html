@@ -11,7 +11,7 @@
   <link rel="icon" sizes="512x512" href="android-chrome-512x512.webp">
 
   <title>Swifty</title>
-<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
 <link rel="stylesheet" href="/css/custom.css" />
 <link rel="stylesheet" href="/css/simple.css" />
@@ -32,19 +32,26 @@
   <div class="serif-font">
     <p>Swifty supports configuration via config.json, config.yaml, or config.yml located in the project root. The configuration file allows you to specify global settings like the site name, date format, and layout preferences.</p>
 <p>This is the default config.yaml that it starts with and shows you all the different configuration options:</p>
-<pre><code>sitename: Swifty
+<pre><code class="language-yaml">sitename: Swifty
 author: Taylor Swift
 breadcrumb_separator: &quot;&amp;raquo;&quot;
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link
 tag_class: tag
+turbo: false
 
-dateFormat: 
+dateFormat:
   weekday: short
   month: short
   day: numeric
   year: numeric
 </code></pre>
+<h2>Turbo</h2>
+<p>By default, Swifty generates plain static HTML pages with standard browser navigation. If you want SPA-like page transitions with prefetching on hover, you can enable <a href="https://turbo.hotwired.dev/">Turbo</a>:</p>
+<pre><code class="language-yaml">turbo: true
+</code></pre>
+<p>When enabled, Turbo will intercept link clicks, fetch pages via AJAX, and morph the DOM for smooth transitions. It also prefetches links on hover, making navigation feel instant.</p>
+<p>For most sites, plain HTML navigation is already fast enough and keeps your pages lighter.</p>
 
   </div>
 </div>
