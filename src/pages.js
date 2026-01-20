@@ -8,12 +8,16 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 
-const isValid = async (filePath) => {
+// Returns stats if valid (directory or .md file), null otherwise
+const getValidStats = async (filePath) => {
   try {
     const stats = await fs.stat(filePath);
-    return stats.isDirectory() || path.extname(filePath) === ".md";
+    if (stats.isDirectory() || path.extname(filePath) === ".md") {
+      return stats;
+    }
+    return null;
   } catch (err) {
-    return false; // Handle errors like file not found
+    return null;
   }
 };
 
@@ -37,6 +41,7 @@ const parseDate = (dateValue) => {
 
 const tagsMap = new Map();
 const pageIndex = [];
+const pageIndexUrls = new Set();
 
 const addToTagMap = (tag, page) => {
   if (!tagsMap.has(tag)) tagsMap.set(tag, []);
@@ -44,9 +49,17 @@ const addToTagMap = (tag, page) => {
 };
 
 const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
+  // Clear module-level state on root call to prevent accumulation across rebuilds
+  if (!parent) {
+    tagsMap.clear();
+    pageIndex.length = 0;
+    pageIndexUrls.clear();
+  }
+
   const pages = [];
   const folderConfig = await loadConfig(sourceDir);
   const config = { ...defaultConfig, ...parent?.data, ...folderConfig };
+  const { dateFormat } = config;
 
   try {
     const files = await fs.readdir(sourceDir, { withFileTypes: true });
@@ -54,7 +67,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     // Collect promises for processing all files
     const filePromises = files.map(async (file) => {
       const filePath = path.join(sourceDir, file.name);
-      if (!(await isValid(filePath))) return null;
+      const stats = await getValidStats(filePath);
+      if (!stats) return null;
 
       const root = file.name === "index.md" && !parent;
       const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/");
@@ -62,8 +76,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const name = root
         ? "Home"
         : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
-      const stats = await fs.stat(filePath);
-      const isDirectory = file.isDirectory();
+      const isDirectory = stats.isDirectory();
       const layoutFileExists =
         parent &&
         (await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`));
@@ -88,15 +101,15 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         title: name,
         created_at: new Date(stats.birthtime).toLocaleDateString(
           undefined,
-          config.dateFormat,
+          dateFormat,
         ),
         updated_at: new Date(stats.mtime).toLocaleDateString(
           undefined,
-          config.dateFormat,
+          dateFormat,
         ),
         date: new Date(stats.birthtime).toLocaleDateString(
           undefined,
-          config.dateFormat,
+          dateFormat,
         ),
         data: root ? { ...defaultConfig } : { ...config },
       };
@@ -111,7 +124,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           const parsedDate = parseDate(data.date);
           if (parsedDate) {
             page.dateObj = parsedDate;
-            page.date = parsedDate.toLocaleDateString(undefined, config.dateFormat);
+            page.date = parsedDate.toLocaleDateString(undefined, dateFormat);
             page.data.date = page.date;
           }
         }
@@ -152,7 +165,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       }
 
       pages.push(page);
-      if (!pageIndex.some((p) => p.url === page.url)) {
+      if (!pageIndexUrls.has(page.url)) {
+        pageIndexUrls.add(page.url);
         pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
       }
     });
@@ -204,26 +218,33 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 };
 
 const generateLinkList = async (name, pages) => {
-  const partial = `${name}.md`;
-  const partialPath = path.join(dirs.partials, partial);
+  const partialFile = `${name}.md`;
+  const partialPath = path.join(dirs.partials, partialFile);
   const linksPath = path.join(
     dirs.partials,
     defaultConfig.default_link_name || "links",
   );
-  // Check if either file exists in the 'partials' folder
-  const fileExists = await fsExtra.pathExists(partialPath);
-  const defaultExists = await fsExtra.pathExists(linksPath);
+  // Check if either file exists in the 'partials' folder (in parallel)
+  const [fileExists, defaultExists] = await Promise.all([
+    fsExtra.pathExists(partialPath),
+    fsExtra.pathExists(linksPath),
+  ]);
   if (fileExists || defaultExists) {
-    const partial = await fs.readFile(
+    const partialContent = await fs.readFile(
       fileExists ? partialPath : linksPath,
       "utf-8",
     );
     const content = await Promise.all(
-      pages.map((page) => replacePlaceholders(partial, page)),
+      pages.map((page) => replacePlaceholders(partialContent, page)),
     );
     return content.join("\n");
   } else {
-    return `${pages.map((page) => `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`).join`\n`}`;
+    return pages
+      .map(
+        (page) =>
+          `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`,
+      )
+      .join("\n");
   }
 };
 
@@ -257,40 +278,49 @@ const createPages = async (pages, distDir = dirs.dist) => {
 };
 
 const addLinks = async (pages, parent) => {
-  for (const page of pages) {
-    page.data ||= {};
-    page.data.links_to_tags = page?.data?.tags?.length
-      ? page.data.tags.map(
-          (tag) =>
-            `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`,
-        ).join``
-      : "";
-    const crumb = page.root
-      ? ""
-      : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
-    page.data.breadcrumbs = parent
-      ? parent.data.breadcrumbs + crumb
-      : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` +
-        crumb;
-    page.data.links_to_children = page.pages
-      ? await generateLinkList(page.filename, page.pages)
-      : "";
-    page.data.links_to_siblings = await generateLinkList(
-      page.parent?.filename || "pages",
-      pages.filter((p) => p.url !== page.url),
-    );
-    page.data.links_to_self_and_siblings = await generateLinkList(
-      page.parent?.filename || "pages",
-      pages,
-    );
-    page.data.nav_links = await generateLinkList(
-      "nav",
-      pageIndex.filter((p) => p.nav),
-    );
-    if (page.pages) {
-      await addLinks(page.pages, page); // Recursive call
-    }
-  }
+  await Promise.all(
+    pages.map(async (page) => {
+      page.data ||= {};
+      page.data.links_to_tags = page?.data?.tags?.length
+        ? page.data.tags
+            .map(
+              (tag) =>
+                `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`,
+            )
+            .join("")
+        : "";
+      const crumb = page.root
+        ? ""
+        : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
+      page.data.breadcrumbs = parent
+        ? parent.data.breadcrumbs + crumb
+        : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` +
+          crumb;
+
+      // Run independent link generation in parallel
+      const [links_to_children, links_to_siblings, links_to_self_and_siblings, nav_links] =
+        await Promise.all([
+          page.pages
+            ? generateLinkList(page.filename, page.pages)
+            : Promise.resolve(""),
+          generateLinkList(
+            page.parent?.filename || "pages",
+            pages.filter((p) => p.url !== page.url),
+          ),
+          generateLinkList(page.parent?.filename || "pages", pages),
+          generateLinkList("nav", pageIndex.filter((p) => p.nav)),
+        ]);
+
+      page.data.links_to_children = links_to_children;
+      page.data.links_to_siblings = links_to_siblings;
+      page.data.links_to_self_and_siblings = links_to_self_and_siblings;
+      page.data.nav_links = nav_links;
+
+      if (page.pages) {
+        await addLinks(page.pages, page);
+      }
+    }),
+  );
 };
 
 export { generatePages, createPages, pageIndex, addLinks };
