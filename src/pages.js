@@ -19,6 +19,22 @@ const isValid = async (filePath) => {
 
 const capitalize = (str) => str.replace(/\b\w/g, (char) => char.toUpperCase());
 
+const parseDate = (dateValue) => {
+  if (dateValue instanceof Date) return dateValue;
+  if (typeof dateValue !== "string") return null;
+
+  // Try DD/MM/YYYY or D/M/YYYY format
+  const ddmmyyyy = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    return new Date(year, month - 1, day);
+  }
+
+  // Try standard Date parsing (ISO, etc.)
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const tagsMap = new Map();
 const pageIndex = [];
 
@@ -89,6 +105,16 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
         Object.assign(page, { data: { ...page.data, ...data }, content });
+
+        // If front matter has a date, parse and format it
+        if (data.date) {
+          const parsedDate = parseDate(data.date);
+          if (parsedDate) {
+            page.dateObj = parsedDate;
+            page.date = parsedDate.toLocaleDateString(undefined, config.dateFormat);
+            page.data.date = page.date;
+          }
+        }
       }
 
       // For directories, we defer recursion separately
@@ -111,8 +137,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           if (a.data.position && b.data.position) {
             return a.data.position - b.data.position;
           }
-          const dateA = new Date(a.created_at);
-          const dateB = new Date(b.created_at);
+          const dateA = a.dateObj || new Date(a.created_at);
+          const dateB = b.dateObj || new Date(b.created_at);
           const sortOrder = (config.date_sort_order || "desc").toLowerCase();
           return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
         });
