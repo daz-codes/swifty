@@ -614,6 +614,51 @@ Your optimized site is now in the `dist/` folder, ready to deploy anywhere that 
 
 ---
 
+## Bonus: Add an RSS Feed
+
+Want customers to subscribe to your bakery's updates? Let's add an RSS feed! First, create a news section.
+
+Create `pages/news/spring-menu.md`:
+
+```markdown
+---
+title: Spring Menu Now Available!
+---
+
+We're excited to announce our new spring menu featuring fresh strawberry tarts, lavender shortbread, and our famous lemon drizzle cake. Stop by and taste the season!
+```
+
+Create `pages/news/holiday-hours.md`:
+
+```markdown
+---
+title: Holiday Hours Update
+---
+
+We'll be closed on Easter Sunday but open extended hours the rest of the holiday weekend. Pre-orders for Easter treats are now open!
+```
+
+Now update your `config.yaml` to enable RSS:
+
+```yaml
+sitename: Sweet Crumbs Bakery
+site_url: https://sweetcrumbs.com
+author: The Sweet Crumbs Team
+tagline: Freshly baked happiness since 2020
+address: 123 Baker Street, Tastyville
+
+rss_feeds:
+  - folder: news
+    title: Sweet Crumbs News
+    description: Updates from your favorite bakery
+```
+
+Rebuild and you'll find `/news/rss.xml` in your dist folder - a valid RSS feed that customers can subscribe to in their favorite feed reader!
+
+You can add feeds for any folder. Running a recipe blog section? Just add `- blog` to the `rss_feeds` list.
+
+---
+
 ## What We Covered
 
 Congratulations! You just built a complete website using:
@@ -626,6 +671,7 @@ Congratulations! You just built a complete website using:
 - **Auto-generated links** - Navigation, breadcrumbs, child/sibling links
 - **Convention over configuration** - Layouts matching folder names
 - **CSS** - Automatically injected stylesheets
+- **RSS feeds** - Auto-generated feeds for content sections
 - **Development server** - Live reload for fast iteration
 - **Production build** - Clean output for deployment
 

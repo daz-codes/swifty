@@ -12,6 +12,7 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **Auto-injected CSS/JS** from your css/ and js/ folders
 - **Code syntax highlighting** via highlight.js
 - **Tags and navigation** generated automatically
+- **RSS feed generation** for blogs and content folders
 - **Optional [Turbo](https://turbo.hotwired.dev/)** for SPA-like transitions
 
 ## Quickstart

@@ -74,3 +74,41 @@ For most sites though, plain HTML is already plenty fast. Only enable Turbo if y
 ## Folder-Level Config
 
 Here's a neat trick: you can add a `config.yaml` inside any folder in `pages/` to set defaults for all pages in that folder. Great for giving a whole section its own author or layout without repeating yourself.
+
+## RSS Feeds
+
+Want to offer RSS feeds for your blog or news section? Easy. Just add the folders you want feeds for:
+
+```yaml
+site_url: https://yoursite.com
+rss_feeds:
+  - blog
+  - news
+```
+
+This generates `/blog/rss.xml` and `/news/rss.xml` automatically, including all pages within those folders.
+
+### Custom Feed Options
+
+Need more control? Use the expanded format:
+
+```yaml
+rss_feeds:
+  - folder: blog
+    title: My Awesome Blog
+    description: Thoughts on code, coffee, and chaos
+  - folder: news
+    title: Company Updates
+    description: The latest from our team
+```
+
+### RSS Config Options
+
+| Option | What it does |
+|--------|--------------|
+| `site_url` | **Required for RSS.** The full URL of your site (used for absolute links in feeds) |
+| `rss_feeds` | List of folders to generate feeds for |
+| `rss_max_items` | Maximum items per feed (default: 20) |
+| `language` | Feed language code (default: "en") |
+
+Each feed includes the page title, URL, publication date, and a description snippet. Feeds are sorted by date with the newest items first.

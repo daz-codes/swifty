@@ -5,6 +5,8 @@ import { dirs, baseDir, defaultConfig } from "./config.js";
 import { getCssImports, getJsImports } from "./assets.js";
 
 const layoutCache = new Map();
+let template = null;
+
 const getLayout = async (layoutName) => {
   if (!layoutName) return null;
   if (!layoutCache.has(layoutName)) {
@@ -44,6 +46,16 @@ const applyLayoutAndWrapContent = async (page,content) => {
     return layoutContent.replace(/\{\{\s*content\s*\}\}/g, () => content);
   };
 
-const template = await createTemplate();
+const getTemplate = async () => {
+  if (!template) {
+    template = await createTemplate();
+  }
+  return template;
+};
 
-export { getLayout, applyLayoutAndWrapContent, template };
+const resetCaches = async () => {
+  layoutCache.clear();
+  template = await createTemplate();
+};
+
+export { getLayout, applyLayoutAndWrapContent, getTemplate, resetCaches };

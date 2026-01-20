@@ -1,7 +1,7 @@
 // pages.js
 import { replacePlaceholders } from "./partials.js";
 import { dirs, defaultConfig, loadConfig } from "./config.js";
-import { template, applyLayoutAndWrapContent } from "./layout.js";
+import { getTemplate, applyLayoutAndWrapContent } from "./layout.js";
 import { marked } from "marked";
 import matter from "gray-matter";
 import fs from "fs/promises";
@@ -78,7 +78,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           undefined,
           config.dateFormat,
         ),
-        date: new Date(stats.mtime).toLocaleDateString(
+        date: new Date(stats.birthtime).toLocaleDateString(
           undefined,
           config.dateFormat,
         ),
@@ -111,7 +111,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           if (a.data.position && b.data.position) {
             return a.data.position - b.data.position;
           }
-          return new Date(a.updated_at) - new Date(b.updated_at);
+          return new Date(b.created_at) - new Date(b.created_at);
         });
 
         page.content = await generateLinkList(page.filename, page.pages);
@@ -177,7 +177,10 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 const generateLinkList = async (name, pages) => {
   const partial = `${name}.md`;
   const partialPath = path.join(dirs.partials, partial);
-  const linksPath = path.join(dirs.partials, defaultConfig.default_link_name || "links");
+  const linksPath = path.join(
+    dirs.partials,
+    defaultConfig.default_link_name || "links",
+  );
   // Check if either file exists in the 'partials' folder
   const fileExists = await fsExtra.pathExists(partialPath);
   const defaultExists = await fsExtra.pathExists(linksPath);
@@ -200,6 +203,7 @@ const render = async (page) => {
   const htmlContent = marked.parse(replacedContent); // Markdown processed once
   const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
   // Use function to avoid $` special replacement patterns in content
+  const template = await getTemplate();
   const htmlWithTemplate = template.replace(
     /\{\{\s*content\s*\}\}/g,
     () => wrappedContent,

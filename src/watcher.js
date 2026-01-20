@@ -80,6 +80,8 @@ function getChangeType(filePath) {
 export default async function watch(outDir = "dist") {
   const build = await import("./build.js");
   const { copySingleAsset, optimizeSingleImage } = await import("./assets.js");
+  const { resetCaches } = await import("./layout.js");
+  const { clearCache: clearPartialCache } = await import("./partials.js");
   const watchPaths = getWatchPaths();
 
   if (watchPaths.length === 0) {
@@ -122,9 +124,11 @@ export default async function watch(outDir = "dist") {
       if (event === "deleted") {
         // For deletions, do a full rebuild to clean up
         console.log(`File deleted: ${filename}. Running full build...`);
+        clearPartialCache();
+        await resetCaches();
         await build.default(outDir);
-      } else if (changeType === "css" || changeType === "js") {
-        // Incremental: just copy the changed asset
+      } else if ((changeType === "css" || changeType === "js") && event === "changed") {
+        // Incremental: just copy the changed asset (only for modifications, not additions)
         console.log(`Asset ${event}: ${filename}`);
         await copySingleAsset(filePath, outDir);
       } else if (changeType === "image") {
@@ -132,8 +136,10 @@ export default async function watch(outDir = "dist") {
         console.log(`Image ${event}: ${filename}`);
         await optimizeSingleImage(filePath, outDir);
       } else {
-        // Full rebuild for pages, layouts, partials, config
+        // Full rebuild for pages, layouts, partials, config, and new CSS/JS files
         console.log(`File ${event}: ${filename}. Running full build...`);
+        clearPartialCache();
+        await resetCaches();
         await build.default(outDir);
       }
       // Trigger browser refresh

@@ -74,4 +74,8 @@ const replacePlaceholders = async (template, values) => {
   return template;
 };
 
-export { loadPartial, replacePlaceholders };
+const clearCache = () => {
+  partialCache.clear();
+};
+
+export { loadPartial, replacePlaceholders, clearCache };

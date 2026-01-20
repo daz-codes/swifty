@@ -28,7 +28,7 @@ npx swifty build --out dir  # Build to custom output directory
 ### Build Pipeline
 
 ```
-copyAssets → optimizeImages → generatePages → addLinks → createPages
+copyAssets → optimizeImages → generatePages → addLinks → createPages → generateRssFeeds
 ```
 
 ### Core Modules (src/)
@@ -41,6 +41,7 @@ copyAssets → optimizeImages → generatePages → addLinks → createPages
 - **assets.js** - Copies CSS/JS, optimizes images to WebP using Sharp
 - **config.js** - Loads config.yaml/yml/json, provides directory mappings
 - **watcher.js** - Uses chokidar to watch files and trigger rebuilds
+- **rss.js** - Generates RSS feeds for configured folders
 
 ### Directory Conventions
 
@@ -72,6 +73,22 @@ tags: [tag1, tag2]
 position: 1  # Sort order for navigation
 ---
 ```
+
+### RSS Feeds
+
+Configure RSS feeds in `config.yaml` to auto-generate feeds for specific folders:
+```yaml
+site_url: https://example.com  # Required for full URLs in feed
+rss_feeds:
+  - blog                        # Simple: generates /blog/rss.xml
+  - folder: news                # With options
+    title: News Feed
+    description: Latest news updates
+```
+
+Additional RSS config options:
+- `rss_max_items: 20` - Maximum items per feed (default: 20)
+- `language: en` - Feed language (default: en)
 
 ## Key Implementation Details
 
