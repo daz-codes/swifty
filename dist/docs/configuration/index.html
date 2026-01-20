@@ -118,6 +118,50 @@ Written by {{ author }}.
 <p>For most sites though, plain HTML is already plenty fast. Only enable Turbo if you really want those buttery transitions.</p>
 <h2>Folder-Level Config</h2>
 <p>Here&#39;s a neat trick: you can add a <code>config.yaml</code> inside any folder in <code>pages/</code> to set defaults for all pages in that folder. Great for giving a whole section its own author or layout without repeating yourself.</p>
+<h2>RSS Feeds</h2>
+<p>Want to offer RSS feeds for your blog or news section? Easy. Just add the folders you want feeds for:</p>
+<pre><code class="language-yaml">site_url: https://yoursite.com
+rss_feeds:
+  - blog
+  - news
+</code></pre>
+<p>This generates <code>/blog/rss.xml</code> and <code>/news/rss.xml</code> automatically, including all pages within those folders.</p>
+<h3>Custom Feed Options</h3>
+<p>Need more control? Use the expanded format:</p>
+<pre><code class="language-yaml">rss_feeds:
+  - folder: blog
+    title: My Awesome Blog
+    description: Thoughts on code, coffee, and chaos
+  - folder: news
+    title: Company Updates
+    description: The latest from our team
+</code></pre>
+<h3>RSS Config Options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>site_url</code></td>
+<td><strong>Required for RSS.</strong> The full URL of your site (used for absolute links in feeds)</td>
+</tr>
+<tr>
+<td><code>rss_feeds</code></td>
+<td>List of folders to generate feeds for</td>
+</tr>
+<tr>
+<td><code>rss_max_items</code></td>
+<td>Maximum items per feed (default: 20)</td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Feed language code (default: &quot;en&quot;)</td>
+</tr>
+</tbody></table>
+<p>Each feed includes the page title, URL, publication date, and a description snippet. Feeds are sorted by date with the newest items first.</p>
 
   </div>
 </div>

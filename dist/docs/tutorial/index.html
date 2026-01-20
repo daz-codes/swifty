@@ -78,12 +78,12 @@ npx swifty init
   &lt;/main&gt;
 
   &lt;footer class=&quot;site-footer&quot;&gt;
-    &lt;p&gt;Include &quot;footer&quot; not found.&lt;/p&gt;
+    {{ partial: footer }}
   &lt;/footer&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre>
-<p>Notice we&#39;re using <code>&lt;p&gt;Include &quot;footer&quot; not found.&lt;/p&gt;</code> - we&#39;ll create that partial soon.</p>
+<p>Notice we&#39;re using <code>{{ partial: footer }}</code> - we&#39;ll create that partial soon.</p>
 <hr>
 <h2>Step 3: Configuration</h2>
 <p>Open <code>config.yaml</code> and set up our site:</p>
@@ -320,7 +320,7 @@ We&#39;re located in the heart of downtown Tastyville, just two blocks from the 
   &lt;p&gt;&amp;copy; 2025 {{ sitename }}. Baked with love.&lt;/p&gt;
 &lt;/div&gt;
 </code></pre>
-<p>This appears on every page thanks to <code>&lt;p&gt;Include &quot;footer&quot; not found.&lt;/p&gt;</code> in our template.</p>
+<p>This appears on every page thanks to <code>{{ partial: footer }}</code> in our template.</p>
 <hr>
 <h2>Step 11: Navigation Partial</h2>
 <p>Let&#39;s customize how nav links look. Create <code>partials/nav.md</code>:</p>
@@ -543,6 +543,37 @@ th {
 </code></pre>
 <p>Your optimized site is now in the <code>dist/</code> folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.</p>
 <hr>
+<h2>Bonus: Add an RSS Feed</h2>
+<p>Want customers to subscribe to your bakery&#39;s updates? Let&#39;s add an RSS feed! First, create a news section.</p>
+<p>Create <code>pages/news/spring-menu.md</code>:</p>
+<pre><code class="language-markdown">---
+title: Spring Menu Now Available!
+---
+
+We&#39;re excited to announce our new spring menu featuring fresh strawberry tarts, lavender shortbread, and our famous lemon drizzle cake. Stop by and taste the season!
+</code></pre>
+<p>Create <code>pages/news/holiday-hours.md</code>:</p>
+<pre><code class="language-markdown">---
+title: Holiday Hours Update
+---
+
+We&#39;ll be closed on Easter Sunday but open extended hours the rest of the holiday weekend. Pre-orders for Easter treats are now open!
+</code></pre>
+<p>Now update your <code>config.yaml</code> to enable RSS:</p>
+<pre><code class="language-yaml">sitename: Sweet Crumbs Bakery
+site_url: https://sweetcrumbs.com
+author: The Sweet Crumbs Team
+tagline: Freshly baked happiness since 2020
+address: 123 Baker Street, Tastyville
+
+rss_feeds:
+  - folder: news
+    title: Sweet Crumbs News
+    description: Updates from your favorite bakery
+</code></pre>
+<p>Rebuild and you&#39;ll find <code>/news/rss.xml</code> in your dist folder - a valid RSS feed that customers can subscribe to in their favorite feed reader!</p>
+<p>You can add feeds for any folder. Running a recipe blog section? Just add <code>- blog</code> to the <code>rss_feeds</code> list.</p>
+<hr>
 <h2>What We Covered</h2>
 <p>Congratulations! You just built a complete website using:</p>
 <ul>
@@ -554,6 +585,7 @@ th {
 <li><strong>Auto-generated links</strong> - Navigation, breadcrumbs, child/sibling links</li>
 <li><strong>Convention over configuration</strong> - Layouts matching folder names</li>
 <li><strong>CSS</strong> - Automatically injected stylesheets</li>
+<li><strong>RSS feeds</strong> - Auto-generated feeds for content sections</li>
 <li><strong>Development server</strong> - Live reload for fast iteration</li>
 <li><strong>Production build</strong> - Clean output for deployment</li>
 </ul>
