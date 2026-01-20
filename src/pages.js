@@ -111,7 +111,10 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           if (a.data.position && b.data.position) {
             return a.data.position - b.data.position;
           }
-          return new Date(b.created_at) - new Date(b.created_at);
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          const sortOrder = (config.date_sort_order || "desc").toLowerCase();
+          return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
         });
 
         page.content = await generateLinkList(page.filename, page.pages);
