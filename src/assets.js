@@ -101,6 +101,18 @@ const getJsImports = () =>
     (file) => `<script src="/js/${file}"></script>`,
     validExtensions.js,
   );
+const getCssPreloads = () =>
+  generateAssetImports(
+    dirs.css,
+    (file) => `<link rel="preload" href="/css/${file}" as="style" />`,
+    validExtensions.css,
+  );
+const getJsPreloads = () =>
+  generateAssetImports(
+    dirs.js,
+    (file) => `<link rel="preload" href="/js/${file}" as="script" />`,
+    validExtensions.js,
+  );
 
 // Copy a single asset file (CSS or JS)
 const copySingleAsset = async (filePath, outputDir = dirs.dist) => {
@@ -155,4 +167,4 @@ const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
   return true;
 };
 
-export { copyAssets, optimizeImages, getCssImports, getJsImports, copySingleAsset, optimizeSingleImage };
+export { copyAssets, optimizeImages, getCssImports, getJsImports, getCssPreloads, getJsPreloads, copySingleAsset, optimizeSingleImage };

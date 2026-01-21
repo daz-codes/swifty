@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import { dirs, baseDir, defaultConfig } from "./config.js";
-import { getCssImports, getJsImports } from "./assets.js";
+import { getCssImports, getJsImports, getCssPreloads, getJsPreloads } from "./assets.js";
 
 const layoutCache = new Map();
 let template = null;
@@ -25,17 +25,36 @@ const createTemplate = async () => {
   // Read the template from pages folder
   const templatePath = path.join(baseDir, 'template.html');
   const templateContent = await fs.readFile(templatePath, 'utf-8');
+
+  // Preconnect hints for external CDNs (improves connection setup time)
+  const preconnectHints = [
+    '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>',
+    '<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">',
+    ...(defaultConfig.turbo ? [
+      '<link rel="preconnect" href="https://esm.sh" crossorigin>',
+      '<link rel="dns-prefetch" href="https://esm.sh">',
+    ] : []),
+  ].join('\n');
+
   const turboScript = defaultConfig.turbo
     ? `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`
     : '';
   const livereloadScript = process.env.SWIFTY_WATCH
     ? `<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>`
     : '';
+
+  // Preload local assets for faster loading
+  const cssPreloads = await getCssPreloads();
+  const jsPreloads = await getJsPreloads();
+  const preloads = [cssPreloads, jsPreloads].filter(Boolean).join('\n');
+
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
   const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
-  const template = templateContent.replace('</head>', `${turboScript}\n${highlightCSS}\n${imports}\n${livereloadScript}\n</head>`);
+
+  // Order: preconnect hints -> preloads -> actual assets -> scripts
+  const template = templateContent.replace('</head>', `${preconnectHints}\n${preloads}\n${turboScript}\n${highlightCSS}\n${imports}\n${livereloadScript}\n</head>`);
   return template;
 };
 
