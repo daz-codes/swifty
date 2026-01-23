@@ -13,11 +13,11 @@
   <title>Swifty</title>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="preload" href="/css/custom.css?v=1769119783592" as="style" />
+<link rel="preload" href="/css/custom.css?v=1742682364000" as="style" />
 <link rel="preload" href="/css/simple.css?v=1744487809186" as="style" />
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
-<link rel="stylesheet" href="/css/custom.css?v=1769119783592" />
+<link rel="stylesheet" href="/css/custom.css?v=1742682364000" />
 <link rel="stylesheet" href="/css/simple.css?v=1744487809186" />
 
 </head>
@@ -85,6 +85,14 @@ anything_you_want: totally works
 <td><code>position</code></td>
 <td>Sort order in navigation (lower = first)</td>
 </tr>
+<tr>
+<td><code>draft</code></td>
+<td>Set to <code>true</code> to hide page in production builds</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>Page date; future dates hide the page until that date</td>
+</tr>
 </tbody></table>
 <h3>Custom Properties</h3>
 <p>Here&#39;s the fun part: add <em>any</em> property you like and use it in your content:</p>
@@ -122,6 +130,32 @@ rating: 5 stars
 <li>Tags create their own pages automatically</li>
 </ul>
 <p>You <em>can</em> override these defaults, but you often won&#39;t need to.</p>
+<h2>Draft Pages</h2>
+<p>Working on something that&#39;s not ready for prime time? Mark it as a draft:</p>
+<pre><code class="language-markdown">---
+title: My Work In Progress
+draft: true
+---
+</code></pre>
+<p>Draft pages:</p>
+<ul>
+<li><strong>Show</strong> during development (<code>swifty start</code>)</li>
+<li><strong>Hidden</strong> in production builds (<code>swifty build</code>)</li>
+</ul>
+<p>This means drafts won&#39;t appear in navigation, tag pages, or RSS feeds when you deploy. Perfect for previewing work before publishing.</p>
+<h2>Scheduled Pages</h2>
+<p>Want to publish a page at a future date? Just set the date in front matter:</p>
+<pre><code class="language-markdown">---
+title: Coming Soon
+date: 2025-06-15
+---
+</code></pre>
+<p>Pages with a future date:</p>
+<ul>
+<li><strong>Show</strong> during development (<code>swifty start</code>)</li>
+<li><strong>Hidden</strong> in production builds until the date arrives</li>
+</ul>
+<p>This lets you write content ahead of time and have it automatically appear when you next build after the scheduled date.</p>
 <h2>Auto-Generated Goodness</h2>
 <p>Every page automatically gets some handy variables:</p>
 <table>

@@ -13,11 +13,11 @@
   <title>Swifty</title>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="preload" href="/css/custom.css?v=1769119783592" as="style" />
+<link rel="preload" href="/css/custom.css?v=1742682364000" as="style" />
 <link rel="preload" href="/css/simple.css?v=1744487809186" as="style" />
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
-<link rel="stylesheet" href="/css/custom.css?v=1769119783592" />
+<link rel="stylesheet" href="/css/custom.css?v=1742682364000" />
 <link rel="stylesheet" href="/css/simple.css?v=1744487809186" />
 
 </head>
@@ -34,6 +34,12 @@
   <h1>Swifty Roadmap</h1>
   <p>Here&#39;s what&#39;s cooking in the Swifty kitchen. Some of these are half-baked ideas, others are ready to go. Got a feature request? We&#39;re all ears!</p>
 <h2>Recently Shipped</h2>
+<h3>RSS Feeds</h3>
+<p>Auto-generate RSS/Atom feeds for blog sections. Configure in <code>config.yaml</code> and feeds are created automatically.</p>
+<h3>Draft Pages</h3>
+<p>Pages with <code>draft: true</code> in front matter are visible during development but hidden in production builds. Perfect for work-in-progress content.</p>
+<h3>Scheduled Publishing</h3>
+<p>Set a future <code>date</code> in front matter and the page stays hidden until that date arrives. Write content ahead of time and publish on schedule.</p>
 <h3>Full Tutorial</h3>
 <p>A complete <a href="/docs/tutorial">step-by-step guide</a> building a bakery brochure site from scratch, using every Swifty feature along the way.</p>
 <h3>Live Reload</h3>
@@ -47,14 +53,10 @@
 <p>Add search functionality to find pages across your site. Probably a simple client-side search using a generated JSON index.</p>
 <h3>Templating Languages</h3>
 <p>Support for Liquid, Nunjucks, or similar templating for more complex logic in layouts.</p>
-<h3>RSS Feeds</h3>
-<p>Auto-generate RSS/Atom feeds for blog sections.</p>
 <h3>Sitemap Generation</h3>
 <p>Automatic sitemap.xml for better SEO.</p>
 <h2>Maybe Someday</h2>
 <ul>
-<li><strong>Drafts</strong>: Pages that build locally but not in production</li>
-<li><strong>Scheduled posts</strong>: Future-dated pages that only appear after their date</li>
 <li><strong>Image galleries</strong>: Special handling for image-heavy pages</li>
 <li><strong>i18n support</strong>: Multi-language sites with automatic linking</li>
 </ul>
