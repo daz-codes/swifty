@@ -305,12 +305,12 @@ rss_feeds:
 
     it("should inject CSS link in template", async () => {
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
-      assert.ok(content.includes('href="/css/style.css"'), "should have CSS link tag");
+      assert.ok(/href="\/css\/style\.css\?v=\d+"/.test(content), "should have CSS link tag with cache-busting query string");
     });
 
     it("should inject JS script in template", async () => {
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
-      assert.ok(content.includes('src="/js/main.js"'), "should have JS script tag");
+      assert.ok(/src="\/js\/main\.js\?v=\d+"/.test(content), "should have JS script tag with cache-busting query string");
     });
   });
 

@@ -127,10 +127,11 @@ export default async function watch(outDir = "dist") {
         clearPartialCache();
         await resetCaches();
         await build.default(outDir);
-      } else if ((changeType === "css" || changeType === "js") && event === "changed") {
-        // Incremental: just copy the changed asset (only for modifications, not additions)
-        console.log(`Asset ${event}: ${filename}`);
-        await copySingleAsset(filePath, outDir);
+      } else if (changeType === "css" || changeType === "js") {
+        // Full rebuild for CSS/JS to update cache-busting query strings in HTML
+        console.log(`Asset ${event}: ${filename}. Rebuilding...`);
+        await resetCaches();
+        await build.default(outDir);
       } else if (changeType === "image") {
         // Incremental: just process the changed image
         console.log(`Image ${event}: ${filename}`);

@@ -143,6 +143,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
       const { page, isDirectory } = result;
 
+      // Skip draft pages in production builds
+      if (page.data.draft && !process.env.SWIFTY_WATCH) return;
+
+      // Skip scheduled pages (future date) in production builds
+      if (page.dateObj && page.dateObj > new Date() && !process.env.SWIFTY_WATCH) return;
+
       if (isDirectory) {
         page.pages = await generatePages(page.filePath, baseDir, page);
 

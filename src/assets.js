@@ -4,6 +4,12 @@ import path from "path";
 import sharp from "sharp";
 import { dirs, defaultConfig } from "./config.js";
 
+// Get file modification timestamp for cache busting
+const getFileMtime = async (filePath) => {
+  const stats = await fs.stat(filePath);
+  return Math.floor(stats.mtimeMs);
+};
+
 const validExtensions = {
   css: [".css"],
   js: [".js"],
@@ -83,34 +89,40 @@ async function optimizeImages(outputDir = dirs.dist) {
 const generateAssetImports = async (dir, tagTemplate, validExts) => {
   if (!(await fsExtra.pathExists(dir))) return "";
   const files = await fs.readdir(dir);
-  return files
+  const validFiles = files
     .filter((file) => validExts.includes(path.extname(file).toLowerCase()))
-    .sort()
-    .map((file) => tagTemplate(file))
-    .join("\n");
+    .sort();
+
+  const imports = await Promise.all(
+    validFiles.map(async (file) => {
+      const mtime = await getFileMtime(path.join(dir, file));
+      return tagTemplate(file, mtime);
+    })
+  );
+  return imports.join("\n");
 };
 const getCssImports = () =>
   generateAssetImports(
     dirs.css,
-    (file) => `<link rel="stylesheet" href="/css/${file}" />`,
+    (file, mtime) => `<link rel="stylesheet" href="/css/${file}?v=${mtime}" />`,
     validExtensions.css,
   );
 const getJsImports = () =>
   generateAssetImports(
     dirs.js,
-    (file) => `<script src="/js/${file}"></script>`,
+    (file, mtime) => `<script src="/js/${file}?v=${mtime}"></script>`,
     validExtensions.js,
   );
 const getCssPreloads = () =>
   generateAssetImports(
     dirs.css,
-    (file) => `<link rel="preload" href="/css/${file}" as="style" />`,
+    (file, mtime) => `<link rel="preload" href="/css/${file}?v=${mtime}" as="style" />`,
     validExtensions.css,
   );
 const getJsPreloads = () =>
   generateAssetImports(
     dirs.js,
-    (file) => `<link rel="preload" href="/js/${file}" as="script" />`,
+    (file, mtime) => `<link rel="preload" href="/js/${file}?v=${mtime}" as="script" />`,
     validExtensions.js,
   );
 

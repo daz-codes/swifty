@@ -51,6 +51,8 @@ anything_you_want: totally works
 | `layout` | Which layout to use (see [Layouts](/docs/layouts)) |
 | `tags` | List of tags for categorization |
 | `position` | Sort order in navigation (lower = first) |
+| `draft` | Set to `true` to hide page in production builds |
+| `date` | Page date; future dates hide the page until that date |
 
 ### Custom Properties
 
@@ -99,6 +101,40 @@ This is a concept borrowed from [Ruby on Rails](https://rubyonrails.org). Swifty
 - Tags create their own pages automatically
 
 You *can* override these defaults, but you often won't need to.
+
+## Draft Pages
+
+Working on something that's not ready for prime time? Mark it as a draft:
+
+```markdown
+---
+title: My Work In Progress
+draft: true
+---
+```
+
+Draft pages:
+- **Show** during development (`swifty start`)
+- **Hidden** in production builds (`swifty build`)
+
+This means drafts won't appear in navigation, tag pages, or RSS feeds when you deploy. Perfect for previewing work before publishing.
+
+## Scheduled Pages
+
+Want to publish a page at a future date? Just set the date in front matter:
+
+```markdown
+---
+title: Coming Soon
+date: 2025-06-15
+---
+```
+
+Pages with a future date:
+- **Show** during development (`swifty start`)
+- **Hidden** in production builds until the date arrives
+
+This lets you write content ahead of time and have it automatically appear when you next build after the scheduled date.
 
 ## Auto-Generated Goodness
 

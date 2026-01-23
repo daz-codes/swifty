@@ -71,6 +71,8 @@ title: Page Title
 layout: custom_layout
 tags: [tag1, tag2]
 position: 1  # Sort order for navigation
+draft: true  # Only show in development (swifty start), hide in production (swifty build)
+date: 2025-06-15  # Future dates hide page until that date (scheduled publishing)
 ---
 ```
 
