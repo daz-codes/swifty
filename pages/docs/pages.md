@@ -53,6 +53,10 @@ anything_you_want: totally works
 | `position` | Sort order in navigation (lower = first) |
 | `draft` | Set to `true` to hide page in production builds |
 | `date` | Page date; future dates hide the page until that date |
+| `nav` | Set to `true` to include in main nav, `false` to exclude |
+| `description` | Short description (used for Open Graph tags) |
+| `image` | Image URL for social sharing (used for og:image) |
+| `summary` | Brief summary of the page content |
 
 ### Custom Properties
 
@@ -150,5 +154,11 @@ Every page automatically gets some handy variables:
 | `<%= date %>` | Formatted last-modified date |
 | `<%= created_at %>` | Formatted creation date |
 | `<%= updated_at %>` | Formatted update date |
+| `<%= word_count %>` | Number of words in the page |
+| `<%= reading_time %>` | Estimated reading time (e.g., "2 min read") |
+| `<%= prev_page %>` | Link to previous sibling page |
+| `<%= next_page %>` | Link to next sibling page |
+| `<%= og_tags %>` | Open Graph meta tags for social sharing |
+| `<%= pagination %>` | Pagination navigation (for paginated folders) |
 
 Just drop these into your layouts or pages wherever you need them.

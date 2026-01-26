@@ -93,6 +93,22 @@ anything_you_want: totally works
 <td><code>date</code></td>
 <td>Page date; future dates hide the page until that date</td>
 </tr>
+<tr>
+<td><code>nav</code></td>
+<td>Set to <code>true</code> to include in main nav, <code>false</code> to exclude</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Short description (used for Open Graph tags)</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image URL for social sharing (used for og:image)</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>Brief summary of the page content</td>
+</tr>
 </tbody></table>
 <h3>Custom Properties</h3>
 <p>Here&#39;s the fun part: add <em>any</em> property you like and use it in your content:</p>
@@ -196,6 +212,30 @@ date: 2025-06-15
 <tr>
 <td><code>&lt;%= updated_at %&gt;</code></td>
 <td>Formatted update date</td>
+</tr>
+<tr>
+<td><code>&lt;%= word_count %&gt;</code></td>
+<td>Number of words in the page</td>
+</tr>
+<tr>
+<td><code>&lt;%= reading_time %&gt;</code></td>
+<td>Estimated reading time (e.g., &quot;2 min read&quot;)</td>
+</tr>
+<tr>
+<td><code>&lt;%= prev_page %&gt;</code></td>
+<td>Link to previous sibling page</td>
+</tr>
+<tr>
+<td><code>&lt;%= next_page %&gt;</code></td>
+<td>Link to next sibling page</td>
+</tr>
+<tr>
+<td><code>&lt;%= og_tags %&gt;</code></td>
+<td>Open Graph meta tags for social sharing</td>
+</tr>
+<tr>
+<td><code>&lt;%= pagination %&gt;</code></td>
+<td>Pagination navigation (for paginated folders)</td>
 </tr>
 </tbody></table>
 <p>Just drop these into your layouts or pages wherever you need them.</p>

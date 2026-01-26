@@ -291,6 +291,58 @@ For celebrations or just because.
 
 ---
 
+## Step 7b: Customize Menu Links with a Partial
+
+By default, `<%= links_to_children %>` outputs a simple list of links. But what if you want richer previews with descriptions? Create a partial that matches the folder name!
+
+Create `partials/menu.md`:
+
+```html
+<div class="menu-card">
+  <h3><a href="<%= url %>"><%= title %></a></h3>
+  <% if (summary) { %>
+    <p><%= summary %></p>
+  <% } %>
+</div>
+```
+
+**The magic:** When Swifty generates the index page for any folder, it looks for a partial with the same name as the folder. Since this partial is named `menu.md`, it automatically applies to the `pages/menu/` folder. Each child page is rendered through this template.
+
+Now let's add summaries to our menu pages. Update the front matter:
+
+**pages/menu/breads.md**
+```yaml
+---
+title: Artisan Breads
+position: 1
+summary: Sourdough, baguettes, focaccia and more - baked fresh every morning.
+---
+```
+
+**pages/menu/pastries.md**
+```yaml
+---
+title: Pastries
+position: 2
+summary: Flaky croissants, pain au chocolat, and sweet Danish treats.
+---
+```
+
+**pages/menu/cakes.md**
+```yaml
+---
+title: Cakes & Treats
+position: 3
+summary: Celebration cakes, brownies, cookies, and French macarons.
+---
+```
+
+Now instead of plain links, your menu index shows styled cards with descriptions!
+
+This pattern works for any folder - create `partials/news.md` to customize how news items appear, `partials/blog.md` for blog posts, etc. If no matching partial exists, Swifty falls back to the default `links` partial or simple HTML links.
+
+---
+
 ## Step 8: Menu Layout
 
 Let's give menu pages their own look. Create `layouts/menu.html`:
@@ -406,6 +458,40 @@ Let's customize how nav links look. Create `partials/nav.md`:
 ```
 
 Swifty uses this partial when generating `<%= nav_links %>`.
+
+### Controlling Navigation
+
+By default, top-level pages (direct children of `pages/`) appear in the main navigation, while nested pages don't. You can override this with front matter.
+
+**Hide a top-level page from nav:**
+
+Say we want a "Terms & Conditions" page that shouldn't clutter the main menu. Create `pages/terms.md`:
+
+```markdown
+---
+title: Terms & Conditions
+nav: false
+---
+
+# Terms & Conditions
+
+Standard legal stuff here...
+```
+
+The page exists at `/terms/` but won't appear in `<%= nav_links %>`.
+
+**Add a nested page to nav:**
+
+Want your News section in the main menu? Update `pages/news/index.md`:
+
+```markdown
+---
+title: News
+nav: true
+---
+```
+
+Now the News link appears alongside About, Menu, and Contact in the main navigation.
 
 ---
 
@@ -584,6 +670,32 @@ th {
 
 .menu-sidebar a:hover {
   color: #8B4513;
+}
+
+/* Menu Cards (from folder partial) */
+.menu-card {
+  background: #f9f5f0;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.menu-card h3 {
+  margin: 0 0 10px;
+}
+
+.menu-card h3 a {
+  color: #8B4513;
+  text-decoration: none;
+}
+
+.menu-card h3 a:hover {
+  text-decoration: underline;
+}
+
+.menu-card p {
+  margin: 0;
+  color: #666;
 }
 
 /* Footer */
@@ -823,8 +935,10 @@ Congratulations! You just built a complete website using:
 - **Pages** - Markdown content with front matter
 - **Layouts** - Different wrappers for different sections
 - **Partials** - Reusable content snippets
+- **Folder-matching partials** - Partials named after folders customize index pages
 - **Auto-generated links** - Navigation, breadcrumbs, child/sibling links
-- **Convention over configuration** - Layouts matching folder names
+- **Navigation control** - Opt pages in or out of the main nav with front matter
+- **Convention over configuration** - Layouts and partials matching folder names
 - **CSS** - Automatically injected stylesheets
 - **RSS feeds** - Auto-generated feeds for content sections
 - **Data files** - JSON/YAML data for structured content

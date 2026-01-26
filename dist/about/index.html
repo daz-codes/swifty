@@ -39,7 +39,8 @@
 <pre><code class="language-bash">npm install @daz4126/swifty
 </code></pre>
 <h4>2. Start a new project:</h4>
-<pre><code class="language-bash">npx swifty init
+<pre><code class="language-bash">npx swifty &quot;my_swifty_site&quot;
+cd my_swifty_site
 </code></pre>
 <h4>3. Add some more pages to the &#39;pages&#39; folder (just write them in Markdown).</h4>
 <h4>4. Start the development server:</h4>
@@ -50,7 +51,11 @@
 <pre><code class="language-bash">npx swifty build
 </code></pre>
 <p>This creates a clean build in the <code>dist/</code> folder ready for deployment (without any development scripts).</p>
-<h4>6. <a href="/docs">Learn More</a> about all the other features, including layouts, partials and front-matter configuration.</h4>
+<h4>6. Deploy:</h4>
+<p>If you have a remote git repository set up with a deploy pipeline (using a service such as Render or Netlify) then this will build and deploy the site automatically:</p>
+<pre><code class="language-bash">npx swifty deploy
+</code></pre>
+<h4>7. <a href="/docs">Learn More</a> about all the other features, including layouts, partials and front-matter configuration.</h4>
 
 </div>
 

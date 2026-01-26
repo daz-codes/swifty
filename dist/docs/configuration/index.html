@@ -40,14 +40,25 @@
 <p>Here&#39;s everything you can configure, with the defaults shown:</p>
 <pre><code class="language-yaml">sitename: Swifty
 author: Taylor Swift
+site_url: https://yoursite.com
 breadcrumb_separator: &quot;&amp;raquo;&quot;
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link
 tag_class: tag
+prev_next_class: swifty_link
 default_layout_name: default
 default_link_name: links
 max_image_size: 800
 turbo: false
+
+# Pagination
+page_count: 10
+pagination_class: swifty_pagination
+pagination_link_class: swifty_pagination_link
+pagination_current_class: swifty_pagination_current
+
+# Sorting
+date_sort_order: desc
 
 dateFormat:
   weekday: short
@@ -72,6 +83,10 @@ dateFormat:
 <td>Your name (or whoever&#39;s taking credit)</td>
 </tr>
 <tr>
+<td><code>site_url</code></td>
+<td>Full URL of your site (required for RSS feeds and Open Graph tags)</td>
+</tr>
+<tr>
 <td><code>breadcrumb_separator</code></td>
 <td>The character between breadcrumb links</td>
 </tr>
@@ -88,6 +103,10 @@ dateFormat:
 <td>CSS class for tag links</td>
 </tr>
 <tr>
+<td><code>prev_next_class</code></td>
+<td>CSS class for previous/next page links</td>
+</tr>
+<tr>
 <td><code>default_layout_name</code></td>
 <td>The fallback layout when no other applies</td>
 </tr>
@@ -102,6 +121,26 @@ dateFormat:
 <tr>
 <td><code>turbo</code></td>
 <td>Enable Turbo for SPA-like navigation</td>
+</tr>
+<tr>
+<td><code>page_count</code></td>
+<td>Number of items per page before pagination kicks in</td>
+</tr>
+<tr>
+<td><code>pagination_class</code></td>
+<td>CSS class for the pagination container</td>
+</tr>
+<tr>
+<td><code>pagination_link_class</code></td>
+<td>CSS class for pagination links</td>
+</tr>
+<tr>
+<td><code>pagination_current_class</code></td>
+<td>CSS class for the current page indicator</td>
+</tr>
+<tr>
+<td><code>date_sort_order</code></td>
+<td>Sort order for pages by date: &quot;desc&quot; (newest first) or &quot;asc&quot;</td>
 </tr>
 <tr>
 <td><code>dateFormat</code></td>

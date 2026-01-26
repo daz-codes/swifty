@@ -117,6 +117,7 @@ draft: true  # Only show in development (swifty start), hide in production (swif
 date: 2025-06-15  # Future dates hide page until that date (scheduled publishing)
 description: Short page description  # Used for og:description
 image: /images/hero.jpg  # Used for og:image
+nav: true  # Include in main navigation (opt in nested pages, opt out top-level pages with false)
 ---
 ```
 

@@ -120,6 +120,11 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         const { data, content } = matter(markdownContent);
         Object.assign(page, { meta: { ...page.meta, ...data }, content });
 
+        // Allow front matter to override nav (opt in or opt out)
+        if (typeof data.nav === "boolean") {
+          page.nav = data.nav;
+        }
+
         // If front matter has a date, parse and format it
         if (data.date) {
           const parsedDate = parseDate(data.date);

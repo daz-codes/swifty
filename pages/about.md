@@ -21,7 +21,8 @@ npm install @daz4126/swifty
 #### 2. Start a new project:
 
 ```bash
-npx swifty init
+npx swifty "my_swifty_site"
+cd my_swifty_site
 ```
 
 #### 3. Add some more pages to the 'pages' folder (just write them in Markdown).
@@ -42,4 +43,12 @@ npx swifty build
 
 This creates a clean build in the `dist/` folder ready for deployment (without any development scripts).
 
-#### 6. [Learn More](/docs) about all the other features, including layouts, partials and front-matter configuration.
+#### 6. Deploy:
+
+If you have a remote git repository set up with a deploy pipeline (using a service such as Render or Netlify) then this will build and deploy the site automatically:
+
+```bash
+npx swifty deploy
+```
+
+#### 7. [Learn More](/docs) about all the other features, including layouts, partials and front-matter configuration.

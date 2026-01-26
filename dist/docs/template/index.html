@@ -76,8 +76,8 @@
 <h2>Template Variables</h2>
 <p>Swifty uses <a href="https://eta.js.org/">Eta</a> with EJS-style syntax for templates:</p>
 <ul>
-<li><code>&lt;%= variable %&gt;</code> - Output a variable</li>
-<li><code>&lt;%= variable %&gt;</code> - Same as above (both work identically)</li>
+<li><code>&lt;%= variable %&gt;</code> - Output a variable (escaped)</li>
+<li><code>&lt;%- variable %&gt;</code> - Output a variable (unescaped, same result since autoEscape is off)</li>
 <li><code>&lt;% code %&gt;</code> - Execute JavaScript without output</li>
 </ul>
 <table>
@@ -117,6 +117,41 @@
 <td><code>author</code></td>
 <td><code>&lt;%= author %&gt;</code></td>
 <td>Author from config or page</td>
+</tr>
+<tr>
+<td><code>og_tags</code></td>
+<td><code>&lt;%= og_tags %&gt;</code></td>
+<td>Open Graph meta tags for social sharing</td>
+</tr>
+<tr>
+<td><code>word_count</code></td>
+<td><code>&lt;%= word_count %&gt;</code></td>
+<td>Number of words in the page content</td>
+</tr>
+<tr>
+<td><code>reading_time</code></td>
+<td><code>&lt;%= reading_time %&gt;</code></td>
+<td>Estimated reading time (e.g., &quot;3 min read&quot;)</td>
+</tr>
+<tr>
+<td><code>prev_page</code></td>
+<td><code>&lt;%= prev_page %&gt;</code></td>
+<td>Link to previous sibling page</td>
+</tr>
+<tr>
+<td><code>next_page</code></td>
+<td><code>&lt;%= next_page %&gt;</code></td>
+<td>Link to next sibling page</td>
+</tr>
+<tr>
+<td><code>pagination</code></td>
+<td><code>&lt;%= pagination %&gt;</code></td>
+<td>Pagination nav for paginated folders</td>
+</tr>
+<tr>
+<td><code>data.*</code></td>
+<td><code>&lt;%= data.team %&gt;</code></td>
+<td>Data from JSON/YAML files in <code>data/</code> folder</td>
 </tr>
 </tbody></table>
 <h2>Using JavaScript in Templates</h2>

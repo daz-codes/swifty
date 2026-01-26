@@ -265,6 +265,42 @@ For celebrations or just because.
 **Custom cakes available!** Order at least 3 days in advance. Ask at the counter for details.
 </code></pre>
 <hr>
+<h2>Step 7b: Customize Menu Links with a Partial</h2>
+<p>By default, <code>&lt;%= links_to_children %&gt;</code> outputs a simple list of links. But what if you want richer previews with descriptions? Create a partial that matches the folder name!</p>
+<p>Create <code>partials/menu.md</code>:</p>
+<pre><code class="language-html">&lt;div class=&quot;menu-card&quot;&gt;
+  &lt;h3&gt;&lt;a href=&quot;&lt;%= url %&gt;&quot;&gt;&lt;%= title %&gt;&lt;/a&gt;&lt;/h3&gt;
+  &lt;% if (summary) { %&gt;
+    &lt;p&gt;&lt;%= summary %&gt;&lt;/p&gt;
+  &lt;% } %&gt;
+&lt;/div&gt;
+</code></pre>
+<p><strong>The magic:</strong> When Swifty generates the index page for any folder, it looks for a partial with the same name as the folder. Since this partial is named <code>menu.md</code>, it automatically applies to the <code>pages/menu/</code> folder. Each child page is rendered through this template.</p>
+<p>Now let&#39;s add summaries to our menu pages. Update the front matter:</p>
+<p><strong>pages/menu/breads.md</strong></p>
+<pre><code class="language-yaml">---
+title: Artisan Breads
+position: 1
+summary: Sourdough, baguettes, focaccia and more - baked fresh every morning.
+---
+</code></pre>
+<p><strong>pages/menu/pastries.md</strong></p>
+<pre><code class="language-yaml">---
+title: Pastries
+position: 2
+summary: Flaky croissants, pain au chocolat, and sweet Danish treats.
+---
+</code></pre>
+<p><strong>pages/menu/cakes.md</strong></p>
+<pre><code class="language-yaml">---
+title: Cakes &amp; Treats
+position: 3
+summary: Celebration cakes, brownies, cookies, and French macarons.
+---
+</code></pre>
+<p>Now instead of plain links, your menu index shows styled cards with descriptions!</p>
+<p>This pattern works for any folder - create <code>partials/news.md</code> to customize how news items appear, <code>partials/blog.md</code> for blog posts, etc. If no matching partial exists, Swifty falls back to the default <code>links</code> partial or simple HTML links.</p>
+<hr>
 <h2>Step 8: Menu Layout</h2>
 <p>Let&#39;s give menu pages their own look. Create <code>layouts/menu.html</code>:</p>
 <pre><code class="language-html">&lt;article class=&quot;menu-page container&quot;&gt;
@@ -355,6 +391,28 @@ We recommend ordering custom cakes at least 3 days in advance, and catering orde
 <pre><code class="language-html">&lt;a href=&quot;&lt;%= url %&gt;&quot; class=&quot;nav-link&quot;&gt;&lt;%= title %&gt;&lt;/a&gt;
 </code></pre>
 <p>Swifty uses this partial when generating <code>&lt;%= nav_links %&gt;</code>.</p>
+<h3>Controlling Navigation</h3>
+<p>By default, top-level pages (direct children of <code>pages/</code>) appear in the main navigation, while nested pages don&#39;t. You can override this with front matter.</p>
+<p><strong>Hide a top-level page from nav:</strong></p>
+<p>Say we want a &quot;Terms &amp; Conditions&quot; page that shouldn&#39;t clutter the main menu. Create <code>pages/terms.md</code>:</p>
+<pre><code class="language-markdown">---
+title: Terms &amp; Conditions
+nav: false
+---
+
+# Terms &amp; Conditions
+
+Standard legal stuff here...
+</code></pre>
+<p>The page exists at <code>/terms/</code> but won&#39;t appear in <code>&lt;%= nav_links %&gt;</code>.</p>
+<p><strong>Add a nested page to nav:</strong></p>
+<p>Want your News section in the main menu? Update <code>pages/news/index.md</code>:</p>
+<pre><code class="language-markdown">---
+title: News
+nav: true
+---
+</code></pre>
+<p>Now the News link appears alongside About, Menu, and Contact in the main navigation.</p>
 <hr>
 <h2>Step 12: Add Some Style</h2>
 <p>Create <code>css/styles.css</code>:</p>
@@ -528,6 +586,32 @@ th {
 
 .menu-sidebar a:hover {
   color: #8B4513;
+}
+
+/* Menu Cards (from folder partial) */
+.menu-card {
+  background: #f9f5f0;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.menu-card h3 {
+  margin: 0 0 10px;
+}
+
+.menu-card h3 a {
+  color: #8B4513;
+  text-decoration: none;
+}
+
+.menu-card h3 a:hover {
+  text-decoration: underline;
+}
+
+.menu-card p {
+  margin: 0;
+  color: #666;
 }
 
 /* Footer */
@@ -719,8 +803,10 @@ title: Meet Our Team
 <li><strong>Pages</strong> - Markdown content with front matter</li>
 <li><strong>Layouts</strong> - Different wrappers for different sections</li>
 <li><strong>Partials</strong> - Reusable content snippets</li>
+<li><strong>Folder-matching partials</strong> - Partials named after folders customize index pages</li>
 <li><strong>Auto-generated links</strong> - Navigation, breadcrumbs, child/sibling links</li>
-<li><strong>Convention over configuration</strong> - Layouts matching folder names</li>
+<li><strong>Navigation control</strong> - Opt pages in or out of the main nav with front matter</li>
+<li><strong>Convention over configuration</strong> - Layouts and partials matching folder names</li>
 <li><strong>CSS</strong> - Automatically injected stylesheets</li>
 <li><strong>RSS feeds</strong> - Auto-generated feeds for content sections</li>
 <li><strong>Data files</strong> - JSON/YAML data for structured content</li>

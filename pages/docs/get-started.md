@@ -18,13 +18,13 @@ npm install @daz4126/swifty
 
 ## Create Your First Site
 
-Swifty comes with a handy `init` command that sets up a fresh project with all the folders you need:
+Swifty comes with a handy command that sets up a fresh project with all the folders you need:
 
 ```bash
-npx swifty init
+npx swifty my-site
 ```
 
-This creates a nice starter structure with example pages, layouts, and styles to play with. Think of it as your creative sandbox.
+This creates a `my-site/` folder with a starter structure including example pages, layouts, and styles to play with. Replace `my-site` with whatever you want to call your project. Think of it as your creative sandbox.
 
 ## Start Developing
 
@@ -45,6 +45,16 @@ npx swifty build
 ```
 
 This creates a squeaky-clean `dist/` folder with optimized HTML, CSS, JS, and images - no development scripts, no cruft. Just pure, fast static files ready for deployment.
+
+## Quick Deploy
+
+If your site is in a git repo, you can build and deploy in one command:
+
+```bash
+npx swifty deploy "Updated content"
+```
+
+This runs the build, then `git add`, `git commit` with your message, and `git push`. Perfect for quick updates.
 
 ## That's It!
 

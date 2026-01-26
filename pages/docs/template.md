@@ -59,8 +59,8 @@ These get added just before the closing `</head>` tag. You don't need to manuall
 
 Swifty uses [Eta](https://eta.js.org/) with EJS-style syntax for templates:
 
-- `<%= variable %>` - Output a variable
-- `<%= variable %>` - Same as above (both work identically)
+- `<%= variable %>` - Output a variable (escaped)
+- `<%- variable %>` - Output a variable (unescaped, same result since autoEscape is off)
 - `<% code %>` - Execute JavaScript without output
 
 | Variable | Syntax | What it does |
@@ -71,6 +71,13 @@ Swifty uses [Eta](https://eta.js.org/) with EJS-style syntax for templates:
 | `nav_links` | `<%= nav_links %>` | Auto-generated navigation |
 | `breadcrumbs` | `<%= breadcrumbs %>` | Breadcrumb trail |
 | `author` | `<%= author %>` | Author from config or page |
+| `og_tags` | `<%= og_tags %>` | Open Graph meta tags for social sharing |
+| `word_count` | `<%= word_count %>` | Number of words in the page content |
+| `reading_time` | `<%= reading_time %>` | Estimated reading time (e.g., "3 min read") |
+| `prev_page` | `<%= prev_page %>` | Link to previous sibling page |
+| `next_page` | `<%= next_page %>` | Link to next sibling page |
+| `pagination` | `<%= pagination %>` | Pagination nav for paginated folders |
+| `data.*` | `<%= data.team %>` | Data from JSON/YAML files in `data/` folder |
 
 ## Using JavaScript in Templates
 
