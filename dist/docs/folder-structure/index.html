@@ -32,7 +32,7 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/folder-structure">Folder Structure</a></div>
     <h1>Folder Structure</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/structure">structure</a></div>
+    <div class="tags"><a class="swifty_tag" href="/tags/swifty">swifty</a><a class="swifty_tag" href="/tags/docs">docs</a><a class="swifty_tag" href="/tags/structure">structure</a></div>
     <p class="text-s bold">How to organize your Swifty project.</p>
   <div class="serif-font">
     <p>Swifty loves a tidy project. Here&#39;s how to organize your files so everything just works.</p>
@@ -55,6 +55,8 @@
 │   └── app.js
 ├── images/          # Images (auto-optimized)
 │   └── hero.webp
+├── data/            # JSON/YAML data files
+│   └── team.json
 ├── template.html    # The master wrapper
 ├── config.yaml      # Site configuration
 └── dist/            # Built output (generated)
@@ -65,13 +67,15 @@
 <h3>layouts/</h3>
 <p>HTML templates that wrap your page content. Name them after folders for automatic matching - <code>blog.html</code> wraps pages in <code>pages/blog/</code>.</p>
 <h3>partials/</h3>
-<p>Reusable content snippets. Include them anywhere with <code>{{ partial: name }}</code>. Great for footers, CTAs, author bios, and link formats.</p>
+<p>Reusable content snippets. Include them anywhere with <code>&lt;%= partial: name %&gt;</code>. Great for footers, CTAs, author bios, and link formats.</p>
 <h3>css/</h3>
 <p>Drop your stylesheets here. They&#39;re automatically added to every page, sorted alphabetically. Prefix with numbers to control load order.</p>
 <h3>js/</h3>
 <p>Same deal as CSS. All JavaScript files are auto-injected into every page.</p>
 <h3>images/</h3>
 <p>Your images go here. JPG, PNG, and JPEG files are automatically converted to WebP and resized for the web. SVGs and GIFs pass through unchanged.</p>
+<h3>data/</h3>
+<p>Store JSON or YAML data files here. The filename becomes the variable name: <code>data/team.json</code> is accessible as <code>data.team</code> in your templates. Great for lists of team members, products, testimonials, or any structured data you want to loop over.</p>
 <h3>dist/</h3>
 <p>The output folder. Don&#39;t edit files here - they get overwritten on every build. This is what you deploy.</p>
 <h2>URLs Mirror Folders</h2>
@@ -121,6 +125,7 @@
 
   </div>
 </div>
+
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -128,4 +133,3 @@
   </footer>
 </body>
 </html>
-  

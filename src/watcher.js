@@ -11,6 +11,7 @@ const dirExtensions = {
   css: [".css"],
   js: [".js"],
   partials: [".md", ".html"],
+  data: [".json", ".yaml", ".yml"],
 };
 
 // Build watch paths
@@ -74,6 +75,7 @@ function getChangeType(filePath) {
   if (topDir === "css") return "css";
   if (topDir === "js") return "js";
   if (topDir === "images") return "image";
+  if (topDir === "data") return "data";
   return "full"; // pages, layouts, partials, config files
 }
 
@@ -82,6 +84,7 @@ export default async function watch(outDir = "dist") {
   const { copySingleAsset, optimizeSingleImage } = await import("./assets.js");
   const { resetCaches } = await import("./layout.js");
   const { clearCache: clearPartialCache } = await import("./partials.js");
+  const { clearDataCache } = await import("./data.js");
   const watchPaths = getWatchPaths();
 
   if (watchPaths.length === 0) {
@@ -136,6 +139,11 @@ export default async function watch(outDir = "dist") {
         // Incremental: just process the changed image
         console.log(`Image ${event}: ${filename}`);
         await optimizeSingleImage(filePath, outDir);
+      } else if (changeType === "data") {
+        // Data file changed - clear data cache and rebuild
+        console.log(`Data ${event}: ${filename}. Rebuilding...`);
+        clearDataCache();
+        await build.default(outDir);
       } else {
         // Full rebuild for pages, layouts, partials, config, and new CSS/JS files
         console.log(`File ${event}: ${filename}. Running full build...`);

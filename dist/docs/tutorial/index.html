@@ -32,7 +32,7 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/tutorial">Tutorial</a></div>
     <h1>Build a Brochure Site</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/tutorial">tutorial</a></div>
+    <div class="tags"><a class="swifty_tag" href="/tags/swifty">swifty</a><a class="swifty_tag" href="/tags/docs">docs</a><a class="swifty_tag" href="/tags/tutorial">tutorial</a></div>
     <p class="text-s bold">Step-by-step guide to building a complete site.</p>
   <div class="serif-font">
     <p>Let&#39;s build a website from scratch! We&#39;ll create a brochure site for a fictional bakery called <strong>Sweet Crumbs</strong>. By the end, you&#39;ll have used every major Swifty feature.</p>
@@ -65,29 +65,30 @@ npx swifty init
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
-  &lt;title&gt;{{ title }} | {{ sitename }}&lt;/title&gt;
+  &lt;title&gt;&lt;%= title %&gt; | &lt;%= sitename %&gt;&lt;/title&gt;
+  &lt;%= og_tags %&gt;
 &lt;/head&gt;
 &lt;body&gt;
   &lt;header class=&quot;site-header&quot;&gt;
     &lt;nav class=&quot;container&quot;&gt;
-      &lt;a href=&quot;/&quot; class=&quot;logo&quot;&gt;{{ sitename }}&lt;/a&gt;
+      &lt;a href=&quot;/&quot; class=&quot;logo&quot;&gt;&lt;%= sitename %&gt;&lt;/a&gt;
       &lt;div class=&quot;nav-links&quot;&gt;
-        {{ nav_links }}
+        &lt;%= nav_links %&gt;
       &lt;/div&gt;
     &lt;/nav&gt;
   &lt;/header&gt;
 
   &lt;main&gt;
-    {{ content }}
+    &lt;%= content %&gt;
   &lt;/main&gt;
 
   &lt;footer class=&quot;site-footer&quot;&gt;
-    {{ partial: footer }}
+    &lt;%= partial: footer %&gt;
   &lt;/footer&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre>
-<p>Notice we&#39;re using <code>{{ partial: footer }}</code> - we&#39;ll create that partial soon.</p>
+<p>Notice we&#39;re using <code>&lt;%= partial: footer %&gt;</code> - we&#39;ll create that partial soon.</p>
 <hr>
 <h2>Step 3: Configuration</h2>
 <p>Open <code>config.yaml</code> and set up our site:</p>
@@ -111,8 +112,8 @@ title: Home
 
 &lt;section class=&quot;hero&quot;&gt;
   &lt;div class=&quot;container&quot;&gt;
-    &lt;h1&gt;{{ sitename }}&lt;/h1&gt;
-    &lt;p class=&quot;tagline&quot;&gt;{{ tagline }}&lt;/p&gt;
+    &lt;h1&gt;&lt;%= sitename %&gt;&lt;/h1&gt;
+    &lt;p class=&quot;tagline&quot;&gt;&lt;%= tagline %&gt;&lt;/p&gt;
     &lt;a href=&quot;/menu&quot; class=&quot;button&quot;&gt;View Our Menu&lt;/a&gt;
   &lt;/div&gt;
 &lt;/section&gt;
@@ -142,7 +143,7 @@ We&#39;re a family-run bakery crafting delicious treats with love and the finest
   &lt;/div&gt;
 &lt;/section&gt;
 </code></pre>
-<p>We&#39;re using <code>layout: false</code> because the homepage has a custom structure. Notice how we use config values like <code>{{ sitename }}</code> and <code>{{ tagline }}</code>.</p>
+<p>We&#39;re using <code>layout: false</code> because the homepage has a custom structure. Notice how we use config values like <code>&lt;%= sitename %&gt;</code> and <code>&lt;%= tagline %&gt;</code>.</p>
 <hr>
 <h2>Step 5: The About Page</h2>
 <p>Create <code>pages/about.md</code>:</p>
@@ -168,7 +169,7 @@ We never use preservatives or artificial flavours. Just real ingredients, real s
 
 ## Visit Us
 
-Find us at **{{ address }}**. We&#39;re open Tuesday through Sunday, 7am to 6pm.
+Find us at **&lt;%= address %&gt;**. We&#39;re open Tuesday through Sunday, 7am to 6pm.
 
 Pop in for a coffee and a pastry - we&#39;d love to meet you!
 </code></pre>
@@ -178,11 +179,11 @@ Pop in for a coffee and a pastry - we&#39;d love to meet you!
 <p>Create <code>layouts/default.html</code>:</p>
 <pre><code class="language-html">&lt;article class=&quot;page container&quot;&gt;
   &lt;nav class=&quot;breadcrumbs&quot;&gt;
-    {{ breadcrumbs }}
+    &lt;%= breadcrumbs %&gt;
   &lt;/nav&gt;
 
   &lt;div class=&quot;page-content&quot;&gt;
-    {{ content }}
+    &lt;%= content %&gt;
   &lt;/div&gt;
 &lt;/article&gt;
 </code></pre>
@@ -199,11 +200,11 @@ title: Our Menu
 
 We offer a delicious range of freshly baked goods. Browse our categories below to see what&#39;s available.
 
-{{ links_to_children }}
+&lt;%= links_to_children %&gt;
 
 *Prices may vary. Some items are seasonal or made to order.*
 </code></pre>
-<p>The <code>{{ links_to_children }}</code> variable automatically lists all pages in this folder!</p>
+<p>The <code>&lt;%= links_to_children %&gt;</code> variable automatically lists all pages in this folder!</p>
 <p>Now create some menu category pages:</p>
 <p><strong>pages/menu/breads.md</strong></p>
 <pre><code class="language-markdown">---
@@ -270,16 +271,16 @@ For celebrations or just because.
 <p>Let&#39;s give menu pages their own look. Create <code>layouts/menu.html</code>:</p>
 <pre><code class="language-html">&lt;article class=&quot;menu-page container&quot;&gt;
   &lt;nav class=&quot;breadcrumbs&quot;&gt;
-    {{ breadcrumbs }}
+    &lt;%= breadcrumbs %&gt;
   &lt;/nav&gt;
 
   &lt;div class=&quot;menu-content&quot;&gt;
-    {{ content }}
+    &lt;%= content %&gt;
   &lt;/div&gt;
 
   &lt;aside class=&quot;menu-sidebar&quot;&gt;
     &lt;h4&gt;Menu Categories&lt;/h4&gt;
-    {{ links_to_siblings }}
+    &lt;%= links_to_siblings %&gt;
   &lt;/aside&gt;
 &lt;/article&gt;
 </code></pre>
@@ -295,9 +296,27 @@ title: Contact Us
 
 We&#39;d love to hear from you!
 
+## Send Us a Message
+
+&lt;form action=&quot;https://formspree.io/f/YOUR_FORM_ID&quot; method=&quot;POST&quot; class=&quot;contact-form&quot;&gt;
+  &lt;label&gt;
+    Your Name
+    &lt;input type=&quot;text&quot; name=&quot;name&quot; required&gt;
+  &lt;/label&gt;
+  &lt;label&gt;
+    Your Email
+    &lt;input type=&quot;email&quot; name=&quot;email&quot; required&gt;
+  &lt;/label&gt;
+  &lt;label&gt;
+    Message
+    &lt;textarea name=&quot;message&quot; rows=&quot;5&quot; required&gt;&lt;/textarea&gt;
+  &lt;/label&gt;
+  &lt;button type=&quot;submit&quot;&gt;Send Message&lt;/button&gt;
+&lt;/form&gt;
+
 ## Visit Our Bakery
 
-**{{ address }}**
+**&lt;%= address %&gt;**
 
 **Hours:**
 - Tuesday - Friday: 7am - 6pm
@@ -310,27 +329,34 @@ We&#39;d love to hear from you!
 For custom cake orders or large catering requests, please call us at **(555) 123-4567** or email **hello@sweetcrumbs.com**.
 
 We recommend ordering custom cakes at least 3 days in advance, and catering orders at least 1 week ahead.
-
-## Find Us
-
-We&#39;re located in the heart of downtown Tastyville, just two blocks from the central square. Street parking is available, and we&#39;re a 5-minute walk from the Tastyville Metro station.
+</code></pre>
+<h3>Adding a Contact Form</h3>
+<p>Since Swifty generates static sites, you&#39;ll need a third-party service to handle form submissions. <a href="https://formspree.io">Formspree</a> is a popular choice - just sign up, create a form, and replace <code>YOUR_FORM_ID</code> with your actual form ID. The free tier includes 50 submissions per month, which is plenty for most small sites.</p>
+<p>Other options include:</p>
+<ul>
+<li><strong>Netlify Forms</strong> - If you deploy to Netlify, just add the <code>netlify</code> attribute to your form tag</li>
+<li><strong>Web3Forms</strong> - Free tier with 250 submissions/month</li>
+<li><strong>Basin</strong>, <strong>Getform</strong>, <strong>FormKeep</strong> - Various pricing options</li>
+</ul>
+<p>You can also skip forms entirely and use a simple <code>mailto:</code> link instead:</p>
+<pre><code class="language-markdown">[Email us](mailto:hello@sweetcrumbs.com?subject=Website%20Inquiry)
 </code></pre>
 <hr>
 <h2>Step 10: Create the Footer Partial</h2>
 <p>Create <code>partials/footer.md</code>:</p>
 <pre><code class="language-markdown">&lt;div class=&quot;container footer-content&quot;&gt;
-  &lt;p&gt;&lt;strong&gt;{{ sitename }}&lt;/strong&gt;&lt;/p&gt;
-  &lt;p&gt;{{ address }}&lt;/p&gt;
-  &lt;p&gt;&amp;copy; 2025 {{ sitename }}. Baked with love.&lt;/p&gt;
+  &lt;p&gt;&lt;strong&gt;&lt;%= sitename %&gt;&lt;/strong&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;%= address %&gt;&lt;/p&gt;
+  &lt;p&gt;&amp;copy; 2025 &lt;%= sitename %&gt;. Baked with love.&lt;/p&gt;
 &lt;/div&gt;
 </code></pre>
-<p>This appears on every page thanks to <code>{{ partial: footer }}</code> in our template.</p>
+<p>This appears on every page thanks to <code>&lt;%= partial: footer %&gt;</code> in our template.</p>
 <hr>
 <h2>Step 11: Navigation Partial</h2>
 <p>Let&#39;s customize how nav links look. Create <code>partials/nav.md</code>:</p>
-<pre><code class="language-html">&lt;a href=&quot;{{ url }}&quot; class=&quot;nav-link&quot;&gt;{{ title }}&lt;/a&gt;
+<pre><code class="language-html">&lt;a href=&quot;&lt;%= url %&gt;&quot; class=&quot;nav-link&quot;&gt;&lt;%= title %&gt;&lt;/a&gt;
 </code></pre>
-<p>Swifty uses this partial when generating <code>{{ nav_links }}</code>.</p>
+<p>Swifty uses this partial when generating <code>&lt;%= nav_links %&gt;</code>.</p>
 <hr>
 <h2>Step 12: Add Some Style</h2>
 <p>Create <code>css/styles.css</code>:</p>
@@ -522,6 +548,36 @@ th {
   margin: 5px 0;
 }
 
+/* Contact Form */
+.contact-form label {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.contact-form button {
+  background: #8B4513;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.contact-form button:hover {
+  background: #6d3610;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .menu-page {
@@ -547,22 +603,49 @@ th {
 </code></pre>
 <p>Your optimized site is now in the <code>dist/</code> folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.</p>
 <hr>
-<h2>Bonus: Add an RSS Feed</h2>
-<p>Want customers to subscribe to your bakery&#39;s updates? Let&#39;s add an RSS feed! First, create a news section.</p>
+<h2>Bonus: Add a News Section with Reading Time</h2>
+<p>Let&#39;s add a news/blog section that shows reading time and previous/next navigation.</p>
 <p>Create <code>pages/news/spring-menu.md</code>:</p>
 <pre><code class="language-markdown">---
 title: Spring Menu Now Available!
+description: Announcing our new spring menu with seasonal treats.
 ---
 
 We&#39;re excited to announce our new spring menu featuring fresh strawberry tarts, lavender shortbread, and our famous lemon drizzle cake. Stop by and taste the season!
+
+Our pastry chef Maria has been working on these recipes all winter, testing and perfecting each one. The strawberry tarts use locally-sourced berries from Sunny Farm just down the road.
 </code></pre>
 <p>Create <code>pages/news/holiday-hours.md</code>:</p>
 <pre><code class="language-markdown">---
 title: Holiday Hours Update
+description: Our hours for the upcoming holiday weekend.
 ---
 
 We&#39;ll be closed on Easter Sunday but open extended hours the rest of the holiday weekend. Pre-orders for Easter treats are now open!
 </code></pre>
+<p>Now create a layout for news posts. Create <code>layouts/news.html</code>:</p>
+<pre><code class="language-html">&lt;article class=&quot;news-post container&quot;&gt;
+  &lt;nav class=&quot;breadcrumbs&quot;&gt;&lt;%= breadcrumbs %&gt;&lt;/nav&gt;
+
+  &lt;header class=&quot;post-header&quot;&gt;
+    &lt;h1&gt;&lt;%= title %&gt;&lt;/h1&gt;
+    &lt;div class=&quot;post-meta&quot;&gt;
+      &lt;span class=&quot;date&quot;&gt;&lt;%= date %&gt;&lt;/span&gt;
+      &lt;span class=&quot;reading-time&quot;&gt;&lt;%= reading_time %&gt;&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/header&gt;
+
+  &lt;div class=&quot;post-content&quot;&gt;
+    &lt;%= content %&gt;
+  &lt;/div&gt;
+
+  &lt;nav class=&quot;post-nav&quot;&gt;
+    &lt;div class=&quot;prev&quot;&gt;&lt;%= prev_page %&gt;&lt;/div&gt;
+    &lt;div class=&quot;next&quot;&gt;&lt;%= next_page %&gt;&lt;/div&gt;
+  &lt;/nav&gt;
+&lt;/article&gt;
+</code></pre>
+<p>The <code>&lt;%= reading_time %&gt;</code> shows something like &quot;2 min read&quot;, and <code>&lt;%= prev_page %&gt;</code> / <code>&lt;%= next_page %&gt;</code> automatically link to sibling posts!</p>
 <p>Now update your <code>config.yaml</code> to enable RSS:</p>
 <pre><code class="language-yaml">sitename: Sweet Crumbs Bakery
 site_url: https://sweetcrumbs.com
@@ -578,6 +661,53 @@ rss_feeds:
 <p>Rebuild and you&#39;ll find <code>/news/rss.xml</code> in your dist folder - a valid RSS feed that customers can subscribe to in their favorite feed reader!</p>
 <p>You can add feeds for any folder. Running a recipe blog section? Just add <code>- blog</code> to the <code>rss_feeds</code> list.</p>
 <hr>
+<h2>Bonus: Use Data Files for Team Members</h2>
+<p>Instead of creating a page for each team member, you can store structured data in the <code>data/</code> folder and loop through it in your templates.</p>
+<p>Create <code>data/team.json</code>:</p>
+<pre><code class="language-json">[
+  {
+    &quot;name&quot;: &quot;Maria Santos&quot;,
+    &quot;role&quot;: &quot;Head Baker&quot;,
+    &quot;bio&quot;: &quot;Maria learned to bake from her grandmother in Portugal and brings 20 years of experience to every loaf.&quot;
+  },
+  {
+    &quot;name&quot;: &quot;Tom Chen&quot;,
+    &quot;role&quot;: &quot;Pastry Chef&quot;,
+    &quot;bio&quot;: &quot;Tom trained at Le Cordon Bleu and specializes in French pastries and custom cakes.&quot;
+  },
+  {
+    &quot;name&quot;: &quot;Sophie Williams&quot;,
+    &quot;role&quot;: &quot;Front of House&quot;,
+    &quot;bio&quot;: &quot;Sophie keeps everything running smoothly and knows all our regulars by name.&quot;
+  }
+]
+</code></pre>
+<p>Now create <code>pages/team.md</code>:</p>
+<pre><code class="language-markdown">---
+title: Meet Our Team
+---
+
+# The People Behind the Counter
+
+&lt;div class=&quot;team-grid&quot;&gt;
+&lt;% for (const member of data.team) { %&gt;
+  &lt;div class=&quot;team-member&quot;&gt;
+    &lt;h3&gt;&lt;%= member.name %&gt;&lt;/h3&gt;
+    &lt;p class=&quot;role&quot;&gt;&lt;%= member.role %&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;%= member.bio %&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;% } %&gt;
+&lt;/div&gt;
+</code></pre>
+<p>The <code>data.team</code> variable automatically loads from <code>data/team.json</code>. You can use JSON or YAML files - the filename becomes the variable name.</p>
+<p>This is great for:</p>
+<ul>
+<li>Team members</li>
+<li>Testimonials</li>
+<li>Product catalogs</li>
+<li>Any structured data you want to display without creating individual pages</li>
+</ul>
+<hr>
 <h2>What We Covered</h2>
 <p>Congratulations! You just built a complete website using:</p>
 <ul>
@@ -590,6 +720,10 @@ rss_feeds:
 <li><strong>Convention over configuration</strong> - Layouts matching folder names</li>
 <li><strong>CSS</strong> - Automatically injected stylesheets</li>
 <li><strong>RSS feeds</strong> - Auto-generated feeds for content sections</li>
+<li><strong>Data files</strong> - JSON/YAML data for structured content</li>
+<li><strong>Reading time</strong> - Auto-calculated for blog posts</li>
+<li><strong>Previous/next links</strong> - Auto-generated navigation between posts</li>
+<li><strong>Open Graph tags</strong> - Social sharing meta tags</li>
 <li><strong>Development server</strong> - Live reload for fast iteration</li>
 <li><strong>Production build</strong> - Clean output for deployment</li>
 </ul>
@@ -608,6 +742,7 @@ rss_feeds:
 
   </div>
 </div>
+
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -615,4 +750,3 @@ rss_feeds:
   </footer>
 </body>
 </html>
-  

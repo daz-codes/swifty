@@ -15,6 +15,13 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **RSS feed generation** for blogs and content folders
 - **Draft mode** for work-in-progress pages (visible in dev, hidden in production)
 - **Scheduled publishing** via future dates in front matter
+- **Contact forms** via third-party services (Formspree, Netlify Forms, etc.)
+- **Pagination** for folders with many pages
+- **Data files** - Load JSON/YAML data and use in templates
+- **Open Graph tags** - Auto-generated social sharing meta tags
+- **Word count & reading time** - Auto-calculated for blog posts
+- **Previous/next navigation** - Auto-generated links between sibling pages
+- **[Eta templating](https://eta.js.org/)** - Full JavaScript in templates with EJS syntax
 - **Optional [Turbo](https://turbo.hotwired.dev/)** for SPA-like transitions
 
 ## Quickstart
@@ -34,6 +41,7 @@ your-site/
 ├── pages/          # Markdown content (folder structure = URLs)
 ├── layouts/        # HTML layout templates
 ├── partials/       # Reusable content snippets
+├── data/           # JSON/YAML data files
 ├── css/            # Stylesheets (auto-injected)
 ├── js/             # JavaScript (auto-injected)
 ├── images/         # Images (auto-optimized to WebP)

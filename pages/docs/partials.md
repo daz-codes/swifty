@@ -30,12 +30,12 @@ Made with Swifty. Built with love.
 
 ## Using a Partial
 
-Drop a partial into any page or layout with double curly braces:
+Drop a partial into any page or layout with ERB-style syntax:
 
 ```markdown
 Here's my page content...
 
-{{ partial: footer }}
+<%= partial: footer %>
 ```
 
 That's it! Swifty finds the partial and inserts it right there.
@@ -46,7 +46,7 @@ Here's where it gets clever. Partials can use the same variables as the page the
 
 **partials/author-bio.md**
 ```markdown
-*Written by {{ author }} on {{ date }}*
+*Written by <%= author %> on <%= date %>*
 ```
 
 When included in a page with `author: Jane` in the front matter, it renders with Jane's name. The partial inherits all the page's variables.
@@ -57,18 +57,18 @@ Swifty uses special partials to control how auto-generated links look. Create th
 
 **partials/links.md** (default for all link lists)
 ```markdown
-- [{{ title }}]({{ url }})
+- [<%= title %>](<%= url %>)
 ```
 
 **partials/blog.md** (for links in the blog section)
 ```markdown
-### [{{ title }}]({{ url }})
-*{{ date }}*
+### [<%= title %>](<%= url %>)
+*<%= date %>*
 ```
 
 **partials/nav.md** (for navigation links)
 ```html
-<a href="{{ url }}" class="nav-link">{{ title }}</a>
+<a href="<%= url %>" class="nav-link"><%= title %></a>
 ```
 
 Name a partial after a folder, and it'll be used for link lists in that section. This lets you style your blog index differently from your docs index.

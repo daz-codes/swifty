@@ -22,26 +22,26 @@ Create a `template.html` in your project root:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title }} | {{ sitename }}</title>
+  <title><%= title %> | <%= sitename %></title>
 </head>
 <body>
   <nav>
-    <a href="/">{{ sitename }}</a>
-    {{ nav_links }}
+    <a href="/"><%= sitename %></a>
+    <%= nav_links %>
   </nav>
 
   <main>
-    {{ content }}
+    <%= content %>
   </main>
 
   <footer>
-    <p>&copy; 2025 {{ sitename }}</p>
+    <p>&copy; 2025 <%= sitename %></p>
   </footer>
 </body>
 </html>
 ```
 
-The `{{ content }}` placeholder is where all your page content (including layouts) gets inserted.
+The `<%= content %>` placeholder is where all your page content (including layouts) gets inserted.
 
 ## What Swifty Auto-Injects
 
@@ -57,16 +57,43 @@ These get added just before the closing `</head>` tag. You don't need to manuall
 
 ## Template Variables
 
-Use any config values or built-in variables in your template:
+Swifty uses [Eta](https://eta.js.org/) with EJS-style syntax for templates:
 
-| Variable | What it does |
-|----------|--------------|
-| `{{ sitename }}` | Your site's name from config |
-| `{{ title }}` | Current page's title |
-| `{{ content }}` | The page content (required!) |
-| `{{ nav_links }}` | Auto-generated navigation |
-| `{{ breadcrumbs }}` | Breadcrumb trail |
-| `{{ author }}` | Author from config or page |
+- `<%= variable %>` - Output a variable
+- `<%= variable %>` - Same as above (both work identically)
+- `<% code %>` - Execute JavaScript without output
+
+| Variable | Syntax | What it does |
+|----------|--------|--------------|
+| `sitename` | `<%= sitename %>` | Your site's name from config |
+| `title` | `<%= title %>` | Current page's title |
+| `content` | `<%= content %>` | The page content (required!) |
+| `nav_links` | `<%= nav_links %>` | Auto-generated navigation |
+| `breadcrumbs` | `<%= breadcrumbs %>` | Breadcrumb trail |
+| `author` | `<%= author %>` | Author from config or page |
+
+## Using JavaScript in Templates
+
+Since Swifty uses Eta, you can use full JavaScript in your templates:
+
+```html
+<!-- Conditionals -->
+<% if (tags && tags.length > 0) { %>
+  <div class="tags">
+    <% for (const tag of tags) { %>
+      <span class="tag"><%= tag %></span>
+    <% } %>
+  </div>
+<% } %>
+
+<!-- Expressions -->
+<p>Published: <%= new Date(date).toLocaleDateString() %></p>
+
+<!-- Computed values -->
+<%= title.toUpperCase() %>
+```
+
+This gives you the power to add conditional content, loops, and dynamic logic right in your templates.
 
 ## Pro Tips
 

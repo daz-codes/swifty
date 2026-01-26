@@ -57,8 +57,8 @@ const generateRssFeed = (feedConfig, pages, siteUrl) => {
   const items = feedPages
     .map((page) => {
       const itemUrl = `${siteUrl}${page.url}`;
-      const itemTitle = escapeXml(page.data?.title || page.title || page.name);
-      const itemDate = toRfc822(page.data?.date || page.updated_at || new Date());
+      const itemTitle = escapeXml(page.meta?.title || page.title || page.name);
+      const itemDate = toRfc822(page.meta?.date || page.updated_at || new Date());
       const itemDescription = escapeXml(
         truncate(stripHtml(page.content), 300)
       );
@@ -98,8 +98,10 @@ const findPagesInFolder = (pages, folderName) => {
         found.push(page);
       }
       // Recursively search nested pages
-      if (page.pages) {
-        searchPages(page.pages);
+      // Use allPages for paginated folders to include all items in RSS
+      const childPages = page.allPages || page.pages;
+      if (childPages) {
+        searchPages(childPages);
       }
     }
   };

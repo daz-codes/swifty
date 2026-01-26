@@ -1,9 +1,9 @@
 <div class="docs">
 <!-- markdown content starts -->
 
-### [{{ title }}]({{ url }})
+### [<%= title %>](<%= url %>)
 
-##### {{ summary }}
+##### <%= summary %>
 
 <!-- markdown content ends -->
 </div>

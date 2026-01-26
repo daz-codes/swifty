@@ -46,15 +46,31 @@
 <p>Dev server now auto-refreshes your browser when you save changes. No more manual refreshing!</p>
 <h3>Incremental Builds</h3>
 <p>CSS, JS, and image changes now rebuild only what&#39;s needed. Full rebuilds only happen when pages, layouts, or partials change.</p>
-<h2>On the Radar</h2>
 <h3>Pagination</h3>
-<p>For blogs with lots of posts, automatically split index pages. Set posts-per-page in config and let Swifty handle the rest.</p>
-<h3>Search</h3>
-<p>Add search functionality to find pages across your site. Probably a simple client-side search using a generated JSON index.</p>
-<h3>Templating Languages</h3>
-<p>Support for Liquid, Nunjucks, or similar templating for more complex logic in layouts.</p>
+<p>For folders with lots of pages, automatically split index pages. Set <code>page_count</code> in config (globally or per-folder) and Swifty creates paginated pages with navigation links.</p>
+<h3>Eta Templating Engine</h3>
+<p>Full JavaScript support in templates using <a href="https://eta.js.org/">Eta</a> with EJS-compatible syntax. Use conditionals, loops, and expressions directly in your templates with <code>&lt;% %&gt;</code> and <code>&lt;%= %&gt;</code>.</p>
+<h3>Data Files</h3>
+<p>Load JSON or YAML from a <code>data/</code> folder and use in templates. File name becomes the variable: <code>data/team.json</code> → <code>data.team</code>. Great for team members, products, testimonials without creating full pages.</p>
+<h3>Open Graph &amp; Twitter Cards</h3>
+<p>Add <code>&lt;%= og_tags %&gt;</code> to your template and Swifty generates all the meta tags for social sharing. Uses <code>title</code>, <code>description</code>, <code>image</code>, and <code>tags</code> from front matter.</p>
+<h3>Word Count &amp; Reading Time</h3>
+<p><code>&lt;%= word_count %&gt;</code> and <code>&lt;%= reading_time %&gt;</code> variables auto-calculated from page content. Perfect for blog posts showing &quot;5 min read&quot;.</p>
+<h3>Previous/Next Navigation</h3>
+<p><code>&lt;%= prev_page %&gt;</code> and <code>&lt;%= next_page %&gt;</code> auto-generate links to sibling pages in the same folder. Pages are linked based on their sort order (date or position). Perfect for blog series and multi-part tutorials.</p>
+<h2>On the Radar</h2>
 <h3>Sitemap Generation</h3>
 <p>Automatic sitemap.xml for better SEO.</p>
+<h3>Search</h3>
+<p>Add search functionality to find pages across your site. Probably a simple client-side search using a generated JSON index.</p>
+<h3>Table of Contents</h3>
+<p>Auto-generate <code>&lt;%= toc %&gt;</code> from page headings. Perfect for documentation and long-form content.</p>
+<h3>Content Summaries</h3>
+<p>Auto-generate <code>&lt;%= summary %&gt;</code> from the first paragraph or a <code>&lt;!--more--&gt;</code> marker. Great for blog index pages showing excerpts.</p>
+<h3>Related Content</h3>
+<p><code>&lt;%= related_pages %&gt;</code> based on shared tags. &quot;You might also like...&quot; suggestions at the bottom of posts.</p>
+<h3>Shortcodes</h3>
+<p>Embed YouTube videos, tweets, and other rich content with simple syntax like <code>&lt;%= youtube: VIDEO_ID %&gt;</code> or <code>&lt;%= gist: GIST_ID %&gt;</code>.</p>
 <h2>Maybe Someday</h2>
 <ul>
 <li><strong>Image galleries</strong>: Special handling for image-heavy pages</li>
@@ -64,6 +80,7 @@
 <p>If you&#39;ve got ideas, bugs, or just want to say hi, open an issue on <a href="https://github.com/daz4126/swifty/issues">GitHub</a>. Swifty is built by people who use it, and your feedback shapes what comes next.</p>
 
 </div>
+
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -71,4 +88,3 @@
   </footer>
 </body>
 </html>
-  

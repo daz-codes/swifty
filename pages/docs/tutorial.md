@@ -50,30 +50,31 @@ Open `template.html` and replace it with our site skeleton:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title }} | {{ sitename }}</title>
+  <title><%= title %> | <%= sitename %></title>
+  <%= og_tags %>
 </head>
 <body>
   <header class="site-header">
     <nav class="container">
-      <a href="/" class="logo">{{ sitename }}</a>
+      <a href="/" class="logo"><%= sitename %></a>
       <div class="nav-links">
-        {{ nav_links }}
+        <%= nav_links %>
       </div>
     </nav>
   </header>
 
   <main>
-    {{ content }}
+    <%= content %>
   </main>
 
   <footer class="site-footer">
-    {{ partial: footer }}
+    <%= partial: footer %>
   </footer>
 </body>
 </html>
 ```
 
-Notice we're using `{{ partial: footer }}` - we'll create that partial soon.
+Notice we're using `<%= partial: footer %>` - we'll create that partial soon.
 
 ---
 
@@ -108,8 +109,8 @@ title: Home
 
 <section class="hero">
   <div class="container">
-    <h1>{{ sitename }}</h1>
-    <p class="tagline">{{ tagline }}</p>
+    <h1><%= sitename %></h1>
+    <p class="tagline"><%= tagline %></p>
     <a href="/menu" class="button">View Our Menu</a>
   </div>
 </section>
@@ -140,7 +141,7 @@ We're a family-run bakery crafting delicious treats with love and the finest ing
 </section>
 ```
 
-We're using `layout: false` because the homepage has a custom structure. Notice how we use config values like `{{ sitename }}` and `{{ tagline }}`.
+We're using `layout: false` because the homepage has a custom structure. Notice how we use config values like `<%= sitename %>` and `<%= tagline %>`.
 
 ---
 
@@ -171,7 +172,7 @@ We never use preservatives or artificial flavours. Just real ingredients, real s
 
 ## Visit Us
 
-Find us at **{{ address }}**. We're open Tuesday through Sunday, 7am to 6pm.
+Find us at **<%= address %>**. We're open Tuesday through Sunday, 7am to 6pm.
 
 Pop in for a coffee and a pastry - we'd love to meet you!
 ```
@@ -187,11 +188,11 @@ Create `layouts/default.html`:
 ```html
 <article class="page container">
   <nav class="breadcrumbs">
-    {{ breadcrumbs }}
+    <%= breadcrumbs %>
   </nav>
 
   <div class="page-content">
-    {{ content }}
+    <%= content %>
   </div>
 </article>
 ```
@@ -215,12 +216,12 @@ title: Our Menu
 
 We offer a delicious range of freshly baked goods. Browse our categories below to see what's available.
 
-{{ links_to_children }}
+<%= links_to_children %>
 
 *Prices may vary. Some items are seasonal or made to order.*
 ```
 
-The `{{ links_to_children }}` variable automatically lists all pages in this folder!
+The `<%= links_to_children %>` variable automatically lists all pages in this folder!
 
 Now create some menu category pages:
 
@@ -299,16 +300,16 @@ Let's give menu pages their own look. Create `layouts/menu.html`:
 ```html
 <article class="menu-page container">
   <nav class="breadcrumbs">
-    {{ breadcrumbs }}
+    <%= breadcrumbs %>
   </nav>
 
   <div class="menu-content">
-    {{ content }}
+    <%= content %>
   </div>
 
   <aside class="menu-sidebar">
     <h4>Menu Categories</h4>
-    {{ links_to_siblings }}
+    <%= links_to_siblings %>
   </aside>
 </article>
 ```
@@ -330,9 +331,27 @@ title: Contact Us
 
 We'd love to hear from you!
 
+## Send Us a Message
+
+<form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" class="contact-form">
+  <label>
+    Your Name
+    <input type="text" name="name" required>
+  </label>
+  <label>
+    Your Email
+    <input type="email" name="email" required>
+  </label>
+  <label>
+    Message
+    <textarea name="message" rows="5" required></textarea>
+  </label>
+  <button type="submit">Send Message</button>
+</form>
+
 ## Visit Our Bakery
 
-**{{ address }}**
+**<%= address %>**
 
 **Hours:**
 - Tuesday - Friday: 7am - 6pm
@@ -345,10 +364,21 @@ We'd love to hear from you!
 For custom cake orders or large catering requests, please call us at **(555) 123-4567** or email **hello@sweetcrumbs.com**.
 
 We recommend ordering custom cakes at least 3 days in advance, and catering orders at least 1 week ahead.
+```
 
-## Find Us
+### Adding a Contact Form
 
-We're located in the heart of downtown Tastyville, just two blocks from the central square. Street parking is available, and we're a 5-minute walk from the Tastyville Metro station.
+Since Swifty generates static sites, you'll need a third-party service to handle form submissions. [Formspree](https://formspree.io) is a popular choice - just sign up, create a form, and replace `YOUR_FORM_ID` with your actual form ID. The free tier includes 50 submissions per month, which is plenty for most small sites.
+
+Other options include:
+- **Netlify Forms** - If you deploy to Netlify, just add the `netlify` attribute to your form tag
+- **Web3Forms** - Free tier with 250 submissions/month
+- **Basin**, **Getform**, **FormKeep** - Various pricing options
+
+You can also skip forms entirely and use a simple `mailto:` link instead:
+
+```markdown
+[Email us](mailto:hello@sweetcrumbs.com?subject=Website%20Inquiry)
 ```
 
 ---
@@ -359,13 +389,13 @@ Create `partials/footer.md`:
 
 ```markdown
 <div class="container footer-content">
-  <p><strong>{{ sitename }}</strong></p>
-  <p>{{ address }}</p>
-  <p>&copy; 2025 {{ sitename }}. Baked with love.</p>
+  <p><strong><%= sitename %></strong></p>
+  <p><%= address %></p>
+  <p>&copy; 2025 <%= sitename %>. Baked with love.</p>
 </div>
 ```
 
-This appears on every page thanks to `{{ partial: footer }}` in our template.
+This appears on every page thanks to `<%= partial: footer %>` in our template.
 
 ---
 
@@ -374,10 +404,10 @@ This appears on every page thanks to `{{ partial: footer }}` in our template.
 Let's customize how nav links look. Create `partials/nav.md`:
 
 ```html
-<a href="{{ url }}" class="nav-link">{{ title }}</a>
+<a href="<%= url %>" class="nav-link"><%= title %></a>
 ```
 
-Swifty uses this partial when generating `{{ nav_links }}`.
+Swifty uses this partial when generating `<%= nav_links %>`.
 
 ---
 
@@ -574,6 +604,36 @@ th {
   margin: 5px 0;
 }
 
+/* Contact Form */
+.contact-form label {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.contact-form button {
+  background: #8B4513;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.contact-form button:hover {
+  background: #6d3610;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .menu-page {
@@ -614,18 +674,21 @@ Your optimized site is now in the `dist/` folder, ready to deploy anywhere that 
 
 ---
 
-## Bonus: Add an RSS Feed
+## Bonus: Add a News Section with Reading Time
 
-Want customers to subscribe to your bakery's updates? Let's add an RSS feed! First, create a news section.
+Let's add a news/blog section that shows reading time and previous/next navigation.
 
 Create `pages/news/spring-menu.md`:
 
 ```markdown
 ---
 title: Spring Menu Now Available!
+description: Announcing our new spring menu with seasonal treats.
 ---
 
 We're excited to announce our new spring menu featuring fresh strawberry tarts, lavender shortbread, and our famous lemon drizzle cake. Stop by and taste the season!
+
+Our pastry chef Maria has been working on these recipes all winter, testing and perfecting each one. The strawberry tarts use locally-sourced berries from Sunny Farm just down the road.
 ```
 
 Create `pages/news/holiday-hours.md`:
@@ -633,10 +696,38 @@ Create `pages/news/holiday-hours.md`:
 ```markdown
 ---
 title: Holiday Hours Update
+description: Our hours for the upcoming holiday weekend.
 ---
 
 We'll be closed on Easter Sunday but open extended hours the rest of the holiday weekend. Pre-orders for Easter treats are now open!
 ```
+
+Now create a layout for news posts. Create `layouts/news.html`:
+
+```html
+<article class="news-post container">
+  <nav class="breadcrumbs"><%= breadcrumbs %></nav>
+
+  <header class="post-header">
+    <h1><%= title %></h1>
+    <div class="post-meta">
+      <span class="date"><%= date %></span>
+      <span class="reading-time"><%= reading_time %></span>
+    </div>
+  </header>
+
+  <div class="post-content">
+    <%= content %>
+  </div>
+
+  <nav class="post-nav">
+    <div class="prev"><%= prev_page %></div>
+    <div class="next"><%= next_page %></div>
+  </nav>
+</article>
+```
+
+The `<%= reading_time %>` shows something like "2 min read", and `<%= prev_page %>` / `<%= next_page %>` automatically link to sibling posts!
 
 Now update your `config.yaml` to enable RSS:
 
@@ -659,6 +750,62 @@ You can add feeds for any folder. Running a recipe blog section? Just add `- blo
 
 ---
 
+## Bonus: Use Data Files for Team Members
+
+Instead of creating a page for each team member, you can store structured data in the `data/` folder and loop through it in your templates.
+
+Create `data/team.json`:
+
+```json
+[
+  {
+    "name": "Maria Santos",
+    "role": "Head Baker",
+    "bio": "Maria learned to bake from her grandmother in Portugal and brings 20 years of experience to every loaf."
+  },
+  {
+    "name": "Tom Chen",
+    "role": "Pastry Chef",
+    "bio": "Tom trained at Le Cordon Bleu and specializes in French pastries and custom cakes."
+  },
+  {
+    "name": "Sophie Williams",
+    "role": "Front of House",
+    "bio": "Sophie keeps everything running smoothly and knows all our regulars by name."
+  }
+]
+```
+
+Now create `pages/team.md`:
+
+```markdown
+---
+title: Meet Our Team
+---
+
+# The People Behind the Counter
+
+<div class="team-grid">
+<% for (const member of data.team) { %>
+  <div class="team-member">
+    <h3><%= member.name %></h3>
+    <p class="role"><%= member.role %></p>
+    <p><%= member.bio %></p>
+  </div>
+<% } %>
+</div>
+```
+
+The `data.team` variable automatically loads from `data/team.json`. You can use JSON or YAML files - the filename becomes the variable name.
+
+This is great for:
+- Team members
+- Testimonials
+- Product catalogs
+- Any structured data you want to display without creating individual pages
+
+---
+
 ## What We Covered
 
 Congratulations! You just built a complete website using:
@@ -672,6 +819,10 @@ Congratulations! You just built a complete website using:
 - **Convention over configuration** - Layouts matching folder names
 - **CSS** - Automatically injected stylesheets
 - **RSS feeds** - Auto-generated feeds for content sections
+- **Data files** - JSON/YAML data for structured content
+- **Reading time** - Auto-calculated for blog posts
+- **Previous/next links** - Auto-generated navigation between posts
+- **Open Graph tags** - Social sharing meta tags
 - **Development server** - Live reload for fast iteration
 - **Production build** - Clean output for deployment
 

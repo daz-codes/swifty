@@ -2,6 +2,7 @@
 import { replacePlaceholders } from "./partials.js";
 import { dirs, defaultConfig, loadConfig } from "./config.js";
 import { getTemplate, applyLayoutAndWrapContent } from "./layout.js";
+import { chunkPages, generatePaginationNav } from "./pagination.js";
 import { marked } from "marked";
 import matter from "gray-matter";
 import fs from "fs/promises";
@@ -58,7 +59,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
   const pages = [];
   const folderConfig = await loadConfig(sourceDir);
-  const config = { ...defaultConfig, ...parent?.data, ...folderConfig };
+  const config = { ...defaultConfig, ...parent?.meta, ...folderConfig };
   const { dateFormat } = config;
 
   try {
@@ -95,7 +96,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         url: root ? "/" : finalPath,
         nav: !parent && !root,
         parent: parent
-          ? { title: parent.data.title, url: parent.url }
+          ? { title: parent.meta.title, url: parent.url }
           : undefined,
         folder: isDirectory,
         title: name,
@@ -111,13 +112,13 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           undefined,
           dateFormat,
         ),
-        data: root ? { ...defaultConfig } : { ...config },
+        meta: root ? { ...defaultConfig } : { ...config },
       };
 
       if (path.extname(file.name) === ".md") {
         const markdownContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(markdownContent);
-        Object.assign(page, { data: { ...page.data, ...data }, content });
+        Object.assign(page, { meta: { ...page.meta, ...data }, content });
 
         // If front matter has a date, parse and format it
         if (data.date) {
@@ -125,7 +126,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           if (parsedDate) {
             page.dateObj = parsedDate;
             page.date = parsedDate.toLocaleDateString(undefined, dateFormat);
-            page.data.date = page.date;
+            page.meta.date = page.date;
           }
         }
       }
@@ -144,7 +145,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const { page, isDirectory } = result;
 
       // Skip draft pages in production builds
-      if (page.data.draft && !process.env.SWIFTY_WATCH) return;
+      if (page.meta.draft && !process.env.SWIFTY_WATCH) return;
 
       // Skip scheduled pages (future date) in production builds
       if (page.dateObj && page.dateObj > new Date() && !process.env.SWIFTY_WATCH) return;
@@ -152,22 +153,75 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       if (isDirectory) {
         page.pages = await generatePages(page.filePath, baseDir, page);
 
+        // Load folder's own config for pagination settings
+        const dirConfig = await loadConfig(page.filePath);
+        const mergedConfig = { ...page.meta, ...dirConfig };
+        page.meta = mergedConfig;
+
         page.pages.sort((a, b) => {
-          if (a.data.position && b.data.position) {
-            return a.data.position - b.data.position;
+          if (a.meta.position && b.meta.position) {
+            return a.meta.position - b.meta.position;
           }
           const dateA = a.dateObj || new Date(a.created_at);
           const dateB = b.dateObj || new Date(b.created_at);
-          const sortOrder = (config.date_sort_order || "desc").toLowerCase();
+          const sortOrder = (mergedConfig.date_sort_order || "desc").toLowerCase();
           return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
         });
 
-        page.content = await generateLinkList(page.filename, page.pages);
+        // Handle pagination if page_count is set
+        const pageCount = mergedConfig.page_count;
+        if (pageCount && page.pages.length > pageCount) {
+          page.allPages = page.pages;
+          const chunks = chunkPages(page.pages, pageCount);
+          const totalPages = chunks.length;
+          const baseUrl = `${page.url}/`;
+
+          // Store visible pages for first page (used by links_to_children)
+          page.visiblePages = chunks[0];
+
+          // First page content
+          page.content = await generateLinkList(page.filename, chunks[0]);
+          page.meta.pagination = generatePaginationNav({
+            currentPage: 1,
+            totalPages,
+            baseUrl,
+            config: page.meta,
+          });
+
+          // Create pagination pages for page 2, 3, etc.
+          page.paginatedPages = [];
+          for (let i = 1; i < chunks.length; i++) {
+            const pageNum = i + 1;
+            const paginatedPage = {
+              name: `${page.name} - Page ${pageNum}`,
+              title: `${page.meta.title || page.name} - Page ${pageNum}`,
+              url: `${page.url}/page/${pageNum}`,
+              folder: false,
+              layout: page.layout,
+              parent: { title: page.meta.title || page.name, url: page.url },
+              meta: {
+                ...page.meta,
+                title: `${page.meta.title || page.name} - Page ${pageNum}`,
+                pagination: generatePaginationNav({
+                  currentPage: pageNum,
+                  totalPages,
+                  baseUrl,
+                  config: page.meta,
+                }),
+              },
+              content: await generateLinkList(page.filename, chunks[i]),
+            };
+            page.paginatedPages.push(paginatedPage);
+          }
+        } else {
+          page.content = await generateLinkList(page.filename, page.pages);
+          page.meta.pagination = '';
+        }
       }
 
       // Add tags
-      if (page.data.tags) {
-        page.data.tags.forEach((tag) => addToTagMap(tag, page));
+      if (page.meta.tags) {
+        page.meta.tags.forEach((tag) => addToTagMap(tag, page));
       }
 
       pages.push(page);
@@ -197,7 +251,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         undefined,
         defaultConfig.dateFormat,
       ),
-      data: { ...config },
+      meta: { ...config },
       pages: [],
     };
 
@@ -211,7 +265,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         ),
         url: `/tags/${tag}`,
         layout: tagLayout ? "tags" : defaultConfig.default_layout_name,
-        data: { ...config, title: `Pages tagged with ${capitalize(tag)}` },
+        meta: { ...config, title: `Pages tagged with ${capitalize(tag)}` },
       };
       page.content = await generateLinkList("tags", pagesForTag);
 
@@ -261,7 +315,7 @@ const render = async (page) => {
   // Use function to avoid $` special replacement patterns in content
   const template = await getTemplate();
   const htmlWithTemplate = template.replace(
-    /\{\{\s*content\s*\}\}/g,
+    /<%=\s*content\s*%>/g,
     () => wrappedContent,
   );
   const finalContent = await replacePlaceholders(htmlWithTemplate, page);
@@ -277,18 +331,25 @@ const createPages = async (pages, distDir = dirs.dist) => {
       await fsExtra.ensureDir(pageDir);
       await fs.writeFile(pagePath, html);
       if (page.folder) {
-        await createPages(page.pages, distDir); // Recursive still needs to await
+        await createPages(page.pages, distDir);
+        // Write pagination pages if they exist
+        if (page.paginatedPages?.length) {
+          await createPages(page.paginatedPages, distDir);
+        }
       }
     }),
   );
 };
 
 const addLinks = async (pages, parent) => {
+  // Filter out folders and index pages for prev/next calculation (only content pages)
+  const contentPages = pages.filter((p) => !p.folder && p.filename !== 'index');
+
   await Promise.all(
     pages.map(async (page) => {
-      page.data ||= {};
-      page.data.links_to_tags = page?.data?.tags?.length
-        ? page.data.tags
+      page.meta ||= {};
+      page.meta.links_to_tags = page?.meta?.tags?.length
+        ? page.meta.tags
             .map(
               (tag) =>
                 `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`,
@@ -298,16 +359,38 @@ const addLinks = async (pages, parent) => {
       const crumb = page.root
         ? ""
         : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
-      page.data.breadcrumbs = parent
-        ? parent.data.breadcrumbs + crumb
+      page.meta.breadcrumbs = parent
+        ? parent.meta.breadcrumbs + crumb
         : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` +
           crumb;
 
+      // Generate prev/next links based on sibling position (only for content pages, not folders or index)
+      const linkClass = defaultConfig.prev_next_class || defaultConfig.link_class || '';
+      const classAttr = linkClass ? ` class="${linkClass}"` : '';
+
+      if (!page.folder && page.filename !== 'index') {
+        const pageIndex = contentPages.indexOf(page);
+        const prevSibling = pageIndex > 0 ? contentPages[pageIndex - 1] : null;
+        const nextSibling = pageIndex < contentPages.length - 1 ? contentPages[pageIndex + 1] : null;
+
+        page.meta.prev_page = prevSibling
+          ? `<a href="${prevSibling.url}"${classAttr}>${prevSibling.title || prevSibling.name}</a>`
+          : '';
+        page.meta.next_page = nextSibling
+          ? `<a href="${nextSibling.url}"${classAttr}>${nextSibling.title || nextSibling.name}</a>`
+          : '';
+      } else {
+        page.meta.prev_page = '';
+        page.meta.next_page = '';
+      }
+
       // Run independent link generation in parallel
+      // Use visiblePages for paginated folders (first page only shows its chunk)
+      const childPages = page.visiblePages || page.pages;
       const [links_to_children, links_to_siblings, links_to_self_and_siblings, nav_links] =
         await Promise.all([
-          page.pages
-            ? generateLinkList(page.filename, page.pages)
+          childPages
+            ? generateLinkList(page.filename, childPages)
             : Promise.resolve(""),
           generateLinkList(
             page.parent?.filename || "pages",
@@ -317,13 +400,21 @@ const addLinks = async (pages, parent) => {
           generateLinkList("nav", pageIndex.filter((p) => p.nav)),
         ]);
 
-      page.data.links_to_children = links_to_children;
-      page.data.links_to_siblings = links_to_siblings;
-      page.data.links_to_self_and_siblings = links_to_self_and_siblings;
-      page.data.nav_links = nav_links;
+      page.meta.links_to_children = links_to_children;
+      page.meta.links_to_siblings = links_to_siblings;
+      page.meta.links_to_self_and_siblings = links_to_self_and_siblings;
+      page.meta.nav_links = nav_links;
 
       if (page.pages) {
         await addLinks(page.pages, page);
+      }
+
+      // Process pagination pages - inherit breadcrumbs and nav_links
+      if (page.paginatedPages) {
+        for (const pp of page.paginatedPages) {
+          pp.meta.breadcrumbs = page.meta.breadcrumbs;
+          pp.meta.nav_links = nav_links;
+        }
       }
     }),
   );

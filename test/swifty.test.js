@@ -19,10 +19,12 @@ describe("Swifty", function () {
     // Create test fixture directory structure
     await fsExtra.ensureDir(path.join(testDir, "pages", "blog"));
     await fsExtra.ensureDir(path.join(testDir, "pages", "docs"));
+    await fsExtra.ensureDir(path.join(testDir, "pages", "posts"));
     await fsExtra.ensureDir(path.join(testDir, "layouts"));
     await fsExtra.ensureDir(path.join(testDir, "partials"));
     await fsExtra.ensureDir(path.join(testDir, "css"));
     await fsExtra.ensureDir(path.join(testDir, "js"));
+    await fsExtra.ensureDir(path.join(testDir, "data"));
 
     // Create template.html with sitename and nav
     await fs.writeFile(
@@ -30,33 +32,46 @@ describe("Swifty", function () {
       `<!DOCTYPE html>
 <html>
 <head>
-  <title>{{ title }} | {{ sitename }}</title>
+  <title><%= title %> | <%= sitename %></title>
+  <%= og_tags %>
 </head>
 <body>
   <header>
-    <h1>{{ sitename }}</h1>
-    <nav>{{ nav_links }}</nav>
+    <h1><%= sitename %></h1>
+    <nav><%= nav_links %></nav>
   </header>
-  <nav class="breadcrumbs">{{ breadcrumbs }}</nav>
-  {{ content }}
-  <footer>{{ partial: footer }}</footer>
+  <nav class="breadcrumbs"><%= breadcrumbs %></nav>
+  <%= content %>
+  <%= pagination %>
+  <footer><%= partial: footer %></footer>
 </body>
 </html>`
     );
 
-    // Create default layout
+    // Create default layout with word count, reading time, and prev/next nav
     await fs.writeFile(
       path.join(testDir, "layouts", "default.html"),
-      `<main class="default-layout">{{ content }}</main>`
+      `<main class="default-layout">
+  <div class="reading-info"><%= word_count %> words · <%= reading_time %></div>
+  <%= content %>
+  <nav class="page-nav">
+    <%= prev_page %>
+    <%= next_page %>
+  </nav>
+</main>`
     );
 
-    // Create blog layout
+    // Create blog layout with prev/next navigation
     await fs.writeFile(
       path.join(testDir, "layouts", "blog.html"),
       `<article class="blog-post">
-  <div class="meta">Published: {{ date }}</div>
-  <div class="tags">{{ links_to_tags }}</div>
-  {{ content }}
+  <div class="meta">Published: <%= date %></div>
+  <div class="tags"><%= links_to_tags %></div>
+  <%= content %>
+  <nav class="post-nav">
+    <span class="prev"><%= prev_page %></span>
+    <span class="next"><%= next_page %></span>
+  </nav>
 </article>`
     );
 
@@ -67,7 +82,7 @@ describe("Swifty", function () {
 title: Home Page
 layout: default
 ---
-# Welcome to {{ sitename }}
+# Welcome to <%= sitename %>
 
 This is the home page with a [link to about](/about).`
     );
@@ -82,7 +97,7 @@ custom_var: Custom Value Here
 ---
 # About
 
-This page has a custom variable: {{ custom_var }}
+This page has a custom variable: <%= custom_var %>
 
 ## Features
 
@@ -112,7 +127,7 @@ layout: default
 ---
 # Blog Posts
 
-{{ links_to_children }}`
+<%= links_to_children %>`
     );
 
     // Create blog posts with tags
@@ -151,7 +166,7 @@ layout: default
 ---
 # Documentation
 
-{{ links_to_children }}`
+<%= links_to_children %>`
     );
 
     await fs.writeFile(
@@ -169,7 +184,7 @@ Install with npm:
 npm install swifty
 \`\`\`
 
-Then use the {{ sitename }} variable in your templates.`
+Then use the <%= sitename %> variable in your templates.`
     );
 
     // Create page with code blocks to test placeholder protection
@@ -185,19 +200,19 @@ position: 2
 Use placeholders like this:
 
 \`\`\`html
-<title>{{ title }}</title>
-<p>{{ sitename }}</p>
+<title><%= title %></title>
+<p><%= sitename %></p>
 \`\`\`
 
-Inline code: \`{{ variable }}\` should also be protected.
+Inline code: \`<%= variable %>\` should also be protected.
 
-Regular text {{ title }} should be replaced.`
+Regular text <%= title %> should be replaced.`
     );
 
     // Create footer partial
     await fs.writeFile(
       path.join(testDir, "partials", "footer.md"),
-      `Built with {{ sitename }} - A Static Site Generator`
+      `Built with <%= sitename %> - A Static Site Generator`
     );
 
     // Create nav partial for custom nav styling
@@ -221,6 +236,81 @@ Regular text {{ title }} should be replaced.`
       `console.log("Swifty site loaded");`
     );
 
+    // Create posts for pagination testing (5 posts, will paginate with 2 per page)
+    for (let i = 1; i <= 5; i++) {
+      await fs.writeFile(
+        path.join(testDir, "pages", "posts", `post-${i}.md`),
+        `---
+title: Post Number ${i}
+position: ${i}
+---
+Content for post ${i}.`
+      );
+    }
+
+    // Create folder-level config for posts with pagination
+    await fs.writeFile(
+      path.join(testDir, "pages", "posts", "config.yaml"),
+      `page_count: 2`
+    );
+
+    // Create data folder files
+    await fs.writeFile(
+      path.join(testDir, "data", "team.json"),
+      JSON.stringify([
+        { name: "Alice", role: "Developer" },
+        { name: "Bob", role: "Designer" }
+      ])
+    );
+
+    // Create a page that uses data folder
+    await fs.writeFile(
+      path.join(testDir, "pages", "team.md"),
+      `---
+title: Our Team
+layout: default
+---
+# Team Members
+
+<% for (const member of data.team) { %>
+- <%= member.name %> (<%= member.role %>)
+<% } %>`
+    );
+
+    // Create a page with description and image for OG tag testing
+    await fs.writeFile(
+      path.join(testDir, "pages", "featured.md"),
+      `---
+title: Featured Article
+description: This is a featured article with full Open Graph metadata
+image: /images/featured.jpg
+tags:
+  - featured
+  - article
+layout: default
+---
+# Featured Content
+
+This page has OG meta tags.`
+    );
+
+    // Create a longer article for word count and reading time testing
+    await fs.writeFile(
+      path.join(testDir, "pages", "long-article.md"),
+      `---
+title: Long Article
+layout: default
+---
+# A Longer Article
+
+${'This is a sample paragraph with multiple words to test word counting. '.repeat(20)}
+
+## Another Section
+
+${'Here is more content to increase the word count further. '.repeat(20)}`
+    );
+
+
     // Create config with RSS feeds
     await fs.writeFile(
       path.join(testDir, "config.yaml"),
@@ -232,7 +322,8 @@ rss_feeds:
   - blog
   - folder: docs
     title: Documentation Updates
-    description: Latest documentation changes`
+    description: Latest documentation changes
+  - posts`
     );
 
     // Change to test directory and run build
@@ -412,9 +503,9 @@ rss_feeds:
   describe("Code Block Protection", () => {
     it("should not replace placeholders inside fenced code blocks", async () => {
       const content = await fs.readFile(path.join(distDir, "docs", "templates", "index.html"), "utf-8");
-      // The {{ title }} inside the code block should remain as-is
+      // The <%= title %> inside the code block should remain as-is
       assert.ok(
-        content.includes("{{ title }}") || content.includes("&#123;&#123; title &#125;&#125;"),
+        content.includes("&lt;%= title %&gt;") || content.includes("<%= title %>"),
         "should preserve placeholder syntax in code blocks"
       );
     });
@@ -422,14 +513,14 @@ rss_feeds:
     it("should not replace placeholders inside inline code", async () => {
       const content = await fs.readFile(path.join(distDir, "docs", "templates", "index.html"), "utf-8");
       assert.ok(
-        content.includes("{{ variable }}") || content.includes("&#123;&#123; variable &#125;&#125;"),
+        content.includes("&lt;%= variable %&gt;") || content.includes("<%= variable %>"),
         "should preserve placeholder in inline code"
       );
     });
 
     it("should still replace placeholders in regular text", async () => {
       const content = await fs.readFile(path.join(distDir, "docs", "templates", "index.html"), "utf-8");
-      // "Regular text {{ title }}" should become "Regular text Template Guide"
+      // "Regular text <%= title %>" should become "Regular text Template Guide"
       assert.ok(
         content.includes("Regular text Template Guide"),
         "should replace placeholder in normal text"
@@ -554,6 +645,177 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "blog", "rss.xml"), "utf-8");
       assert.ok(content.includes("atom:link"), "should have atom:link for self-reference");
       assert.ok(content.includes('rel="self"'), "should have rel=self attribute");
+    });
+  });
+
+  describe("Pagination", () => {
+    it("should create first page at folder index", async () => {
+      const exists = await fsExtra.pathExists(path.join(distDir, "posts", "index.html"));
+      assert.strictEqual(exists, true, "posts/index.html should exist");
+    });
+
+    it("should create pagination pages for page 2 and 3", async () => {
+      const page2Exists = await fsExtra.pathExists(path.join(distDir, "posts", "page", "2", "index.html"));
+      const page3Exists = await fsExtra.pathExists(path.join(distDir, "posts", "page", "3", "index.html"));
+      assert.strictEqual(page2Exists, true, "posts/page/2/index.html should exist");
+      assert.strictEqual(page3Exists, true, "posts/page/3/index.html should exist");
+    });
+
+    it("should limit first page to page_count items", async () => {
+      const content = await fs.readFile(path.join(distDir, "posts", "index.html"), "utf-8");
+      // With page_count: 2, first page should have posts 1 and 2 (check URLs)
+      assert.ok(content.includes("/posts/post-1"), "should include post 1");
+      assert.ok(content.includes("/posts/post-2"), "should include post 2");
+      assert.ok(!content.includes("/posts/post-3"), "should not include post 3 on first page");
+    });
+
+    it("should show correct items on page 2", async () => {
+      const content = await fs.readFile(path.join(distDir, "posts", "page", "2", "index.html"), "utf-8");
+      assert.ok(content.includes("/posts/post-3"), "should include post 3");
+      assert.ok(content.includes("/posts/post-4"), "should include post 4");
+      assert.ok(!content.includes("/posts/post-1"), "should not include post 1 on page 2");
+    });
+
+    it("should show correct items on page 3", async () => {
+      const content = await fs.readFile(path.join(distDir, "posts", "page", "3", "index.html"), "utf-8");
+      assert.ok(content.includes("/posts/post-5"), "should include post 5");
+      assert.ok(!content.includes("/posts/post-1"), "should not include post 1 on page 3");
+    });
+
+    it("should include pagination navigation on first page", async () => {
+      const content = await fs.readFile(path.join(distDir, "posts", "index.html"), "utf-8");
+      assert.ok(content.includes('class="swifty_pagination"'), "should have pagination nav");
+      assert.ok(content.includes("/posts/page/2/"), "should link to page 2");
+    });
+
+    it("should include pagination navigation on page 2", async () => {
+      const content = await fs.readFile(path.join(distDir, "posts", "page", "2", "index.html"), "utf-8");
+      assert.ok(content.includes("/posts/"), "should link back to first page");
+      assert.ok(content.includes("/posts/page/3/"), "should link to page 3");
+    });
+
+    it("should include all posts in RSS feed despite pagination", async () => {
+      const content = await fs.readFile(path.join(distDir, "posts", "rss.xml"), "utf-8");
+      assert.ok(content.includes("Post Number 1"), "RSS should include post 1");
+      assert.ok(content.includes("Post Number 3"), "RSS should include post 3");
+      assert.ok(content.includes("Post Number 5"), "RSS should include post 5");
+    });
+  });
+
+  describe("Data Folder", () => {
+    it("should load data from JSON files", async () => {
+      const content = await fs.readFile(path.join(distDir, "team", "index.html"), "utf-8");
+      assert.ok(content.includes("Alice"), "should include team member Alice");
+      assert.ok(content.includes("Developer"), "should include Alice's role");
+    });
+
+    it("should support loops over data", async () => {
+      const content = await fs.readFile(path.join(distDir, "team", "index.html"), "utf-8");
+      assert.ok(content.includes("Bob"), "should include team member Bob");
+      assert.ok(content.includes("Designer"), "should include Bob's role");
+    });
+  });
+
+  describe("Open Graph Tags", () => {
+    it("should generate og:title meta tag", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('og:title'), "should have og:title");
+      assert.ok(content.includes("Featured Article"), "should include page title");
+    });
+
+    it("should generate og:site_name meta tag", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('og:site_name'), "should have og:site_name");
+      assert.ok(content.includes("Test Site"), "should include sitename");
+    });
+
+    it("should generate og:url with full URL", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('og:url'), "should have og:url");
+      assert.ok(content.includes("https://example.com/featured"), "should have full URL");
+    });
+
+    it("should generate og:description from front matter", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('og:description'), "should have og:description");
+      assert.ok(content.includes("featured article with full Open Graph"), "should include description");
+    });
+
+    it("should generate og:image from front matter", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('og:image'), "should have og:image");
+      assert.ok(content.includes("/images/featured"), "should include image path");
+    });
+
+    it("should generate og:type as article for pages", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('og:type'), "should have og:type");
+      assert.ok(content.includes('content="article"'), "should be article type");
+    });
+
+    it("should generate twitter:card meta tag", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('twitter:card'), "should have twitter:card");
+      assert.ok(content.includes("summary_large_image"), "should be summary_large_image when image exists");
+    });
+
+    it("should generate article:tag for each tag", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(content.includes('article:tag'), "should have article:tag");
+      assert.ok(content.includes("featured"), "should include featured tag");
+      assert.ok(content.includes("article"), "should include article tag");
+    });
+  });
+
+  describe("Word Count and Reading Time", () => {
+    it("should calculate word_count for pages", async () => {
+      const content = await fs.readFile(path.join(distDir, "long-article", "index.html"), "utf-8");
+      // The long article has ~400+ words
+      assert.ok(content.includes("words"), "should show word count");
+      // Extract the word count number
+      const match = content.match(/(\d+)\s*words/);
+      assert.ok(match, "should have word count number");
+      const wordCount = parseInt(match[1], 10);
+      assert.ok(wordCount > 100, "should have significant word count");
+    });
+
+    it("should calculate reading_time for pages", async () => {
+      const content = await fs.readFile(path.join(distDir, "long-article", "index.html"), "utf-8");
+      assert.ok(content.includes("min read"), "should show reading time");
+    });
+
+    it("should show 1 min read for short content", async () => {
+      const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
+      // Short page should be 1 min read
+      assert.ok(content.includes("min read"), "should show reading time");
+    });
+  });
+
+  describe("Previous/Next Page Navigation", () => {
+    it("should auto-generate next_page link for first sibling", async () => {
+      // First post should have next link to second
+      const content = await fs.readFile(path.join(distDir, "blog", "first-post", "index.html"), "utf-8");
+      assert.ok(content.includes("/blog/second-post"), "first post should link to second post");
+    });
+
+    it("should auto-generate prev_page link for last sibling", async () => {
+      // Second post (last) should have prev link to first
+      const content = await fs.readFile(path.join(distDir, "blog", "second-post", "index.html"), "utf-8");
+      assert.ok(content.includes("/blog/first-post"), "second post should link back to first");
+    });
+
+    it("should not have prev_page for first sibling", async () => {
+      const content = await fs.readFile(path.join(distDir, "blog", "first-post", "index.html"), "utf-8");
+      // The prev span should be empty (no link inside)
+      assert.ok(content.includes('<span class="prev">') &&
+                !content.match(/<span class="prev">[^<]*<a/), "first post should have empty prev");
+    });
+
+    it("should not have next_page for last sibling", async () => {
+      const content = await fs.readFile(path.join(distDir, "blog", "second-post", "index.html"), "utf-8");
+      // The next span should be empty (no link inside)
+      assert.ok(content.includes('<span class="next">') &&
+                !content.match(/<span class="next">[^<]*<a/), "last post should have empty next");
     });
   });
 });

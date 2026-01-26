@@ -37,7 +37,7 @@ copyAssets → optimizeImages → generatePages → addLinks → createPages →
 - **build.js** - Orchestrates build pipeline
 - **pages.js** - Reads Markdown from `pages/`, parses front matter, generates page objects and HTML
 - **layout.js** - Wraps content in layouts from `layouts/`, injects Turbo.js and CSS
-- **partials.js** - Handles `{{ partial: name }}` includes and `{{ variable }}` replacement
+- **partials.js** - Handles `<%= partial: name %>` includes and ERB-style variable replacement
 - **assets.js** - Copies CSS/JS, optimizes images to WebP using Sharp
 - **config.js** - Loads config.yaml/yml/json, provides directory mappings
 - **watcher.js** - Uses chokidar to watch files and trigger rebuilds
@@ -53,14 +53,53 @@ copyAssets → optimizeImages → generatePages → addLinks → createPages →
 | `css/` | Stylesheets (auto-injected) |
 | `js/` | JavaScript files (auto-injected) |
 | `images/` | Images (auto-optimized to WebP) |
+| `data/` | JSON/YAML data files |
 | `dist/` | Generated output |
 
-### Template System
+### Documentation Files
 
-- `{{ content }}` - Page content placeholder
-- `{{ partial: name }}` - Include partial from partials/
-- `{{ variableName }}` - Replace with front matter or config value
-- Built-in variables: `sitename`, `title`, `breadcrumbs`, `nav_links`, `links_to_children`, `links_to_siblings`, `links_to_tags`
+- `README.md` - Project readme with features and quickstart
+- `pages/docs/tutorial.md` - Step-by-step tutorial for building a brochure site
+- `pages/roadmap.md` - Feature roadmap (update when implementing new features)
+
+### Template System (Eta with EJS-style syntax)
+
+Swifty uses [Eta](https://eta.js.org/) as its templating engine with EJS-compatible syntax:
+
+**Variable output:**
+- `<%= variable %>` - Output variable (e.g., `<%= title %>`, `<%= sitename %>`)
+- `<%= page.variable %>` - Namespaced access (also supported)
+
+**Always use `<%=` for output.** The `<%-` syntax is supported for EJS compatibility but is converted to `<%=` internally (autoEscape is off, so both are identical).
+
+**JavaScript execution:**
+- `<% code %>` - Execute JavaScript without output
+- `<%= expression %>` - Output the result of a JavaScript expression
+
+**Partials:**
+- `<%= partial: name %>` - Include partial from partials/
+
+**Examples:**
+```html
+<!-- Conditionals -->
+<% if (tags && tags.length > 0) { %>
+  <div class="tags"><%= tags.join(', ') %></div>
+<% } %>
+
+<!-- Loops -->
+<% for (const item of items) { %>
+  <li><%= item.title %></li>
+<% } %>
+```
+
+Built-in variables:
+- Text: `title`, `sitename`, `author`, `date`, `summary`, `created_at`, `updated_at`, `word_count`, `reading_time`
+- HTML: `content`, `breadcrumbs`, `nav_links`, `links_to_children`, `links_to_siblings`, `links_to_tags`, `pagination`, `og_tags`, `prev_page`, `next_page`
+- Data: `data.filename` - contents of `data/filename.json` or `data/filename.yaml`
+
+**Page metadata:**
+- `page.title`, `page.tags`, etc. - front matter values
+- `page.meta.title` - explicit access to front matter
 
 ### Front Matter
 
@@ -73,8 +112,31 @@ tags: [tag1, tag2]
 position: 1  # Sort order for navigation
 draft: true  # Only show in development (swifty start), hide in production (swifty build)
 date: 2025-06-15  # Future dates hide page until that date (scheduled publishing)
+description: Short page description  # Used for og:description
+image: /images/hero.jpg  # Used for og:image
 ---
 ```
+
+### Open Graph Tags
+
+Add `<%= og_tags %>` in your template `<head>` to auto-generate Open Graph and Twitter Card meta tags:
+
+```html
+<head>
+  <title><%= title %></title>
+  <%= og_tags %>
+</head>
+```
+
+Generated tags use:
+- `title` → `og:title`, `twitter:title`
+- `sitename` → `og:site_name`
+- `site_url` + `url` → `og:url`
+- `description` or `summary` → `og:description`, `twitter:description`
+- `image` → `og:image`, `twitter:image`
+- `author` → `article:author`
+- `tags` → `article:tag` (one per tag)
+- `og:type` → "article" for pages, "website" for folders
 
 ### RSS Feeds
 
@@ -92,9 +154,33 @@ Additional RSS config options:
 - `rss_max_items: 20` - Maximum items per feed (default: 20)
 - `language: en` - Feed language (default: en)
 
+### Pagination
+
+Enable pagination for folders with many child pages by setting `page_count`:
+```yaml
+# Global config (config.yaml)
+page_count: 10
+
+# Or per-folder (pages/blog/config.yaml)
+page_count: 5
+```
+
+Pagination creates:
+- `/folder/` - First page
+- `/folder/page/2/` - Page 2
+- `/folder/page/3/` - Page 3, etc.
+
+Use `<%- pagination %>` in templates to render navigation links.
+
+Config options:
+- `pagination_class` - Container class (default: `swifty_pagination`)
+- `pagination_link_class` - Link class (default: `swifty_pagination_link`)
+- `pagination_current_class` - Current page class (default: `swifty_pagination_current`)
+
 ## Key Implementation Details
 
 - ES Modules (`"type": "module"`)
+- Uses Eta templating engine with EJS-compatible syntax
 - Heavy use of async/await and Promise.all for parallel file operations
 - Layout and partial caching via Map objects
 - Code blocks are protected from template variable replacement

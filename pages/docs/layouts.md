@@ -17,16 +17,16 @@ Layouts live in the `layouts/` folder and are always HTML files. Here's a simple
 ```html
 <article class="page">
   <header>
-    <h1>{{ title }}</h1>
-    <p class="meta">{{ date }}</p>
+    <h1><%= title %></h1>
+    <p class="meta"><%= date %></p>
   </header>
   <main>
-    {{ content }}
+    <%= content %>
   </main>
 </article>
 ```
 
-The magic happens with `{{ content }}` - that's where your page content gets inserted. You can also use any front matter variables like `{{ title }}` or config values like `{{ sitename }}`.
+The magic happens with `<%= content %>` - that's where your page content gets inserted. You can also use any front matter variables like `<%= title %>` or config values like `<%= sitename %>`.
 
 ## How Layouts Are Applied
 

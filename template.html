@@ -10,15 +10,15 @@
   <link rel="icon" sizes="192x192" href="android-chrome-192x19.png">
   <link rel="icon" sizes="512x512" href="android-chrome-512x512.png">
 
-  <title>{{sitename}}</title>
+  <title><%= sitename %></title>
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
       <a href="/" class="logo">S</a>
-      <nav class="tabs">{{ nav_links }}</nav>
+      <nav class="tabs"><%= nav_links %></nav>
   </header>
     <main>
-    {{ content }}
+    <%= content %>
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -26,4 +26,3 @@
   </footer>
 </body>
 </html>
-  

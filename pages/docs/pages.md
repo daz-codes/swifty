@@ -65,10 +65,10 @@ price: $29.99
 rating: 5 stars
 ---
 
-# {{ title }}
+# <%= title %>
 
-**Price:** {{ price }}
-**Rating:** {{ rating }}
+**Price:** <%= price %>
+**Rating:** <%= rating %>
 ```
 
 Your custom properties become template variables. Neat, right?
@@ -142,13 +142,13 @@ Every page automatically gets some handy variables:
 
 | Variable | What you get |
 |----------|--------------|
-| `{{ breadcrumbs }}` | Breadcrumb navigation links |
-| `{{ nav_links }}` | Top-level navigation links |
-| `{{ links_to_children }}` | Links to child pages (for folder index pages) |
-| `{{ links_to_siblings }}` | Links to sibling pages |
-| `{{ links_to_tags }}` | Links to this page's tags |
-| `{{ date }}` | Formatted last-modified date |
-| `{{ created_at }}` | Formatted creation date |
-| `{{ updated_at }}` | Formatted update date |
+| `<%= breadcrumbs %>` | Breadcrumb navigation links |
+| `<%= nav_links %>` | Top-level navigation links |
+| `<%= links_to_children %>` | Links to child pages (for folder index pages) |
+| `<%= links_to_siblings %>` | Links to sibling pages |
+| `<%= links_to_tags %>` | Links to this page's tags |
+| `<%= date %>` | Formatted last-modified date |
+| `<%= created_at %>` | Formatted creation date |
+| `<%= updated_at %>` | Formatted update date |
 
 Just drop these into your layouts or pages wherever you need them.

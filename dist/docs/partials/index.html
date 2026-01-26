@@ -32,7 +32,7 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/partials">Partials</a></div>
     <h1>Partials</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/partials">partials</a></div>
+    <div class="tags"><a class="swifty_tag" href="/tags/swifty">swifty</a><a class="swifty_tag" href="/tags/docs">docs</a><a class="swifty_tag" href="/tags/partials">partials</a></div>
     <p class="text-s bold">Reusable snippets for DRY content.</p>
   <div class="serif-font">
     <p>Partials are little snippets of content you can reuse across your site. Got a footer you want on every page? A call-to-action box? A fancy quote format? Partials have got you covered.</p>
@@ -50,29 +50,29 @@ Made with Swifty. Built with love.
 &lt;/div&gt;
 </code></pre>
 <h2>Using a Partial</h2>
-<p>Drop a partial into any page or layout with double curly braces:</p>
+<p>Drop a partial into any page or layout with ERB-style syntax:</p>
 <pre><code class="language-markdown">Here&#39;s my page content...
 
-{{ partial: footer }}
+&lt;%= partial: footer %&gt;
 </code></pre>
 <p>That&#39;s it! Swifty finds the partial and inserts it right there.</p>
 <h2>Partials with Variables</h2>
 <p>Here&#39;s where it gets clever. Partials can use the same variables as the page they&#39;re included in:</p>
 <p><strong>partials/author-bio.md</strong></p>
-<pre><code class="language-markdown">*Written by {{ author }} on {{ date }}*
+<pre><code class="language-markdown">*Written by &lt;%= author %&gt; on &lt;%= date %&gt;*
 </code></pre>
 <p>When included in a page with <code>author: Jane</code> in the front matter, it renders with Jane&#39;s name. The partial inherits all the page&#39;s variables.</p>
 <h2>Link List Partials</h2>
 <p>Swifty uses special partials to control how auto-generated links look. Create these in your partials folder:</p>
 <p><strong>partials/links.md</strong> (default for all link lists)</p>
-<pre><code class="language-markdown">- [{{ title }}]({{ url }})
+<pre><code class="language-markdown">- [&lt;%= title %&gt;](&lt;%= url %&gt;)
 </code></pre>
 <p><strong>partials/blog.md</strong> (for links in the blog section)</p>
-<pre><code class="language-markdown">### [{{ title }}]({{ url }})
-*{{ date }}*
+<pre><code class="language-markdown">### [&lt;%= title %&gt;](&lt;%= url %&gt;)
+*&lt;%= date %&gt;*
 </code></pre>
 <p><strong>partials/nav.md</strong> (for navigation links)</p>
-<pre><code class="language-html">&lt;a href=&quot;{{ url }}&quot; class=&quot;nav-link&quot;&gt;{{ title }}&lt;/a&gt;
+<pre><code class="language-html">&lt;a href=&quot;&lt;%= url %&gt;&quot; class=&quot;nav-link&quot;&gt;&lt;%= title %&gt;&lt;/a&gt;
 </code></pre>
 <p>Name a partial after a folder, and it&#39;ll be used for link lists in that section. This lets you style your blog index differently from your docs index.</p>
 <h2>Why Use Partials?</h2>
@@ -86,6 +86,7 @@ Made with Swifty. Built with love.
 
   </div>
 </div>
+
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -93,4 +94,3 @@ Made with Swifty. Built with love.
   </footer>
 </body>
 </html>
-  

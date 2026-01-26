@@ -32,7 +32,7 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/template">Template</a></div>
     <h1>The Template File</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/template">template</a></div>
+    <div class="tags"><a class="swifty_tag" href="/tags/swifty">swifty</a><a class="swifty_tag" href="/tags/docs">docs</a><a class="swifty_tag" href="/tags/template">template</a></div>
     <p class="text-s bold">The master wrapper for your entire site.</p>
   <div class="serif-font">
     <p>The template file is the big boss - it wraps around <em>everything</em>. While layouts wrap individual page content, the template wraps the whole shebang, including the layout.</p>
@@ -44,25 +44,25 @@
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot;&gt;
   &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
-  &lt;title&gt;{{ title }} | {{ sitename }}&lt;/title&gt;
+  &lt;title&gt;&lt;%= title %&gt; | &lt;%= sitename %&gt;&lt;/title&gt;
 &lt;/head&gt;
 &lt;body&gt;
   &lt;nav&gt;
-    &lt;a href=&quot;/&quot;&gt;{{ sitename }}&lt;/a&gt;
-    {{ nav_links }}
+    &lt;a href=&quot;/&quot;&gt;&lt;%= sitename %&gt;&lt;/a&gt;
+    &lt;%= nav_links %&gt;
   &lt;/nav&gt;
 
   &lt;main&gt;
-    {{ content }}
+    &lt;%= content %&gt;
   &lt;/main&gt;
 
   &lt;footer&gt;
-    &lt;p&gt;&amp;copy; 2025 {{ sitename }}&lt;/p&gt;
+    &lt;p&gt;&amp;copy; 2025 &lt;%= sitename %&gt;&lt;/p&gt;
   &lt;/footer&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre>
-<p>The <code>{{ content }}</code> placeholder is where all your page content (including layouts) gets inserted.</p>
+<p>The <code>&lt;%= content %&gt;</code> placeholder is where all your page content (including layouts) gets inserted.</p>
 <h2>What Swifty Auto-Injects</h2>
 <p>You might notice your CSS and JS files magically appear in the built pages. That&#39;s because Swifty automatically injects:</p>
 <ul>
@@ -74,39 +74,69 @@
 </ul>
 <p>These get added just before the closing <code>&lt;/head&gt;</code> tag. You don&#39;t need to manually link your stylesheets or scripts - just drop files in the right folders and they&#39;re included.</p>
 <h2>Template Variables</h2>
-<p>Use any config values or built-in variables in your template:</p>
+<p>Swifty uses <a href="https://eta.js.org/">Eta</a> with EJS-style syntax for templates:</p>
+<ul>
+<li><code>&lt;%= variable %&gt;</code> - Output a variable</li>
+<li><code>&lt;%= variable %&gt;</code> - Same as above (both work identically)</li>
+<li><code>&lt;% code %&gt;</code> - Execute JavaScript without output</li>
+</ul>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
+<th>Syntax</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>{{ sitename }}</code></td>
+<td><code>sitename</code></td>
+<td><code>&lt;%= sitename %&gt;</code></td>
 <td>Your site&#39;s name from config</td>
 </tr>
 <tr>
-<td><code>{{ title }}</code></td>
+<td><code>title</code></td>
+<td><code>&lt;%= title %&gt;</code></td>
 <td>Current page&#39;s title</td>
 </tr>
 <tr>
-<td><code>{{ content }}</code></td>
+<td><code>content</code></td>
+<td><code>&lt;%= content %&gt;</code></td>
 <td>The page content (required!)</td>
 </tr>
 <tr>
-<td><code>{{ nav_links }}</code></td>
+<td><code>nav_links</code></td>
+<td><code>&lt;%= nav_links %&gt;</code></td>
 <td>Auto-generated navigation</td>
 </tr>
 <tr>
-<td><code>{{ breadcrumbs }}</code></td>
+<td><code>breadcrumbs</code></td>
+<td><code>&lt;%= breadcrumbs %&gt;</code></td>
 <td>Breadcrumb trail</td>
 </tr>
 <tr>
-<td><code>{{ author }}</code></td>
+<td><code>author</code></td>
+<td><code>&lt;%= author %&gt;</code></td>
 <td>Author from config or page</td>
 </tr>
 </tbody></table>
+<h2>Using JavaScript in Templates</h2>
+<p>Since Swifty uses Eta, you can use full JavaScript in your templates:</p>
+<pre><code class="language-html">&lt;!-- Conditionals --&gt;
+&lt;% if (tags &amp;&amp; tags.length &gt; 0) { %&gt;
+  &lt;div class=&quot;tags&quot;&gt;
+    &lt;% for (const tag of tags) { %&gt;
+      &lt;span class=&quot;tag&quot;&gt;&lt;%= tag %&gt;&lt;/span&gt;
+    &lt;% } %&gt;
+  &lt;/div&gt;
+&lt;% } %&gt;
+
+&lt;!-- Expressions --&gt;
+&lt;p&gt;Published: &lt;%= new Date(date).toLocaleDateString() %&gt;&lt;/p&gt;
+
+&lt;!-- Computed values --&gt;
+&lt;%= title.toUpperCase() %&gt;
+</code></pre>
+<p>This gives you the power to add conditional content, loops, and dynamic logic right in your templates.</p>
 <h2>Pro Tips</h2>
 <p><strong>Name your CSS files strategically</strong>: Since they&#39;re loaded alphabetically, prefix with numbers for control:</p>
 <pre><code>css/
@@ -119,6 +149,7 @@
 
   </div>
 </div>
+
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -126,4 +157,3 @@
   </footer>
 </body>
 </html>
-  

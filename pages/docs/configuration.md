@@ -36,7 +36,7 @@ dateFormat:
 
 | Option | What it does |
 |--------|--------------|
-| `sitename` | Your site's name - use `{{ sitename }}` anywhere to display it |
+| `sitename` | Your site's name - use `<%= sitename %>` anywhere to display it |
 | `author` | Your name (or whoever's taking credit) |
 | `breadcrumb_separator` | The character between breadcrumb links |
 | `breadcrumb_class` | CSS class for breadcrumb links |
@@ -50,11 +50,11 @@ dateFormat:
 
 ## Using Config Values in Pages
 
-Any config value can be dropped into your pages or layouts using double curly braces:
+Any config value can be dropped into your pages or layouts using ERB-style syntax:
 
 ```markdown
-Welcome to {{ sitename }}!
-Written by {{ author }}.
+Welcome to <%= sitename %>!
+Written by <%= author %>.
 ```
 
 Simple as that.

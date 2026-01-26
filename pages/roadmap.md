@@ -28,19 +28,43 @@ Dev server now auto-refreshes your browser when you save changes. No more manual
 ### Incremental Builds
 CSS, JS, and image changes now rebuild only what's needed. Full rebuilds only happen when pages, layouts, or partials change.
 
+### Pagination
+For folders with lots of pages, automatically split index pages. Set `page_count` in config (globally or per-folder) and Swifty creates paginated pages with navigation links.
+
+### Eta Templating Engine
+Full JavaScript support in templates using [Eta](https://eta.js.org/) with EJS-compatible syntax. Use conditionals, loops, and expressions directly in your templates with `<% %>` and `<%= %>`.
+
+### Data Files
+Load JSON or YAML from a `data/` folder and use in templates. File name becomes the variable: `data/team.json` → `data.team`. Great for team members, products, testimonials without creating full pages.
+
+### Open Graph & Twitter Cards
+Add `<%= og_tags %>` to your template and Swifty generates all the meta tags for social sharing. Uses `title`, `description`, `image`, and `tags` from front matter.
+
+### Word Count & Reading Time
+`<%= word_count %>` and `<%= reading_time %>` variables auto-calculated from page content. Perfect for blog posts showing "5 min read".
+
+### Previous/Next Navigation
+`<%= prev_page %>` and `<%= next_page %>` auto-generate links to sibling pages in the same folder. Pages are linked based on their sort order (date or position). Perfect for blog series and multi-part tutorials.
+
 ## On the Radar
 
-### Pagination
-For blogs with lots of posts, automatically split index pages. Set posts-per-page in config and let Swifty handle the rest.
+### Sitemap Generation
+Automatic sitemap.xml for better SEO.
 
 ### Search
 Add search functionality to find pages across your site. Probably a simple client-side search using a generated JSON index.
 
-### Templating Languages
-Support for Liquid, Nunjucks, or similar templating for more complex logic in layouts.
+### Table of Contents
+Auto-generate `<%= toc %>` from page headings. Perfect for documentation and long-form content.
 
-### Sitemap Generation
-Automatic sitemap.xml for better SEO.
+### Content Summaries
+Auto-generate `<%= summary %>` from the first paragraph or a `<!--more-->` marker. Great for blog index pages showing excerpts.
+
+### Related Content
+`<%= related_pages %>` based on shared tags. "You might also like..." suggestions at the bottom of posts.
+
+### Shortcodes
+Embed YouTube videos, tweets, and other rich content with simple syntax like `<%= youtube: VIDEO_ID %>` or `<%= gist: GIST_ID %>`.
 
 ## Maybe Someday
 

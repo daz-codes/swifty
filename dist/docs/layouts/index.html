@@ -32,7 +32,7 @@
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/layouts">Layouts</a></div>
     <h1>Layouts</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/layouts">layouts</a></div>
+    <div class="tags"><a class="swifty_tag" href="/tags/swifty">swifty</a><a class="swifty_tag" href="/tags/docs">docs</a><a class="swifty_tag" href="/tags/layouts">layouts</a></div>
     <p class="text-s bold">Wrap your pages in reusable layouts.</p>
   <div class="serif-font">
     <p>Layouts are like picture frames for your content. They wrap around your page content and give it structure - headers, footers, sidebars, whatever you fancy.</p>
@@ -41,15 +41,15 @@
 <p><strong>layouts/default.html</strong></p>
 <pre><code class="language-html">&lt;article class=&quot;page&quot;&gt;
   &lt;header&gt;
-    &lt;h1&gt;{{ title }}&lt;/h1&gt;
-    &lt;p class=&quot;meta&quot;&gt;{{ date }}&lt;/p&gt;
+    &lt;h1&gt;&lt;%= title %&gt;&lt;/h1&gt;
+    &lt;p class=&quot;meta&quot;&gt;&lt;%= date %&gt;&lt;/p&gt;
   &lt;/header&gt;
   &lt;main&gt;
-    {{ content }}
+    &lt;%= content %&gt;
   &lt;/main&gt;
 &lt;/article&gt;
 </code></pre>
-<p>The magic happens with <code>{{ content }}</code> - that&#39;s where your page content gets inserted. You can also use any front matter variables like <code>{{ title }}</code> or config values like <code>{{ sitename }}</code>.</p>
+<p>The magic happens with <code>&lt;%= content %&gt;</code> - that&#39;s where your page content gets inserted. You can also use any front matter variables like <code>&lt;%= title %&gt;</code> or config values like <code>&lt;%= sitename %&gt;</code>.</p>
 <h2>How Layouts Are Applied</h2>
 <p>Swifty uses <strong>convention over configuration</strong> (borrowed from Ruby on Rails) to automatically pick layouts:</p>
 <ol>
@@ -91,6 +91,7 @@ layout: false
 
   </div>
 </div>
+
   </main>
     <footer>
     <p>This site was built with Swifty, the super speedy static site generator.</p>
@@ -98,4 +99,3 @@ layout: false
   </footer>
 </body>
 </html>
-  

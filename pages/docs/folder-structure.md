@@ -30,6 +30,8 @@ your-site/
 │   └── app.js
 ├── images/          # Images (auto-optimized)
 │   └── hero.jpg
+├── data/            # JSON/YAML data files
+│   └── team.json
 ├── template.html    # The master wrapper
 ├── config.yaml      # Site configuration
 └── dist/            # Built output (generated)
@@ -44,7 +46,7 @@ This is where your content lives. Every `.md` file becomes a page. Subfolders be
 HTML templates that wrap your page content. Name them after folders for automatic matching - `blog.html` wraps pages in `pages/blog/`.
 
 ### partials/
-Reusable content snippets. Include them anywhere with `{{ partial: name }}`. Great for footers, CTAs, author bios, and link formats.
+Reusable content snippets. Include them anywhere with `<%= partial: name %>`. Great for footers, CTAs, author bios, and link formats.
 
 ### css/
 Drop your stylesheets here. They're automatically added to every page, sorted alphabetically. Prefix with numbers to control load order.
@@ -54,6 +56,9 @@ Same deal as CSS. All JavaScript files are auto-injected into every page.
 
 ### images/
 Your images go here. JPG, PNG, and JPEG files are automatically converted to WebP and resized for the web. SVGs and GIFs pass through unchanged.
+
+### data/
+Store JSON or YAML data files here. The filename becomes the variable name: `data/team.json` is accessible as `data.team` in your templates. Great for lists of team members, products, testimonials, or any structured data you want to loop over.
 
 ### dist/
 The output folder. Don't edit files here - they get overwritten on every build. This is what you deploy.

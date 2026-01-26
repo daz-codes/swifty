@@ -16,6 +16,7 @@ const dirs = {
   css: path.join(baseDir, "css"),
   js: path.join(baseDir, "js"),
   partials: path.join(baseDir, "partials"),
+  data: path.join(baseDir, "data"),
 };
 
 async function loadConfig(dir) {
@@ -31,6 +32,12 @@ async function loadConfig(dir) {
   return {};
 }
 
-const defaultConfig = await loadConfig(baseDir);
+// Hardcoded defaults (used if not specified in config file)
+const builtInDefaults = {
+  default_layout_name: 'default',
+};
+
+const loadedConfig = await loadConfig(baseDir);
+const defaultConfig = { ...builtInDefaults, ...loadedConfig };
 
 export { baseDir, dirs, defaultConfig, loadConfig };

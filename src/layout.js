@@ -59,10 +59,10 @@ const createTemplate = async () => {
 };
 
 const applyLayoutAndWrapContent = async (page,content) => {
-    const layoutContent = await getLayout(page.data.layout !== undefined ? page.data.layout : page.layout);
+    const layoutContent = await getLayout(page.meta.layout !== undefined ? page.meta.layout : page.layout);
     if (!layoutContent) return content;
     // Use function to avoid $` special replacement patterns in content
-    return layoutContent.replace(/\{\{\s*content\s*\}\}/g, () => content);
+    return layoutContent.replace(/<%=\s*content\s*%>/g, () => content);
   };
 
 const getTemplate = async () => {
