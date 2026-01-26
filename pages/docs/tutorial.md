@@ -26,17 +26,15 @@ Ready? Let's bake!
 
 ## Step 1: Project Setup
 
-First, create a new folder and set up Swifty:
+First, install Swifty and create a new site:
 
 ```bash
-mkdir sweet-crumbs
+npm install -g @daz4126/swifty
+swifty sweet-crumbs
 cd sweet-crumbs
-npm init -y
-npm install @daz4126/swifty
-npx swifty init
 ```
 
-You now have a starter structure. Let's clear it out and start fresh. Delete the contents of `pages/` (keep the folder) and we'll build our own.
+This creates a `sweet-crumbs` folder with the starter structure. Let's clear it out and start fresh. Delete the contents of `pages/` (keep the folder) and we'll build our own.
 
 ---
 
@@ -671,6 +669,16 @@ npx swifty build
 ```
 
 Your optimized site is now in the `dist/` folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.
+
+### Quick Deploy with Git
+
+If your site is in a git repo, you can build and deploy in one command:
+
+```bash
+npx swifty deploy "Updated menu prices"
+```
+
+This runs `swifty build`, then `git add .`, `git commit`, and `git push` - perfect for quick updates.
 
 ---
 

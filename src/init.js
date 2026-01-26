@@ -2,22 +2,17 @@
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 
-// Needed to emulate __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Define the structure
-const structure = {
-  "pages/index.md": "This my home page.",
-  "layouts/": null,
-  "partials/": null,
-  "css/": null,
-  "js/": null,
-  "images/": null,
-  "config.yaml": `sitename: Swifty
+function getStructure(sitename) {
+  return {
+    "pages/index.md": `# Welcome to ${sitename}\n\nThis is my home page.`,
+    "layouts/": null,
+    "partials/": null,
+    "css/": null,
+    "js/": null,
+    "images/": null,
+    "data/": null,
+    "config.yaml": `sitename: ${sitename}
 breadcrumb_separator: "&raquo;"
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link
@@ -31,7 +26,7 @@ dateFormat:
   month: short
   day: numeric
   year: numeric`,
-  "template.html": `<!DOCTYPE html>
+    "template.html": `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -40,7 +35,7 @@ dateFormat:
 </head>
 <body>
   <header>
-      <h1>Swifty</h1>
+      <h1>${sitename}</h1>
   </header>
     <main>
     <%= content %>
@@ -50,8 +45,9 @@ dateFormat:
   </footer>
 </body>
 </html>
-  `
-};
+  `,
+  };
+}
 
 function createStructure(basePath, structure) {
   Object.entries(structure).forEach(([filePath, content]) => {
@@ -65,7 +61,20 @@ function createStructure(basePath, structure) {
   });
 }
 
-const projectRoot = process.cwd();
-createStructure(projectRoot, structure);
+export default function init(sitename) {
+  const projectRoot = path.join(process.cwd(), sitename);
 
-console.log("✅ Swifty project initialized successfully!");
+  // Check if folder already exists
+  if (fs.existsSync(projectRoot)) {
+    console.error(`Error: Folder "${sitename}" already exists.`);
+    process.exit(1);
+  }
+
+  const structure = getStructure(sitename);
+  createStructure(projectRoot, structure);
+
+  console.log(`Site "${sitename}" created successfully!`);
+  console.log(`\nNext steps:`);
+  console.log(`  cd ${sitename}`);
+  console.log(`  npx swifty start`);
+}

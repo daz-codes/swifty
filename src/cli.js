@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 
 const args = process.argv.slice(2);
 let outDir = "dist"; // default
@@ -14,13 +14,22 @@ if (outIndex !== -1 && args[outIndex + 1]) {
 // Pass outDir as an environment variable too (optional, still useful)
 process.env.OUT_DIR = outDir;
 
+const reservedCommands = ["build", "start", "watch", "deploy"];
+
 async function main() {
   const command = args[0];
 
+  // No arguments - show usage
+  if (!command) {
+    console.log(`Usage:`);
+    console.log(`  swifty <sitename>              Create a new site in <sitename> folder`);
+    console.log(`  swifty build [--out folder]    Build the site`);
+    console.log(`  swifty start [--out folder]    Build and serve with live reload`);
+    console.log(`  swifty deploy "message"        Build, commit, and push to git`);
+    return;
+  }
+
   switch (command) {
-    case "init":
-      await import("./init.js");
-      break;
     case "build": {
       const build = await import("./build.js");
       if (typeof build.default === "function") {
@@ -54,9 +63,44 @@ async function main() {
       }
       break;
     }
-    default:
-      console.log(`Unknown command: ${command}`);
-      console.log(`Usage: swifty [init|build|start|watch] [--out folder]`);
+    case "deploy": {
+      const commitMessage = args[1] || "Deploying latest build";
+
+      // Build the site
+      const build = await import("./build.js");
+      if (typeof build.default === "function") {
+        await build.default(outDir);
+      }
+
+      // Git operations
+      try {
+        console.log("Adding files to git...");
+        execSync("git add .", { stdio: "inherit" });
+
+        console.log("Committing changes...");
+        execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, {
+          stdio: "inherit",
+        });
+
+        console.log("Pushing to remote...");
+        execSync("git push", { stdio: "inherit" });
+
+        console.log("Deployed successfully!");
+      } catch (error) {
+        console.error("Deploy failed:", error.message);
+        process.exit(1);
+      }
+      break;
+    }
+    default: {
+      // Treat as sitename for new project creation
+      const sitename = command;
+      const init = await import("./init.js");
+      if (typeof init.default === "function") {
+        await init.default(sitename);
+      }
+      break;
+    }
   }
 }
 

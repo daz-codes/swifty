@@ -9,19 +9,22 @@ Swifty is a static site generator that converts Markdown files into a fast stati
 ## Commands
 
 ```bash
-npm test                    # Run tests (mocha)
-npm run build               # Build static site to dist/
-npm start                   # Build and serve at http://localhost:3000
-npx swifty init             # Create new project structure
-npx swifty build            # Build for production (no dev scripts)
-npx swifty start            # Development server with live reload
-npx swifty build --out dir  # Build to custom output directory
+npm test                        # Run tests (mocha)
+npm run build                   # Build static site to dist/
+npm start                       # Build and serve at http://localhost:3000
+npx swifty <sitename>           # Create new site in <sitename>/ folder
+npx swifty build                # Build for production (no dev scripts)
+npx swifty start                # Development server with live reload
+npx swifty build --out dir      # Build to custom output directory
+npx swifty deploy "message"     # Build, git add, commit, and push
 ```
 
 ### Development vs Production
 
+- `swifty <sitename>` - Creates a new site folder with the given name and sets sitename in config.
 - `swifty start` - Development mode with live reload and file watching. Injects livereload script into pages.
 - `swifty build` - Production build with clean output (no livereload script). Use this before deploying.
+- `swifty deploy "message"` - Builds site and commits/pushes to git in one command.
 
 ## Architecture
 
@@ -33,7 +36,7 @@ copyAssets → optimizeImages → generatePages → addLinks → createPages →
 
 ### Core Modules (src/)
 
-- **cli.js** - Entry point, routes commands: init, build, start, watch
+- **cli.js** - Entry point, routes commands: build, start, watch, deploy, and site creation
 - **build.js** - Orchestrates build pipeline
 - **pages.js** - Reads Markdown from `pages/`, parses front matter, generates page objects and HTML
 - **layout.js** - Wraps content in layouts from `layouts/`, injects Turbo.js and CSS

@@ -1,0 +1,14 @@
+sitename: /tmp/existing-site
+breadcrumb_separator: "&raquo;"
+breadcrumb_class: swifty_breadcrumb
+link_class: swifty_link
+tag_class: swifty_tag
+default_layout_name: default
+default_link_name: links
+max_image_size: 800
+
+dateFormat:
+  weekday: short
+  month: short
+  day: numeric
+  year: numeric

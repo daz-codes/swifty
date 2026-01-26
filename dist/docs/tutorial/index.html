@@ -49,14 +49,12 @@
 <p>Ready? Let&#39;s bake!</p>
 <hr>
 <h2>Step 1: Project Setup</h2>
-<p>First, create a new folder and set up Swifty:</p>
-<pre><code class="language-bash">mkdir sweet-crumbs
+<p>First, install Swifty and create a new site:</p>
+<pre><code class="language-bash">npm install -g @daz4126/swifty
+swifty sweet-crumbs
 cd sweet-crumbs
-npm init -y
-npm install @daz4126/swifty
-npx swifty init
 </code></pre>
-<p>You now have a starter structure. Let&#39;s clear it out and start fresh. Delete the contents of <code>pages/</code> (keep the folder) and we&#39;ll build our own.</p>
+<p>This creates a <code>sweet-crumbs</code> folder with the starter structure. Let&#39;s clear it out and start fresh. Delete the contents of <code>pages/</code> (keep the folder) and we&#39;ll build our own.</p>
 <hr>
 <h2>Step 2: The Template</h2>
 <p>Open <code>template.html</code> and replace it with our site skeleton:</p>
@@ -602,6 +600,11 @@ th {
 <pre><code class="language-bash">npx swifty build
 </code></pre>
 <p>Your optimized site is now in the <code>dist/</code> folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.</p>
+<h3>Quick Deploy with Git</h3>
+<p>If your site is in a git repo, you can build and deploy in one command:</p>
+<pre><code class="language-bash">npx swifty deploy &quot;Updated menu prices&quot;
+</code></pre>
+<p>This runs <code>swifty build</code>, then <code>git add .</code>, <code>git commit</code>, and <code>git push</code> - perfect for quick updates.</p>
 <hr>
 <h2>Bonus: Add a News Section with Reading Time</h2>
 <p>Let&#39;s add a news/blog section that shows reading time and previous/next navigation.</p>

@@ -27,8 +27,9 @@ Swifty uses convention over configuration to make it super simple to build blazi
 ## Quickstart
 
 ```bash
-npm install @daz4126/swifty
-npx swifty init
+npm install -g @daz4126/swifty
+swifty my-site
+cd my-site
 npx swifty start
 ```
 
@@ -52,16 +53,18 @@ your-site/
 ## Commands
 
 ```bash
-npx swifty init             # Create new project structure
+npx swifty my-site          # Create new site in my-site/ folder
 npx swifty build            # Build static site to dist/ (for production)
 npx swifty start            # Build, watch, and serve at localhost:3000 (for development)
 npx swifty build --out dir  # Build to custom output directory
+npx swifty deploy "message" # Build, git add, commit, and push
 ```
 
 ### Development vs Production
 
 - **`swifty start`** - For development. Includes live reload (auto-refreshes browser on file changes) and file watching with incremental builds for CSS/JS/images.
 - **`swifty build`** - For production deployment. Produces clean output without any development scripts.
+- **`swifty deploy "message"`** - Builds the site and commits/pushes to git in one command.
 
 ## Documentation
 
