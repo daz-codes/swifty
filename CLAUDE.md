@@ -16,7 +16,7 @@ npx swifty <sitename>           # Create new site in <sitename>/ folder
 npx swifty build                # Build for production (no dev scripts)
 npx swifty start                # Development server with live reload
 npx swifty build --out dir      # Build to custom output directory
-npx swifty deploy "message"     # Build, git add, commit, and push
+npx swifty deploy ["message"]   # Build, git add, commit, and push
 ```
 
 ### Development vs Production

@@ -25,7 +25,7 @@ async function main() {
     console.log(`  swifty <sitename>              Create a new site in <sitename> folder`);
     console.log(`  swifty build [--out folder]    Build the site`);
     console.log(`  swifty start [--out folder]    Build and serve with live reload`);
-    console.log(`  swifty deploy "message"        Build, commit, and push to git`);
+    console.log(`  swifty deploy ["message"]      Build, commit, and push to git`);
     return;
   }
 
