@@ -1,8 +1,8 @@
 sitename: Swifty
 breadcrumb_separator: "&raquo;"
 breadcrumb_class: swifty_breadcrumb
-link_class: swifty_link
-tag_class: swifty_tag
+link_class: link
+tag_class: tag
 default_layout_name: default
 default_link_name: links
 max_image_size: 800

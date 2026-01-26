@@ -60,7 +60,6 @@ These get added just before the closing `</head>` tag. You don't need to manuall
 Swifty uses [Eta](https://eta.js.org/) with EJS-style syntax for templates:
 
 - `<%= variable %>` - Output a variable (escaped)
-- `<%- variable %>` - Output a variable (unescaped, same result since autoEscape is off)
 - `<% code %>` - Execute JavaScript without output
 
 | Variable | Syntax | What it does |

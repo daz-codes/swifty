@@ -13,26 +13,26 @@
   <title>Swifty</title>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="preload" href="/css/custom.css?v=1742682364000" as="style" />
+<link rel="preload" href="/css/custom.css?v=1769451763796" as="style" />
 <link rel="preload" href="/css/simple.css?v=1744487809186" as="style" />
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
-<link rel="stylesheet" href="/css/custom.css?v=1742682364000" />
+<link rel="stylesheet" href="/css/custom.css?v=1769451763796" />
 <link rel="stylesheet" href="/css/simple.css?v=1744487809186" />
 
 </head>
 <body>
   <header class="sticky dropshadow opacity-9 align-vertical space-between">
       <a href="/" class="logo">S</a>
-      <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
-<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
-<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
+      <nav class="tabs"><li><a href="/about" class="link">About</a></li>
+<li><a href="/roadmap" class="link">Roadmap</a></li>
+<li><a href="/docs" class="link">Docs</a></li></nav>
   </header>
     <main>
     <div class="container">
   <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/template">Template</a></div>
     <h1>The Template File</h1>
-    <div class="tags"><a class="swifty_tag" href="/tags/swifty">swifty</a><a class="swifty_tag" href="/tags/docs">docs</a><a class="swifty_tag" href="/tags/template">template</a></div>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/template">template</a></div>
     <p class="text-s bold">The master wrapper for your entire site.</p>
   <div class="serif-font">
     <p>The template file is the big boss - it wraps around <em>everything</em>. While layouts wrap individual page content, the template wraps the whole shebang, including the layout.</p>
@@ -77,7 +77,6 @@
 <p>Swifty uses <a href="https://eta.js.org/">Eta</a> with EJS-style syntax for templates:</p>
 <ul>
 <li><code>&lt;%= variable %&gt;</code> - Output a variable (escaped)</li>
-<li><code>&lt;%- variable %&gt;</code> - Output a variable (unescaped, same result since autoEscape is off)</li>
 <li><code>&lt;% code %&gt;</code> - Execute JavaScript without output</li>
 </ul>
 <table>
