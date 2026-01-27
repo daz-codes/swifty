@@ -2,9 +2,9 @@
 layout: false
 ---
 
-<section class="container text-center no-margin">
+<section class="container text-center no-margin right-align">
     <h1 class="display-l fancy-font logo no-margin"><%= sitename %></h1>
-    <div class="gradient-text display-s text-center margin-y">Super Speedy Static Site Generator!</div>
+    <h2 class="display-s margin-y">Super Speedy Static Site Generator!</h2>
 </section>
 
 <div class="align-center gap-s">
@@ -14,7 +14,7 @@ layout: false
 </div>
 
 
-<section class="highlight container text-center">
+<section class="highlight container right-align">
 
 ## Create a Website in No Time!
 
@@ -24,7 +24,7 @@ Swifty is the super speedy static site generator that makes building a website a
 
 </section>
 
-<section class="container text-center">
+<section class="container right-align">
 
 ## Super Flexible
 
@@ -34,7 +34,7 @@ You can conditionally add layouts to pages as well as using partials for content
 
 </section>
 
-<section class="highlight container text-center">
+<section class="highlight container right-align">
 
 ## Extra Features
 

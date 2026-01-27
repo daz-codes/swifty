@@ -1,8 +1,12 @@
-<div class="container">
-  <div class="breadcrumbs"><%= breadcrumbs %></div>
+<div class="page-hero">
+  <div class="container">
+    <div class="breadcrumbs"><%= breadcrumbs %></div>
     <h1><%= title %></h1>
     <div class="tags"><%= links_to_tags %></div>
-    <p class="text-s bold"><%= summary %></p>
+    <p class="page-summary"><%= summary %></p>
+  </div>
+</div>
+<div class="page-body container">
   <div class="serif-font">
     <%= content %>
   </div>

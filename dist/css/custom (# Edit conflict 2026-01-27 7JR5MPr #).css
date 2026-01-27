@@ -28,7 +28,7 @@ h1.logo::after {
 }
 
 header{
-  padding: 1rem 2rem;
+  padding: 0 2rem;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -45,12 +45,10 @@ header > nav a:visited {
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0.5rem 1rem;
+  padding: 0 1rem;
   text-decoration: none;
   color: var(--text);
   transition: color 0.2s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 header > nav a:hover {
@@ -109,7 +107,7 @@ h2 {
   text-align: right;
 }
 
-.right-align h1, .right-align h2, .right-align h3,
+.right-align h1, .right-align h3,
 .right-align h4, .right-align h5, .right-align h6 {
   text-align: right;
 }
@@ -216,24 +214,8 @@ pre code {
 }
 
 /* Breadcrumb separator */
-.breadcrumbs {
+.breadcrumb-sep {
   color: #f18c8e;
-}
-
-/* Page hero / body sections */
-.page-hero {
-  background-color: #1e3d4d;
-  padding: 2rem 0;
-}
-
-.page-body {
-  background-color: #568ea6;
-  padding: 2rem 0;
-}
-
-.page-summary {
-  color: #f0b7a4;
-  font-size: 1.1rem;
 }
 
 /* Blockquote */
@@ -245,19 +227,26 @@ blockquote {
 }
 
 /* Heading underline: filled circle + gap + thick line */
-h2 {
+h2, h3 {
   position: relative;
   display: inline-block;
   padding-bottom: 1.2rem;
+}
+
+h2 {
   float: right;
   clear: both;
+}
+
+h3 {
+  float: none;
 }
 
 section h2 {
   font-size: 2.25rem;
 }
 
-h2::before {
+h2::before, h3::before {
   content: "";
   position: absolute;
   left: 0;
@@ -268,7 +257,7 @@ h2::before {
   background: #f18c8e;
 }
 
-h2::after {
+h2::after, h3::after {
   content: "";
   position: absolute;
   left: 44px;
@@ -279,30 +268,8 @@ h2::after {
   border-radius: 3px;
 }
 
-/* h3 underline - thin white line */
-h3 {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 0.6rem;
-}
-
-h3::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 3px;
-  background: #ffffff;
-  border-radius: 2px;
-}
-
 /* Exclude hero section subtitle */
 section.no-margin h2::before,
 section.no-margin h2::after {
   display: none;
-}
-
-section.no-margin h2 {
-  float: none;
 }

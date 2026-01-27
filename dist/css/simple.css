@@ -1,30 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Special+Elite&family=Holtwood+One+SC&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&family=Jost:wght@300;400;500;600;700&display=swap');
 /* Global variables. */
 :root {
     background: var(--accent-bg);
-    --font-family: -apple-system, "BlinkMacSystemFont", "Avenir", "Avenir Next", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-    --serif-font: -apple-system, "BlinkMacSystemFont", "Avenir", "Avenir Next", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-    --sans-font: -apple-system, "BlinkMacSystemFont", "Avenir", "Avenir Next", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    --font-family: "Jost", -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+    --serif-font: "Georgia", "Times New Roman", serif;
+    --sans-font: "Jost", -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
     --mono-font: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
-    --brand-font: "Permanent Marker", cursive;
-    --heading-font: "Permanent Marker", cursive;
-    --fancy-font: "Permanent Marker", cursive;
-    --slab-font:  "Holtwood One SC", serif;
+    --brand-font: "Boldonse", cursive;
+    --heading-font: "Jost", -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+    --fancy-font: "Boldonse", cursive;
+    --slab-font: "Boldonse", cursive;
 
-    /* Retro 1950s theme */
-    --bg: #851012;
-    --accent-bg: #6b0c0e;
-    --highlight: rgba(247,242,171,0.1);
-    --text: #f7f2ab;
-    --text-light: #f7f2ab;
-    --border: #a0421f;
-    --primary: #f7f2ab;
-    --secondary: #d4883a;
-    --primary-hover: #f7f2ab;
-    --accent-text: #851012;
-    --preformatted: #f7f2ab;
-    --marked: #f7f2ab;
-    --disabled: #5a0a0b;
+    /* Modern minimalist theme */
+    --bg: #305f72;
+    --accent-bg: #2a5264;
+    --highlight: rgba(241,209,181,0.2);
+    --text: #ffffff;
+    --text-light: #e0e8ec;
+    --border: #3d7a8f;
+    --primary: #ffffff;
+    --secondary: #f18c8e;
+    --primary-hover: #ffffff;
+    --accent-text: #305f72;
+    --preformatted: #f1d1b5;
+    --marked: #f1d1b5;
+    --disabled: #ccc;
 
     --white: #f6f7f8;
     --offWhite: #efefef;
@@ -97,7 +97,14 @@
     --radius-xl: calc(4*var(--radius-unit));
   }
   
-  /* Dark theme disabled - retro theme is universal */
+  /* Dark theme - already dark, just deepen slightly */
+@media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e3d4d;
+      --accent-bg: #183343;
+      --border: #2a5264;
+    }
+  }
   
   /* Reset box-sizing */
   *, *::before, *::after {
@@ -139,7 +146,7 @@
   }
 
   .highlight{
-    background: #f7f2ab;
+    background: #568ea6;
   }
 
   .opacity-0{ opacity: 0; }
@@ -159,18 +166,18 @@
     background-color: var(--accent-bg);
     text-align: center;
     grid-column: 1 / -1;
-    border-bottom: 3px solid var(--primary);
+    border-bottom: none;
   }
-  
+
   /* Add a little padding to ensure spacing is correct between content and header > nav */
   main {
     padding-top: var(--padding-s);
     grid-column: 1 / -1;
   }
-  
+
   body > footer {
     background-color: var(--accent-bg);
-    border-top: 3px solid var(--primary);
+    border-top: none;
     margin-top: var(--margin-l);
     padding: var(--padding-xs) var(--padding-s) var(--padding-m) var(--padding-s);
     color: var(--text-light);
@@ -775,7 +782,7 @@
         font-family: var(--font-family);
         line-height: 1.2;
         font-weight: 300;
-        font-size: 4rem;
+        font-size: 4.8rem;
     }
 
     .display-m {
