@@ -35,6 +35,17 @@ async function loadConfig(dir) {
 // Hardcoded defaults (used if not specified in config file)
 const builtInDefaults = {
   default_layout_name: 'default',
+  // Reading time calculation
+  words_per_minute: 200,
+  // Image optimization settings
+  max_image_width: 800,
+  image_quality: 80,
+  // LiveReload and watcher settings
+  livereload_port: 35729,
+  watcher_delay: 100,
+  watcher_interval: 500,
+  // Pagination
+  default_page_count: 2,
 };
 
 const loadedConfig = await loadConfig(baseDir);

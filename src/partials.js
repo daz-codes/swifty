@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
-import { dirs } from "./config.js";
+import { dirs, defaultConfig } from "./config.js";
 import { marked } from "marked";
 import { Eta } from "eta";
 import { loadData } from "./data.js";
@@ -32,8 +32,8 @@ const countWords = (content) => {
   return words.length;
 };
 
-// Calculate reading time (average 200 words per minute)
-const calculateReadingTime = (wordCount, wordsPerMinute = 200) => {
+// Calculate reading time using config value or default 200 words per minute
+const calculateReadingTime = (wordCount, wordsPerMinute = defaultConfig.words_per_minute || 200) => {
   const minutes = Math.ceil(wordCount / wordsPerMinute);
   return minutes === 1 ? '1 min read' : `${minutes} min read`;
 };

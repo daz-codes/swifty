@@ -40,7 +40,7 @@ const createTemplate = async () => {
     ? `<script type="module">import * as Turbo from 'https://esm.sh/@hotwired/turbo';</script>`
     : '';
   const livereloadScript = process.env.SWIFTY_WATCH
-    ? `<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>`
+    ? `<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':${defaultConfig.livereload_port || 35729}/livereload.js?snipver=1"></' + 'script>')</script>`
     : '';
 
   // Preload local assets for faster loading

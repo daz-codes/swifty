@@ -1,0 +1,8 @@
+sitename: Test Config
+words_per_minute: 100
+max_image_width: 400
+image_quality: 60
+livereload_port: 40000
+watcher_delay: 200
+watcher_interval: 1000
+default_page_count: 3

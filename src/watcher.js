@@ -2,6 +2,7 @@ import chokidar from "chokidar";
 import livereload from "livereload";
 import path from "path";
 import fs from "fs";
+import { defaultConfig } from "./config.js";
 
 // Directory to extension mapping for filtering
 const dirExtensions = {
@@ -95,22 +96,25 @@ export default async function watch(outDir = "dist") {
   // Start livereload server
   const lrServer = livereload.createServer({
     usePolling: true,
-    delay: 100,
+    delay: defaultConfig.watcher_delay || 100,
   });
   const outPath = path.join(process.cwd(), outDir);
+  const livereloadPort = defaultConfig.livereload_port || 35729;
   lrServer.watch(outPath);
-  console.log("LiveReload server started on port 35729");
+  console.log(`LiveReload server started on port ${livereloadPort}`);
 
   // Initialize watcher (chokidar 4.x)
   // usePolling needed for network/cloud drives that don't emit native fs events
+  const watcherInterval = defaultConfig.watcher_interval || 500;
+  const watcherDelay = defaultConfig.watcher_delay || 100;
   const watcher = chokidar.watch(watchPaths, {
     persistent: true,
     ignoreInitial: true,
     usePolling: true,
-    interval: 500,
+    interval: watcherInterval,
     awaitWriteFinish: {
-      stabilityThreshold: 200,
-      pollInterval: 100,
+      stabilityThreshold: watcherDelay * 2,
+      pollInterval: watcherDelay,
     },
   });
 
@@ -126,30 +130,45 @@ export default async function watch(outDir = "dist") {
     try {
       if (event === "deleted") {
         // For deletions, do a full rebuild to clean up
-        console.log(`File deleted: ${filename}. Running full build...`);
+        console.log(`🗑️  File deleted: ${filename}. Running full build...`);
+        const rebuildStart = performance.now();
         clearPartialCache();
         await resetCaches();
         await build.default(outDir);
+        const rebuildTime = performance.now() - rebuildStart;
+        console.log(`   Rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`);
       } else if (changeType === "css" || changeType === "js") {
         // Full rebuild for CSS/JS to update cache-busting query strings in HTML
-        console.log(`Asset ${event}: ${filename}. Rebuilding...`);
+        console.log(`🎨 Asset ${event}: ${filename}. Rebuilding...`);
+        const rebuildStart = performance.now();
         await resetCaches();
         await build.default(outDir);
+        const rebuildTime = performance.now() - rebuildStart;
+        console.log(`   Rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`);
       } else if (changeType === "image") {
         // Incremental: just process the changed image
-        console.log(`Image ${event}: ${filename}`);
+        const imageStart = performance.now();
+        console.log(`🖼️  Image ${event}: ${filename}`);
         await optimizeSingleImage(filePath, outDir);
+        const imageTime = performance.now() - imageStart;
+        console.log(`   Optimized in ${(imageTime / 1000).toFixed(2)}s`);
       } else if (changeType === "data") {
         // Data file changed - clear data cache and rebuild
-        console.log(`Data ${event}: ${filename}. Rebuilding...`);
+        console.log(`📊 Data ${event}: ${filename}. Rebuilding...`);
+        const rebuildStart = performance.now();
         clearDataCache();
         await build.default(outDir);
+        const rebuildTime = performance.now() - rebuildStart;
+        console.log(`   Rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`);
       } else {
         // Full rebuild for pages, layouts, partials, config, and new CSS/JS files
-        console.log(`File ${event}: ${filename}. Running full build...`);
+        console.log(`📝 File ${event}: ${filename}. Running full build...`);
+        const rebuildStart = performance.now();
         clearPartialCache();
         await resetCaches();
         await build.default(outDir);
+        const rebuildTime = performance.now() - rebuildStart;
+        console.log(`   Rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`);
       }
       // Trigger browser refresh
       lrServer.refresh("/");

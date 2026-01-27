@@ -160,7 +160,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
         // Load folder's own config for pagination settings
         const dirConfig = await loadConfig(page.filePath);
-        const mergedConfig = { ...page.meta, ...dirConfig };
+        const mergedConfig = { 
+          ...page.meta, 
+          ...dirConfig,
+          // Only set default page_count if explicitly specified in either page meta or dir config
+          page_count: dirConfig.page_count || page.meta.page_count
+        };
         page.meta = mergedConfig;
 
         page.pages.sort((a, b) => {

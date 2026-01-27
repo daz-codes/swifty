@@ -1,11 +1,27 @@
 sitename: Swifty
 breadcrumb_separator: "&raquo;"
 breadcrumb_class: swifty_breadcrumb
-link_class: link
+link_class: swifty_link
 tag_class: tag
 default_layout_name: default
 default_link_name: links
-max_image_size: 800
+
+# Image optimization settings
+max_image_width: 800
+image_quality: 80
+
+# Reading time calculation
+words_per_minute: 200
+
+# LiveReload and watcher settings
+livereload_port: 35729
+watcher_delay: 100
+watcher_interval: 500
+
+# Pagination
+default_page_count: 2
+
+# Performance
 turbo: false
 
 dateFormat:

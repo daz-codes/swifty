@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico" sizes="48x48" type="image/x-icon">
+  <link rel="icon" href="favicon-16x16.webp" sizes="16x16" type="image/x-icon">
+  <link rel="icon" href="favicon-32x32.webp" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="path/to/apple-touch-icon.webp">
+  <link rel="icon" sizes="192x192" href="android-chrome-192x19.webp">
+  <link rel="icon" sizes="512x512" href="android-chrome-512x512.webp">
+
+  <title>Swifty</title>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="preload" href="/css/custom.css?v=1769538233099" as="style" />
+<link rel="preload" href="/css/simple.css?v=1769537828151" as="style" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
+<link rel="stylesheet" href="/css/custom.css?v=1769538233099" />
+<link rel="stylesheet" href="/css/simple.css?v=1769537828151" />
+<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+</head>
+<body>
+  <header class="sticky dropshadow opacity-9 align-vertical space-between">
+      <a href="/" class="logo">S</a>
+      <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
+<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
+<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
+  </header>
+    <main>
+    <div class="container">
+  <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/configuration">Configuration</a></div>
+    <h1>Configuration</h1>
+    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/config">config</a></div>
+    <p class="text-s bold">Customize Swifty to your liking.</p>
+  <div class="serif-font">
+    <p>Swifty believes in sensible defaults, but when you want to tweak things, the config file is your friend. Create a <code>config.yaml</code> (or <code>config.yml</code> or <code>config.json</code> if that&#39;s your jam) in your project root.</p>
+<h2>The Full Config Menu</h2>
+<p>Here&#39;s everything you can configure, with the defaults shown:</p>
+<pre><code class="language-yaml">sitename: Swifty
+author: Taylor Swift
+site_url: https://yoursite.com
+breadcrumb_separator: &quot;&amp;raquo;&quot;
+breadcrumb_class: swifty_breadcrumb
+link_class: swifty_link
+tag_class: tag
+prev_next_class: swifty_link
+default_layout_name: default
+default_link_name: links
+max_image_size: 800
+turbo: false
+
+# Pagination
+page_count: 10
+pagination_class: swifty_pagination
+pagination_link_class: swifty_pagination_link
+pagination_current_class: swifty_pagination_current
+
+# Sorting
+date_sort_order: desc
+
+dateFormat:
+  weekday: short
+  month: short
+  day: numeric
+  year: numeric
+</code></pre>
+<h2>What Does What?</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>sitename</code></td>
+<td>Your site&#39;s name - use <code>&lt;%= sitename %&gt;</code> anywhere to display it</td>
+</tr>
+<tr>
+<td><code>author</code></td>
+<td>Your name (or whoever&#39;s taking credit)</td>
+</tr>
+<tr>
+<td><code>site_url</code></td>
+<td>Full URL of your site (required for RSS feeds and Open Graph tags)</td>
+</tr>
+<tr>
+<td><code>breadcrumb_separator</code></td>
+<td>The character between breadcrumb links</td>
+</tr>
+<tr>
+<td><code>breadcrumb_class</code></td>
+<td>CSS class for breadcrumb links</td>
+</tr>
+<tr>
+<td><code>link_class</code></td>
+<td>CSS class for auto-generated links</td>
+</tr>
+<tr>
+<td><code>tag_class</code></td>
+<td>CSS class for tag links</td>
+</tr>
+<tr>
+<td><code>prev_next_class</code></td>
+<td>CSS class for previous/next page links</td>
+</tr>
+<tr>
+<td><code>default_layout_name</code></td>
+<td>The fallback layout when no other applies</td>
+</tr>
+<tr>
+<td><code>default_link_name</code></td>
+<td>The partial used for generating link lists</td>
+</tr>
+<tr>
+<td><code>max_image_size</code></td>
+<td>Maximum width for optimized images (in pixels)</td>
+</tr>
+<tr>
+<td><code>turbo</code></td>
+<td>Enable Turbo for SPA-like navigation</td>
+</tr>
+<tr>
+<td><code>page_count</code></td>
+<td>Number of items per page before pagination kicks in</td>
+</tr>
+<tr>
+<td><code>pagination_class</code></td>
+<td>CSS class for the pagination container</td>
+</tr>
+<tr>
+<td><code>pagination_link_class</code></td>
+<td>CSS class for pagination links</td>
+</tr>
+<tr>
+<td><code>pagination_current_class</code></td>
+<td>CSS class for the current page indicator</td>
+</tr>
+<tr>
+<td><code>date_sort_order</code></td>
+<td>Sort order for pages by date: &quot;desc&quot; (newest first) or &quot;asc&quot;</td>
+</tr>
+<tr>
+<td><code>dateFormat</code></td>
+<td>How dates are formatted throughout your site</td>
+</tr>
+</tbody></table>
+<h2>Using Config Values in Pages</h2>
+<p>Any config value can be dropped into your pages or layouts using ERB-style syntax:</p>
+<pre><code class="language-markdown">Welcome to &lt;%= sitename %&gt;!
+Written by &lt;%= author %&gt;.
+</code></pre>
+<p>Simple as that.</p>
+<h2>Turbo Mode</h2>
+<p>By default, Swifty generates good old-fashioned HTML pages. But if you want that slick single-page-app feel with instant page transitions, flip on Turbo:</p>
+<pre><code class="language-yaml">turbo: true
+</code></pre>
+<p>When enabled, <a href="https://turbo.hotwired.dev/">Turbo</a> intercepts link clicks, fetches pages in the background, and smoothly swaps content. It even prefetches links when you hover over them. Your visitors will think you&#39;re some kind of wizard.</p>
+<p>For most sites though, plain HTML is already plenty fast. Only enable Turbo if you really want those buttery transitions.</p>
+<h2>Folder-Level Config</h2>
+<p>Here&#39;s a neat trick: you can add a <code>config.yaml</code> inside any folder in <code>pages/</code> to set defaults for all pages in that folder. Great for giving a whole section its own author or layout without repeating yourself.</p>
+<h2>RSS Feeds</h2>
+<p>Want to offer RSS feeds for your blog or news section? Easy. Just add the folders you want feeds for:</p>
+<pre><code class="language-yaml">site_url: https://yoursite.com
+rss_feeds:
+  - blog
+  - news
+</code></pre>
+<p>This generates <code>/blog/rss.xml</code> and <code>/news/rss.xml</code> automatically, including all pages within those folders.</p>
+<h3>Custom Feed Options</h3>
+<p>Need more control? Use the expanded format:</p>
+<pre><code class="language-yaml">rss_feeds:
+  - folder: blog
+    title: My Awesome Blog
+    description: Thoughts on code, coffee, and chaos
+  - folder: news
+    title: Company Updates
+    description: The latest from our team
+</code></pre>
+<h3>RSS Config Options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>site_url</code></td>
+<td><strong>Required for RSS.</strong> The full URL of your site (used for absolute links in feeds)</td>
+</tr>
+<tr>
+<td><code>rss_feeds</code></td>
+<td>List of folders to generate feeds for</td>
+</tr>
+<tr>
+<td><code>rss_max_items</code></td>
+<td>Maximum items per feed (default: 20)</td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Feed language code (default: &quot;en&quot;)</td>
+</tr>
+</tbody></table>
+<p>Each feed includes the page title, URL, publication date, and a description snippet. Feeds are sorted by date with the newest items first.</p>
+
+  </div>
+</div>
+
+  </main>
+    <footer>
+    <p>This site was built with Swifty, the super speedy static site generator.</p>
+    <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
+  </footer>
+</body>
+</html>

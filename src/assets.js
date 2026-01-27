@@ -68,12 +68,13 @@ async function optimizeImages(outputDir = dirs.dist) {
           const image = sharp(filePath);
           const metadata = await image.metadata();
           const originalWidth = metadata.width || 0;
-          const maxWidth = defaultConfig.max_image_size || 800;
+          const maxWidth = defaultConfig.max_image_width || 800;
+          const imageQuality = defaultConfig.image_quality || 80;
           const resizeWidth = Math.min(originalWidth, maxWidth);
 
           await image
             .resize({ width: resizeWidth })
-            .toFormat("webp", { quality: 80 })
+            .toFormat("webp", { quality: imageQuality })
             .toFile(optimizedPath);
 
           await fs.unlink(filePath);
@@ -167,12 +168,13 @@ const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
   const image = sharp(filePath);
   const metadata = await image.metadata();
   const originalWidth = metadata.width || 0;
-  const maxWidth = defaultConfig.max_image_size || 800;
+  const maxWidth = defaultConfig.max_image_width || 800;
+  const imageQuality = defaultConfig.image_quality || 80;
   const resizeWidth = Math.min(originalWidth, maxWidth);
 
   await image
     .resize({ width: resizeWidth })
-    .toFormat("webp", { quality: 80 })
+    .toFormat("webp", { quality: imageQuality })
     .toFile(optimizedPath);
 
   console.log(`Optimized ${filename} -> ${path.basename(optimizedPath)}`);
