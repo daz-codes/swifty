@@ -136,7 +136,42 @@ h1::after {
 
 @media only screen and (max-width: 720px) {
   h1 {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
+    gap: 0.05em;
+  }
+
+  h1::after {
+    width: 14px;
+    height: 14px;
+  }
+
+  h2::before {
+    width: 20px;
+    height: 20px;
+  }
+
+  h2::after {
+    left: 32px;
+    bottom: 6px;
+    width: calc(100% - 32px);
+    height: 6px;
+  }
+
+  h3::after {
+    height: 2px;
+  }
+
+  .align-center {
+    flex-direction: column;
+    align-items: center;
+    width: 90%;
+    margin: 0 auto;
+  }
+
+  .align-center .button {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
   }
 }
 
