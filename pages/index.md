@@ -4,13 +4,13 @@ layout: false
 
 <section class="container text-center no-margin right-align">
     <h1 class="display-l fancy-font logo no-margin"><%= sitename %></h1>
-    <h2 class="display-s margin-y">Super Speedy Static Site Generator!</h2>
+    <h2 class="display-s margin-y">The super speedy static site generator</h2>
 </section>
 
 <div class="align-center gap-s">
-    <a class="button" href="/about">Get Started</a>
-    <a class="button" href="/docs">Learn Swifty</a>
-    <a class="button" href="/docs/tutorial">Tutorial</a>
+    <a class="button" href="/about">GET STARTED</a>
+    <a class="button" href="/docs">LEARN SWIFTY</a>
+    <a class="button" href="/docs/tutorial">TUTORIAL</a>
 </div>
 
 

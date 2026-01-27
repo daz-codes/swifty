@@ -178,7 +178,7 @@
   body > footer {
     background-color: var(--accent-bg);
     border-top: none;
-    margin-top: var(--margin-l);
+    margin-top: 0;
     padding: var(--padding-xs) var(--padding-s) var(--padding-m) var(--padding-s);
     color: var(--text-light);
     font-size: 0.9rem;
@@ -274,7 +274,7 @@
   input[type="submit"],
   input[type="reset"],
   input[type="button"] {
-    border: var(--border-width-s) solid var(--primary);
+    border: var(--border-width-s) solid rgba(255, 255, 255, 0.35);
     border-radius: var(--radius-l);
     background-color: var(--primary);
     color: var(--accent-text);
@@ -791,6 +791,12 @@
 
     .display-s {
         font-size: 2.25rem;
+    }
+
+    @media only screen and (max-width: 720px) {
+      .display-l {
+        font-size: 3.9rem;
+      }
     }
 
 .text-xl {
