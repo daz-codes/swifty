@@ -1,9 +1,16 @@
+/* Homepage hero title */
 h1.logo {
   color: var(--primary);
   display: inline-flex;
   align-items: baseline;
   justify-content: flex-end;
   gap: 0.15em;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+h1.logo::before {
+  display: none;
 }
 
 h1.logo::after {
@@ -16,6 +23,53 @@ h1.logo::after {
   flex-shrink: 0;
   position: relative;
   bottom: 0.05em;
+}
+
+/* Homepage subheading - no decoration */
+section.no-margin h2 {
+  border-bottom: none;
+  padding-bottom: 0;
+  position: static;
+  display: block;
+  float: none;
+}
+
+section.no-margin h2::before,
+section.no-margin h2::after {
+  display: none;
+}
+
+/* Homepage section headings - right aligned with dot and thick underline */
+section.right-align h2 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 1.2rem;
+  float: right;
+  clear: both;
+  text-align: right;
+  border-bottom: none;
+}
+
+section.right-align h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f18c8e;
+}
+
+section.right-align h2::after {
+  content: "";
+  position: absolute;
+  left: 44px;
+  bottom: 4px;
+  width: calc(100% - 44px);
+  height: 10px;
+  background: #f1d1b5;
+  border-radius: 3px;
 }
 
 .post-info{
@@ -111,8 +165,13 @@ h1, h2, h3, h4, h5, h6 {
   text-align: left;
 }
 
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
+h1 a:visited, h2 a:visited, h3 a:visited, h4 a:visited, h5 a:visited, h6 a:visited {
+  text-decoration: none;
+}
+
 h2 {
-  text-align: right;
+  text-align: left;
 }
 
 .right-align h1, .right-align h2, .right-align h3,
@@ -123,48 +182,71 @@ h2 {
 h1 {
   font-size: 3rem;
   font-family: var(--fancy-font) !important;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.15em;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 1.2rem;
+  text-align: left;
 }
 
-h1::after {
+h1::before {
   content: "";
-  display: inline-block;
+  position: absolute;
+  right: 0;
+  bottom: -1px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
   background: #f18c8e;
-  flex-shrink: 0;
-  position: relative;
-  bottom: 0.05em;
+}
+
+h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: calc(100% - 44px);
+  height: 10px;
+  background: #f1d1b5;
+  border-radius: 3px;
 }
 
 @media only screen and (max-width: 720px) {
   h1 {
     font-size: 1.8rem;
-    gap: 0.05em;
   }
 
-  h1::after {
-    width: 14px;
-    height: 14px;
-  }
-
-  h2::before {
+  h1::before {
     width: 20px;
     height: 20px;
   }
 
-  h2::after {
+  h1::after {
+    width: calc(100% - 32px);
+    height: 6px;
+    bottom: 2px;
+  }
+
+  h1.logo::before {
+    display: none;
+  }
+
+  h1.logo::after {
+    position: relative;
+    bottom: 0.05em;
+    width: 14px;
+    height: 14px;
+  }
+
+  section.right-align h2::before {
+    width: 20px;
+    height: 20px;
+  }
+
+  section.right-align h2::after {
     left: 32px;
     bottom: 2px;
     width: calc(100% - 32px);
     height: 6px;
-  }
-
-  h3::after {
-    height: 2px;
   }
 
   .align-center {
@@ -288,65 +370,20 @@ blockquote {
   color: var(--text);
 }
 
-/* Heading underline: filled circle + gap + thick line */
+/* Heading underlines */
 h2 {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 1.2rem;
-  float: right;
-  clear: both;
+  display: block;
+  border-bottom: 2px solid #f18c8e;
+  padding-bottom: 0.4rem;
 }
 
 section h2 {
   font-size: 2.25rem;
 }
 
-h2::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #f18c8e;
-}
-
-h2::after {
-  content: "";
-  position: absolute;
-  left: 44px;
-  bottom: 4px;
-  width: calc(100% - 44px);
-  height: 10px;
-  background: #f1d1b5;
-  border-radius: 3px;
-}
-
-/* h3 underline - thin white line */
 h3 {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 0.6rem;
+  display: block;
+  border-bottom: 1px solid #f18c8e;
+  padding-bottom: 0.3rem;
 }
 
-h3::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 3px;
-  background: #f1d1b5;
-  border-radius: 2px;
-}
-
-/* Exclude hero section subtitle */
-section.no-margin h2::before,
-section.no-margin h2::after {
-  display: none;
-}
-
-section.no-margin h2 {
-  float: none;
-}
