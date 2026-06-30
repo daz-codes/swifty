@@ -24,6 +24,7 @@ describe("Swifty", function () {
     await fsExtra.ensureDir(path.join(testDir, "partials"));
     await fsExtra.ensureDir(path.join(testDir, "css"));
     await fsExtra.ensureDir(path.join(testDir, "js"));
+    await fsExtra.ensureDir(path.join(testDir, "images"));
     await fsExtra.ensureDir(path.join(testDir, "data"));
 
     // Create template.html with sitename and nav
@@ -43,6 +44,7 @@ describe("Swifty", function () {
   <nav class="breadcrumbs"><%= breadcrumbs %></nav>
   <%= content %>
   <%= pagination %>
+  <%= partial: htmlnav %>
   <footer><%= partial: footer %></footer>
 </body>
 </html>`
@@ -104,6 +106,16 @@ This page has a custom variable: <%= custom_var %>
 - Feature one
 - Feature two
 - Feature three`
+    );
+
+    // Create page whose filename capitalization would be wrong without front matter title
+    await fs.writeFile(
+      path.join(testDir, "pages", "about-mi.md"),
+      `---
+title: About Me
+layout: default
+---
+# About Me`
     );
 
     // Create contact page
@@ -223,6 +235,15 @@ Regular text <%= title %> should be replaced.`
 - [Blog](/blog)`
     );
 
+    await fs.writeFile(
+      path.join(testDir, "partials", "htmlnav.html"),
+      `<nav class="raw-partial">
+  <a href="/about">About</a>
+
+  <button type="button">Menu</button>
+</nav>`
+    );
+
     // Create CSS file
     await fs.writeFile(
       path.join(testDir, "css", "style.css"),
@@ -235,6 +256,15 @@ Regular text <%= title %> should be replaced.`
       path.join(testDir, "js", "main.js"),
       `console.log("Swifty site loaded");`
     );
+
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+      "base64",
+    );
+    await Promise.all([
+      fs.writeFile(path.join(testDir, "images", "photo.png"), png),
+      fs.writeFile(path.join(testDir, "images", "favicon.png"), png),
+    ]);
 
     // Create posts for pagination testing (5 posts, will paginate with 2 per page)
     for (let i = 1; i <= 5; i++) {
@@ -292,6 +322,23 @@ layout: default
 # Featured Content
 
 This page has OG meta tags.`
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "pages", "images.md"),
+      `---
+title: Image Rewrite
+layout: default
+---
+# Image Rewrite
+
+![Local image](/images/photo.png)
+
+<img src="https://cdn.example.com/remote.jpg" alt="Remote image">
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<a href="/images/photo.jpg">Download original</a>
+
+The filename report.png should not be rewritten.`
     );
 
     // Create a longer article for word count and reading time testing
@@ -403,6 +450,27 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
       assert.ok(/src="\/js\/main\.js\?v=\d+"/.test(content), "should have JS script tag with cache-busting query string");
     });
+
+    it("should optimize local PNG images to WebP", async () => {
+      const photoExists = await fsExtra.pathExists(path.join(distDir, "images", "photo.webp"));
+      const faviconExists = await fsExtra.pathExists(path.join(distDir, "images", "favicon.webp"));
+      assert.strictEqual(photoExists, true, "photo.webp should exist");
+      assert.strictEqual(faviconExists, true, "favicon.webp should exist");
+    });
+
+    it("should skip image optimization when WebP output is newer than the source", async () => {
+      const { optimizeSingleImage } = await import("../src/assets.js");
+      const sourcePath = path.join(testDir, "images", "photo.png");
+      const optimizedPath = path.join(distDir, "images", "photo.webp");
+      const future = new Date(Date.now() + 60_000);
+
+      await fs.utimes(optimizedPath, future, future);
+      const before = (await fs.stat(optimizedPath)).mtimeMs;
+      await optimizeSingleImage(sourcePath, distDir);
+      const after = (await fs.stat(optimizedPath)).mtimeMs;
+
+      assert.strictEqual(after, before, "cached WebP should not be rewritten");
+    });
   });
 
   describe("Layouts", () => {
@@ -498,6 +566,12 @@ rss_feeds:
         "should replace sitename in partial"
       );
     });
+
+    it("should render raw HTML partials without Markdown wrapping", async () => {
+      const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+      assert.ok(content.includes('<nav class="raw-partial">'), "should include raw HTML partial");
+      assert.ok(!content.includes('<p><nav class="raw-partial">'), "should not wrap raw HTML partial in paragraphs");
+    });
   });
 
   describe("Code Block Protection", () => {
@@ -555,6 +629,12 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "blog", "first-post", "index.html"), "utf-8");
       assert.ok(content.includes("breadcrumbs"), "should have breadcrumbs container");
       assert.ok(content.includes('href="/"'), "breadcrumbs should include home link");
+    });
+
+    it("should use front matter titles in breadcrumbs", async () => {
+      const content = await fs.readFile(path.join(distDir, "about-mi", "index.html"), "utf-8");
+      assert.ok(content.includes(">About Me</a>"), "breadcrumb should use front matter title");
+      assert.ok(!content.includes(">About Mi</a>"), "breadcrumb should not use capitalized filename");
     });
 
     it("should generate nav_links for top-level pages", async () => {
@@ -645,6 +725,28 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "blog", "rss.xml"), "utf-8");
       assert.ok(content.includes("atom:link"), "should have atom:link for self-reference");
       assert.ok(content.includes('rel="self"'), "should have rel=self attribute");
+    });
+  });
+
+  describe("SEO Files", () => {
+    it("should generate sitemap.xml", async () => {
+      const sitemapPath = path.join(distDir, "sitemap.xml");
+      const exists = await fsExtra.pathExists(sitemapPath);
+      assert.strictEqual(exists, true, "sitemap.xml should exist");
+    });
+
+    it("should include site URLs in sitemap.xml", async () => {
+      const content = await fs.readFile(path.join(distDir, "sitemap.xml"), "utf-8");
+      assert.ok(content.includes("<urlset"), "should have urlset element");
+      assert.ok(content.includes("https://example.com/about"), "should include full page URL");
+      assert.ok(content.includes("https://example.com/blog/first-post"), "should include nested page URL");
+    });
+
+    it("should generate robots.txt with sitemap reference", async () => {
+      const content = await fs.readFile(path.join(distDir, "robots.txt"), "utf-8");
+      assert.ok(content.includes("User-agent: *"), "should include default user agent");
+      assert.ok(content.includes("Allow: /"), "should allow crawling by default");
+      assert.ok(content.includes("Sitemap: https://example.com/sitemap.xml"), "should reference sitemap");
     });
   });
 
@@ -764,6 +866,25 @@ rss_feeds:
       assert.ok(content.includes('article:tag'), "should have article:tag");
       assert.ok(content.includes("featured"), "should include featured tag");
       assert.ok(content.includes("article"), "should include article tag");
+    });
+  });
+
+  describe("Image Reference Rewriting", () => {
+    it("should rewrite local markdown image sources to WebP", async () => {
+      const content = await fs.readFile(path.join(distDir, "images", "index.html"), "utf-8");
+      assert.ok(content.includes('src="/images/photo.webp"'), "local image src should point to WebP");
+    });
+
+    it("should not rewrite external image URLs, favicon links, or prose", async () => {
+      const content = await fs.readFile(path.join(distDir, "images", "index.html"), "utf-8");
+      assert.ok(content.includes('src="https://cdn.example.com/remote.jpg"'), "external image URL should stay unchanged");
+      assert.ok(content.includes('href="/images/favicon.png"'), "favicon href should stay unchanged");
+      assert.ok(content.includes("report.png"), "prose filename should stay unchanged");
+    });
+
+    it("should rewrite local image download links to WebP", async () => {
+      const content = await fs.readFile(path.join(distDir, "images", "index.html"), "utf-8");
+      assert.ok(content.includes('href="/images/photo.webp"'), "local image anchor should point to WebP");
     });
   });
 

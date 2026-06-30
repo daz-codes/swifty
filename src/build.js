@@ -1,9 +1,10 @@
 import { copyAssets, optimizeImages } from "./assets.js";
 import { generatePages, createPages, addLinks } from "./pages.js";
 import { generateRssFeeds } from "./rss.js";
+import { generateSeoFiles } from "./sitemap.js";
 import { dirs } from "./config.js";
 
-export default async function build(outputDir) {
+export default async function build(outputDir = dirs.dist) {
   const startTime = performance.now();
   console.log("🚀 Starting build...");
   
@@ -36,6 +37,11 @@ export default async function build(outputDir) {
   await generateRssFeeds(pages, outputDir);
   const rssTime = performance.now() - rssStart;
   console.log(`📡 RSS feeds generated in ${(rssTime / 1000).toFixed(2)}s`);
+
+  const seoStart = performance.now();
+  await generateSeoFiles(pages, outputDir);
+  const seoTime = performance.now() - seoStart;
+  console.log(`🧭 SEO files generated in ${(seoTime / 1000).toFixed(2)}s`);
   
   const totalTime = performance.now() - startTime;
   console.log(`\n✅ Build completed in ${(totalTime / 1000).toFixed(2)}s`);
@@ -47,7 +53,8 @@ export default async function build(outputDir) {
     { name: "Pages", time: pagesTime },
     { name: "Links", time: linksTime },
     { name: "Create", time: createTime },
-    { name: "RSS", time: rssTime }
+    { name: "RSS", time: rssTime },
+    { name: "SEO", time: seoTime }
   ];
   
   const slowest = stages.sort((a, b) => b.time - a.time)[0];

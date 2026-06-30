@@ -8,6 +8,7 @@ import matter from "gray-matter";
 import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
+import { mapLimit } from "./concurrency.js";
 
 // Returns stats if valid (directory or .md file), null otherwise
 const getValidStats = async (filePath) => {
@@ -43,6 +44,9 @@ const parseDate = (dateValue) => {
 const tagsMap = new Map();
 const pageIndex = [];
 const pageIndexUrls = new Set();
+const partialExtensions = [".md", ".html"];
+
+const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
 
 const addToTagMap = (tag, page) => {
   if (!tagsMap.has(tag)) tagsMap.set(tag, []);
@@ -65,86 +69,90 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   try {
     const files = await fs.readdir(sourceDir, { withFileTypes: true });
 
-    // Collect promises for processing all files
-    const filePromises = files.map(async (file) => {
-      const filePath = path.join(sourceDir, file.name);
-      const stats = await getValidStats(filePath);
-      if (!stats) return null;
+    const fileResults = await mapLimit(
+      files,
+      async (file) => {
+        const filePath = path.join(sourceDir, file.name);
+        const stats = await getValidStats(filePath);
+        if (!stats) return null;
 
-      const root = file.name === "index.md" && !parent;
-      const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/");
-      const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
-      const name = root
-        ? "Home"
-        : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
-      const isDirectory = stats.isDirectory();
-      const layoutFileExists =
-        parent &&
-        (await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`));
-      const layout = layoutFileExists
-        ? parent.filename
-        : parent
-          ? parent.layout
-          : config.default_layout_name;
+        const root = file.name === "index.md" && !parent;
+        const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/");
+        const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
+        const name = root
+          ? "Home"
+          : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
+        const isDirectory = stats.isDirectory();
+        const layoutFileExists =
+          parent &&
+          (await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`));
+        const layout = layoutFileExists
+          ? parent.filename
+          : parent
+            ? parent.layout
+            : config.default_layout_name;
 
-      const page = {
-        name,
-        root,
-        layout,
-        filePath,
-        filename: file.name.replace(/\.md$/, ""),
-        url: root ? "/" : finalPath,
-        nav: !parent && !root,
-        parent: parent
-          ? { title: parent.meta.title, url: parent.url }
-          : undefined,
-        folder: isDirectory,
-        title: name,
-        created_at: new Date(stats.birthtime).toLocaleDateString(
-          undefined,
-          dateFormat,
-        ),
-        updated_at: new Date(stats.mtime).toLocaleDateString(
-          undefined,
-          dateFormat,
-        ),
-        date: new Date(stats.birthtime).toLocaleDateString(
-          undefined,
-          dateFormat,
-        ),
-        meta: root ? { ...defaultConfig } : { ...config },
-      };
+        const page = {
+          name,
+          root,
+          layout,
+          filePath,
+          filename: file.name.replace(/\.md$/, ""),
+          url: root ? "/" : finalPath,
+          nav: !parent && !root,
+          parent: parent
+            ? { title: parent.meta.title, url: parent.url }
+            : undefined,
+          folder: isDirectory,
+          title: name,
+          createdAtObj: stats.birthtime,
+          updatedAtObj: stats.mtime,
+          created_at: new Date(stats.birthtime).toLocaleDateString(
+            undefined,
+            dateFormat,
+          ),
+          updated_at: new Date(stats.mtime).toLocaleDateString(
+            undefined,
+            dateFormat,
+          ),
+          date: new Date(stats.birthtime).toLocaleDateString(
+            undefined,
+            dateFormat,
+          ),
+          meta: root ? { ...defaultConfig } : { ...config },
+        };
 
-      if (path.extname(file.name) === ".md") {
-        const markdownContent = await fs.readFile(filePath, "utf-8");
-        const { data, content } = matter(markdownContent);
-        Object.assign(page, { meta: { ...page.meta, ...data }, content });
+        if (path.extname(file.name) === ".md") {
+          const markdownContent = await fs.readFile(filePath, "utf-8");
+          const { data, content } = matter(markdownContent);
+          Object.assign(page, { meta: { ...page.meta, ...data }, content });
+          page.title = page.meta.title || page.title;
+          page.name = page.meta.title || page.name;
 
-        // Allow front matter to override nav (opt in or opt out)
-        if (typeof data.nav === "boolean") {
-          page.nav = data.nav;
-        }
+          // Allow front matter to override nav (opt in or opt out)
+          if (typeof data.nav === "boolean") {
+            page.nav = data.nav;
+          }
 
-        // If front matter has a date, parse and format it
-        if (data.date) {
-          const parsedDate = parseDate(data.date);
-          if (parsedDate) {
-            page.dateObj = parsedDate;
-            page.date = parsedDate.toLocaleDateString(undefined, dateFormat);
-            page.meta.date = page.date;
+          // If front matter has a date, parse and format it
+          if (data.date) {
+            const parsedDate = parseDate(data.date);
+            if (parsedDate) {
+              page.dateObj = parsedDate;
+              page.date = parsedDate.toLocaleDateString(undefined, dateFormat);
+              page.meta.date = page.date;
+            }
           }
         }
-      }
 
-      // For directories, we defer recursion separately
-      return { page, isDirectory };
-    });
-
-    // Await all file processing
-    const fileResults = await Promise.all(filePromises);
+        // For directories, we defer recursion separately
+        return { page, isDirectory };
+      },
+      getBuildConcurrency(),
+    );
 
     // Now handle directories recursively
-    const directoryPromises = fileResults.map(async (result) => {
+    await mapLimit(fileResults, async (result) => {
       if (!result) return;
 
       const { page, isDirectory } = result;
@@ -239,10 +247,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         pageIndexUrls.add(page.url);
         pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
       }
-    });
-
-    // Await all directory recursion
-    await Promise.all(directoryPromises);
+    }, getBuildConcurrency());
   } catch (err) {
     console.error("Error reading directory:", err);
   }
@@ -288,24 +293,25 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 };
 
 const generateLinkList = async (name, pages) => {
-  const partialFile = `${name}.md`;
-  const partialPath = path.join(dirs.partials, partialFile);
-  const linksPath = path.join(
-    dirs.partials,
+  const findPartialPath = async (partialName) => {
+    for (const ext of partialExtensions) {
+      const partialPath = path.join(dirs.partials, `${partialName}${ext}`);
+      if (await fsExtra.pathExists(partialPath)) return partialPath;
+    }
+    return null;
+  };
+
+  const partialPath = await findPartialPath(name);
+  const defaultPath = await findPartialPath(
     defaultConfig.default_link_name || "links",
   );
-  // Check if either file exists in the 'partials' folder (in parallel)
-  const [fileExists, defaultExists] = await Promise.all([
-    fsExtra.pathExists(partialPath),
-    fsExtra.pathExists(linksPath),
-  ]);
-  if (fileExists || defaultExists) {
-    const partialContent = await fs.readFile(
-      fileExists ? partialPath : linksPath,
-      "utf-8",
-    );
-    const content = await Promise.all(
-      pages.map((page) => replacePlaceholders(partialContent, page)),
+
+  if (partialPath || defaultPath) {
+    const partialContent = await fs.readFile(partialPath || defaultPath, "utf-8");
+    const content = await mapLimit(
+      pages,
+      (page) => replacePlaceholders(partialContent, page),
+      getBuildConcurrency(),
     );
     return content.join("\n");
   } else {
@@ -333,8 +339,9 @@ const render = async (page) => {
 };
 
 const createPages = async (pages, distDir = dirs.dist) => {
-  await Promise.all(
-    pages.map(async (page) => {
+  await mapLimit(
+    pages,
+    async (page) => {
       const html = await render(page);
       const pageDir = path.join(distDir, page.url);
       const pagePath = path.join(distDir, page.url, "index.html");
@@ -347,7 +354,8 @@ const createPages = async (pages, distDir = dirs.dist) => {
           await createPages(page.paginatedPages, distDir);
         }
       }
-    }),
+    },
+    getBuildConcurrency(),
   );
 };
 
@@ -355,8 +363,9 @@ const addLinks = async (pages, parent) => {
   // Filter out folders and index pages for prev/next calculation (only content pages)
   const contentPages = pages.filter((p) => !p.folder && p.filename !== 'index');
 
-  await Promise.all(
-    pages.map(async (page) => {
+  await mapLimit(
+    pages,
+    async (page) => {
       page.meta ||= {};
       page.meta.links_to_tags = page?.meta?.tags?.length
         ? page.meta.tags
@@ -366,9 +375,10 @@ const addLinks = async (pages, parent) => {
             )
             .join("")
         : "";
+      const crumbTitle = page.meta.title || page.title || page.name;
       const crumb = page.root
         ? ""
-        : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${page.name}</a>`;
+        : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${crumbTitle}</a>`;
       page.meta.breadcrumbs = parent
         ? parent.meta.breadcrumbs + crumb
         : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` +
@@ -426,7 +436,8 @@ const addLinks = async (pages, parent) => {
           pp.meta.nav_links = nav_links;
         }
       }
-    }),
+    },
+    getBuildConcurrency(),
   );
 };
 

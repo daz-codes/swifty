@@ -3,6 +3,7 @@ import fsExtra from "fs-extra";
 import path from "path";
 import sharp from "sharp";
 import { dirs, defaultConfig } from "./config.js";
+import { mapLimit } from "./concurrency.js";
 
 // Get file modification timestamp for cache busting
 const getFileMtime = async (filePath) => {
@@ -13,7 +14,53 @@ const getFileMtime = async (filePath) => {
 const validExtensions = {
   css: [".css"],
   js: [".js"],
-  images: [".png", ".jpg", ".jpeg", ".gif", ".svg", " .webp"],
+  images: [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"],
+};
+
+const optimizableImageExtensions = [".jpg", ".jpeg", ".png"];
+
+const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
+
+const isDestinationFresh = async (source, destination) => {
+  try {
+    const [sourceStats, destinationStats] = await Promise.all([
+      fs.stat(source),
+      fs.stat(destination),
+    ]);
+    return destinationStats.mtimeMs >= sourceStats.mtimeMs;
+  } catch (err) {
+    return false;
+  }
+};
+
+const copyIfStale = async (source, destination) => {
+  if (await isDestinationFresh(source, destination)) {
+    return false;
+  }
+
+  await fsExtra.copy(source, destination);
+  return true;
+};
+
+const optimizeImageToWebp = async (source, destination) => {
+  if (await isDestinationFresh(source, destination)) {
+    return false;
+  }
+
+  const image = sharp(source);
+  const metadata = await image.metadata();
+  const originalWidth = metadata.width || 0;
+  const maxWidth = defaultConfig.max_image_width || 800;
+  const imageQuality = defaultConfig.image_quality || 80;
+  const resizeOptions =
+    originalWidth > 0 ? { width: Math.min(originalWidth, maxWidth) } : {};
+
+  await image
+    .resize(resizeOptions)
+    .toFormat("webp", { quality: imageQuality })
+    .toFile(destination);
+
+  return true;
 };
 
 const ensureAndCopy = async (source, destination, validExts) => {
@@ -40,48 +87,47 @@ const copyAssets = async (outputDir = dirs.dist) => {
     validExtensions.css,
   );
   await ensureAndCopy(dirs.js, path.join(outputDir, "js"), validExtensions.js);
-  await ensureAndCopy(
-    dirs.images,
-    path.join(outputDir, "images"),
-    validExtensions.images,
-  );
 };
 async function optimizeImages(outputDir = dirs.dist) {
   try {
-    const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
-    const images_folder = path.join(outputDir, "images");
-    const files = await fs.readdir(images_folder);
+    if (!(await fsExtra.pathExists(dirs.images))) {
+      console.log(`No ${path.basename(dirs.images)} found in ${dirs.images}`);
+      return;
+    }
 
-    await Promise.all(
-      files.map(async (file) => {
-        const filePath = path.join(images_folder, file);
+    const imagesFolder = path.join(outputDir, "images");
+    await fsExtra.ensureDir(imagesFolder);
+
+    const files = await fs.readdir(dirs.images);
+
+    await mapLimit(
+      files.filter((file) =>
+        validExtensions.images.includes(path.extname(file).toLowerCase()),
+      ),
+      async (file) => {
+        const filePath = path.join(dirs.images, file);
         const ext = path.extname(file).toLowerCase();
 
-        if (!IMAGE_EXTENSIONS.includes(ext)) return;
+        if (!optimizableImageExtensions.includes(ext)) {
+          const destination = path.join(imagesFolder, file);
+          const copied = await copyIfStale(filePath, destination);
+          if (copied) {
+            console.log(`Copied ${file}`);
+          }
+          return;
+        }
 
         const optimizedPath = path.join(
-          images_folder,
+          imagesFolder,
           `${path.basename(file, ext)}.webp`,
         );
 
-        if (filePath !== optimizedPath) {
-          const image = sharp(filePath);
-          const metadata = await image.metadata();
-          const originalWidth = metadata.width || 0;
-          const maxWidth = defaultConfig.max_image_width || 800;
-          const imageQuality = defaultConfig.image_quality || 80;
-          const resizeWidth = Math.min(originalWidth, maxWidth);
-
-          await image
-            .resize({ width: resizeWidth })
-            .toFormat("webp", { quality: imageQuality })
-            .toFile(optimizedPath);
-
-          await fs.unlink(filePath);
-
+        const optimized = await optimizeImageToWebp(filePath, optimizedPath);
+        if (optimized) {
           console.log(`Optimized ${file} -> ${optimizedPath}`);
         }
-      }),
+      },
+      getBuildConcurrency(),
     );
   } catch (error) {
     console.error("Error optimizing images:", error);
@@ -149,7 +195,6 @@ const copySingleAsset = async (filePath, outputDir = dirs.dist) => {
 
 // Process a single image
 const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
-  const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
   const filename = path.basename(filePath);
   const ext = path.extname(filePath).toLowerCase();
   const imagesFolder = path.join(outputDir, "images");
@@ -157,27 +202,20 @@ const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
   await fsExtra.ensureDir(imagesFolder);
 
   // For non-optimizable images (svg, webp, gif), just copy
-  if (!IMAGE_EXTENSIONS.includes(ext)) {
-    await fsExtra.copy(filePath, path.join(imagesFolder, filename));
-    console.log(`Copied ${filename}`);
+  if (!optimizableImageExtensions.includes(ext)) {
+    const copied = await copyIfStale(filePath, path.join(imagesFolder, filename));
+    if (copied) {
+      console.log(`Copied ${filename}`);
+    }
     return true;
   }
 
   // Optimize jpg/jpeg/png to webp
   const optimizedPath = path.join(imagesFolder, `${path.basename(filename, ext)}.webp`);
-  const image = sharp(filePath);
-  const metadata = await image.metadata();
-  const originalWidth = metadata.width || 0;
-  const maxWidth = defaultConfig.max_image_width || 800;
-  const imageQuality = defaultConfig.image_quality || 80;
-  const resizeWidth = Math.min(originalWidth, maxWidth);
-
-  await image
-    .resize({ width: resizeWidth })
-    .toFormat("webp", { quality: imageQuality })
-    .toFile(optimizedPath);
-
-  console.log(`Optimized ${filename} -> ${path.basename(optimizedPath)}`);
+  const optimized = await optimizeImageToWebp(filePath, optimizedPath);
+  if (optimized) {
+    console.log(`Optimized ${filename} -> ${path.basename(optimizedPath)}`);
+  }
   return true;
 };
 

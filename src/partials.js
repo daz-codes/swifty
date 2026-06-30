@@ -7,6 +7,8 @@ import { Eta } from "eta";
 import { loadData } from "./data.js";
 
 const partialCache = new Map();
+const imageExtensionRegex = /\.(png|jpe?g|webp)(?=([?#]|$))/i;
+const rewriteableImageTags = new Set(["a", "img", "source"]);
 
 // Helper to escape HTML attribute values
 const escapeAttr = (str) => {
@@ -97,21 +99,73 @@ const eta = new Eta({
   useWith: true,      // Allows direct variable access without 'it.' prefix
 });
 
-const loadPartial = async (partialName) => {
+const loadPartialData = async (partialName) => {
   if (partialCache.has(partialName)) {
     return partialCache.get(partialName);
   }
 
-  const partialPath = path.join(dirs.partials, `${partialName}.md`);
-  if (await fsExtra.pathExists(partialPath)) {
+  const partialFiles = [
+    { path: path.join(dirs.partials, `${partialName}.md`), raw: false },
+    { path: path.join(dirs.partials, `${partialName}.html`), raw: true },
+  ];
+
+  for (const partialFile of partialFiles) {
+    const partialPath = partialFile.path;
+    if (!(await fsExtra.pathExists(partialPath))) continue;
+
     const partialContent = await fs.readFile(partialPath, "utf-8");
-    partialCache.set(partialName, partialContent);
-    return partialContent;
-  } else {
-    console.warn(`Include "${partialName}" not found.`);
-    return `<p>Include "${partialName}" not found.</p>`;
+    const partialData = { content: partialContent, raw: partialFile.raw };
+    partialCache.set(partialName, partialData);
+    return partialData;
   }
+
+  console.warn(`Include "${partialName}" not found.`);
+  return { content: `<p>Include "${partialName}" not found.</p>`, raw: true };
 };
+
+const loadPartial = async (partialName) => {
+  const partialData = await loadPartialData(partialName);
+  return partialData.content;
+};
+
+const shouldRewriteImageUrl = (url) => {
+  if (!url || !url.startsWith("/images/")) return false;
+  return imageExtensionRegex.test(url);
+};
+
+const rewriteImageUrl = (url) => {
+  if (!shouldRewriteImageUrl(url)) return url;
+  return url.replace(imageExtensionRegex, ".webp");
+};
+
+const rewriteSrcset = (srcset) =>
+  srcset
+    .split(",")
+    .map((candidate) => {
+      const parts = candidate.trim().split(/\s+/);
+      if (!parts[0]) return candidate;
+      return [rewriteImageUrl(parts[0]), ...parts.slice(1)].join(" ");
+    })
+    .join(", ");
+
+const rewriteLocalImageReferences = (html) =>
+  html.replace(/<([a-z][\w:-]*)(\s[^<>]*?)?>/gi, (tag, tagName) => {
+    const normalizedTagName = tagName.toLowerCase();
+    if (!rewriteableImageTags.has(normalizedTagName)) {
+      return tag;
+    }
+
+    return tag.replace(
+      /\s(src|href|srcset)=(["'])(.*?)\2/gi,
+      (attribute, attributeName, quote, value) => {
+        const nextValue =
+          attributeName.toLowerCase() === "srcset"
+            ? rewriteSrcset(value)
+            : rewriteImageUrl(value);
+        return ` ${attributeName}=${quote}${nextValue}${quote}`;
+      },
+    );
+  });
 
 const replacePlaceholders = async (template, values) => {
   // Default values for optional variables
@@ -185,9 +239,10 @@ const replacePlaceholders = async (template, values) => {
 
   for (const match of partialMatches) {
     const [fullMatch, partialName] = match;
-    let partialContent = await loadPartial(partialName);
+    const partialData = await loadPartialData(partialName);
+    let partialContent = partialData.content;
     partialContent = await replacePlaceholders(partialContent, values);
-    const renderedPartial = marked(partialContent);
+    const renderedPartial = partialData.raw ? partialContent : marked(partialContent);
     template = template.replace(fullMatch, renderedPartial);
   }
 
@@ -208,8 +263,7 @@ const replacePlaceholders = async (template, values) => {
     (_, index) => codeBlocks[index],
   );
 
-  // Replace image extensions with optimized extension
-  template = template.replace(/\.(png|jpe?g|webp)/gi, ".webp");
+  template = rewriteLocalImageReferences(template);
 
   return template;
 };

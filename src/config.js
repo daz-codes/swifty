@@ -46,6 +46,8 @@ const builtInDefaults = {
   watcher_interval: 500,
   // Pagination
   default_page_count: 2,
+  // Build safety
+  build_concurrency: 16,
 };
 
 const loadedConfig = await loadConfig(baseDir);
