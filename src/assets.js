@@ -1,10 +1,14 @@
+import crypto from "crypto";
 import fs from "fs/promises";
-import fsExtra from "fs-extra";
 import path from "path";
-import sharp from "sharp";
 import { fileURLToPath } from "url";
+
+import fsExtra from "fs-extra";
+import sharp from "sharp";
+
 import { dirs, defaultConfig } from "./config.js";
 import { mapLimit } from "./concurrency.js";
+import { minifyCss, minifyJs } from "./minify.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,9 +27,72 @@ const validExtensions = {
 };
 
 const optimizableImageExtensions = [".jpg", ".jpeg", ".png"];
+const responsiveImageMap = new Map();
 
 const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
 const navigationEnabled = () => defaultConfig.morphing !== false;
+const minificationEnabled = (type) =>
+  defaultConfig.minify !== false && defaultConfig[`minify_${type}`] !== false;
+const normalizeImageUrl = (url) => (url || "").split(/[?#]/)[0];
+
+const getResponsiveWidths = (originalWidth) => {
+  const maxWidth = defaultConfig.max_image_width || 800;
+  const configuredWidths = Array.isArray(defaultConfig.responsive_image_widths)
+    ? defaultConfig.responsive_image_widths
+    : [320, 640, maxWidth];
+  const outputWidth =
+    originalWidth > 0 ? Math.min(originalWidth, maxWidth) : maxWidth;
+  const widths = configuredWidths
+    .map((width) => Number(width))
+    .filter((width) => Number.isInteger(width) && width > 0)
+    .map((width) => Math.min(width, maxWidth));
+
+  widths.push(outputWidth);
+
+  return [...new Set(widths)]
+    .filter((width) => !originalWidth || width <= originalWidth)
+    .sort((a, b) => a - b);
+};
+
+const variantFilename = (filename, ext, width, outputWidth) =>
+  width === outputWidth
+    ? `${path.basename(filename, ext)}.webp`
+    : `${path.basename(filename, ext)}-${width}.webp`;
+
+const registerResponsiveImage = (filename, ext, variants) => {
+  const basename = path.basename(filename, ext);
+  const entry = {
+    src: `/images/${basename}.webp`,
+    srcset: variants
+      .map((variant) => `${variant.url} ${variant.width}w`)
+      .join(", "),
+    sizes: defaultConfig.responsive_image_sizes || "100vw",
+    variants,
+  };
+
+  responsiveImageMap.set(normalizeImageUrl(`/images/${filename}`), entry);
+  responsiveImageMap.set(normalizeImageUrl(entry.src), entry);
+};
+
+const getResponsiveImage = (url) =>
+  responsiveImageMap.get(normalizeImageUrl(url)) || null;
+
+const getNavigationAssetName = async (filename = "swifty-navigation.js") => {
+  const sourcePath = path.join(clientAssetsDir, filename);
+  const content = await fs.readFile(sourcePath);
+  const hash = crypto
+    .createHash("sha256")
+    .update(content)
+    .digest("hex")
+    .slice(0, 10);
+  const ext = path.extname(filename);
+  return `${path.basename(filename, ext)}.${hash}${ext}`;
+};
+
+const getNavigationScriptSrc = async () => {
+  if (!navigationEnabled()) return "";
+  return `/swifty/${await getNavigationAssetName()}`;
+};
 
 const isDestinationFresh = async (source, destination) => {
   try {
@@ -48,24 +115,73 @@ const copyIfStale = async (source, destination) => {
   return true;
 };
 
-const optimizeImageToWebp = async (source, destination) => {
+const optimizeImageVariantToWebp = async (source, destination, width) => {
   if (await isDestinationFresh(source, destination)) {
     return false;
   }
 
-  const image = sharp(source);
-  const metadata = await image.metadata();
-  const originalWidth = metadata.width || 0;
-  const maxWidth = defaultConfig.max_image_width || 800;
   const imageQuality = defaultConfig.image_quality || 80;
-  const resizeOptions =
-    originalWidth > 0 ? { width: Math.min(originalWidth, maxWidth) } : {};
 
-  await image
-    .resize(resizeOptions)
+  await sharp(source)
+    .resize({ width })
     .toFormat("webp", { quality: imageQuality })
     .toFile(destination);
 
+  return true;
+};
+
+const optimizeImageToWebp = async (source, imagesFolder, filename, ext) => {
+  const metadata = await sharp(source).metadata();
+  const originalWidth = metadata.width || 0;
+  const maxWidth = defaultConfig.max_image_width || 800;
+  const outputWidth =
+    originalWidth > 0 ? Math.min(originalWidth, maxWidth) : maxWidth;
+  const variants = getResponsiveWidths(originalWidth).map((width) => {
+    const file = variantFilename(filename, ext, width, outputWidth);
+    return {
+      width,
+      file,
+      url: `/images/${file}`,
+      destination: path.join(imagesFolder, file),
+    };
+  });
+
+  const results = await Promise.all(
+    variants.map((variant) =>
+      optimizeImageVariantToWebp(source, variant.destination, variant.width),
+    ),
+  );
+
+  registerResponsiveImage(
+    filename,
+    ext,
+    variants.map(({ width, file, url }) => ({ width, file, url })),
+  );
+
+  return results.some(Boolean);
+};
+
+const processTextAsset = async (source, destination, type) => {
+  const content = await fs.readFile(source, "utf-8");
+  const nextContent =
+    type === "css" && minificationEnabled("css")
+      ? minifyCss(content)
+      : type === "js" && minificationEnabled("js")
+        ? minifyJs(content)
+        : content;
+
+  try {
+    const currentContent = await fs.readFile(destination, "utf-8");
+    if (
+      currentContent === nextContent &&
+      (await isDestinationFresh(source, destination))
+    ) {
+      return false;
+    }
+  } catch (err) {}
+
+  await fsExtra.ensureDir(path.dirname(destination));
+  await fs.writeFile(destination, nextContent);
   return true;
 };
 
@@ -77,9 +193,15 @@ const ensureAndCopy = async (source, destination, validExts) => {
     await Promise.all(
       files
         .filter((file) => validExts.includes(path.extname(file).toLowerCase()))
-        .map((file) =>
-          fsExtra.copy(path.join(source, file), path.join(destination, file)),
-        ),
+        .map((file) => {
+          const ext = path.extname(file).toLowerCase();
+          const type = validExtensions.css.includes(ext) ? "css" : "js";
+          return processTextAsset(
+            path.join(source, file),
+            path.join(destination, file),
+            type,
+          );
+        }),
     );
     console.log(`Copied valid files from ${source} to ${destination}`);
   } else {
@@ -99,10 +221,14 @@ const copyNavigationAssets = async (outputDir = dirs.dist) => {
     files,
     async (file) => {
       const sourcePath = path.join(clientAssetsDir, file);
-      const destinationPath = path.join(destination, file);
+      const destinationFilename =
+        file === "swifty-navigation.js"
+          ? await getNavigationAssetName(file)
+          : file;
+      const destinationPath = path.join(destination, destinationFilename);
       const copied = await copyIfStale(sourcePath, destinationPath);
       if (copied) {
-        console.log(`Copied Swifty navigation asset ${file}`);
+        console.log(`Copied Swifty navigation asset ${destinationFilename}`);
       }
     },
     getBuildConcurrency(),
@@ -119,6 +245,8 @@ const copyAssets = async (outputDir = dirs.dist) => {
   await copyNavigationAssets(outputDir);
 };
 async function optimizeImages(outputDir = dirs.dist) {
+  responsiveImageMap.clear();
+
   try {
     if (!(await fsExtra.pathExists(dirs.images))) {
       console.log(`No ${path.basename(dirs.images)} found in ${dirs.images}`);
@@ -147,14 +275,14 @@ async function optimizeImages(outputDir = dirs.dist) {
           return;
         }
 
-        const optimizedPath = path.join(
+        const optimized = await optimizeImageToWebp(
+          filePath,
           imagesFolder,
-          `${path.basename(file, ext)}.webp`,
+          file,
+          ext,
         );
-
-        const optimized = await optimizeImageToWebp(filePath, optimizedPath);
         if (optimized) {
-          console.log(`Optimized ${file} -> ${optimizedPath}`);
+          console.log(`Optimized ${file}`);
         }
       },
       getBuildConcurrency(),
@@ -217,8 +345,11 @@ const copySingleAsset = async (filePath, outputDir = dirs.dist) => {
     return false;
   }
 
-  await fsExtra.ensureDir(destDir);
-  await fsExtra.copy(filePath, path.join(destDir, filename));
+  await processTextAsset(
+    filePath,
+    path.join(destDir, filename),
+    validExtensions.css.includes(ext) ? "css" : "js",
+  );
   console.log(`Copied ${filename}`);
   return true;
 };
@@ -240,13 +371,27 @@ const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
     return true;
   }
 
-  // Optimize jpg/jpeg/png to webp
-  const optimizedPath = path.join(imagesFolder, `${path.basename(filename, ext)}.webp`);
-  const optimized = await optimizeImageToWebp(filePath, optimizedPath);
+  const optimized = await optimizeImageToWebp(
+    filePath,
+    imagesFolder,
+    filename,
+    ext,
+  );
   if (optimized) {
-    console.log(`Optimized ${filename} -> ${path.basename(optimizedPath)}`);
+    console.log(`Optimized ${filename}`);
   }
   return true;
 };
 
-export { copyAssets, optimizeImages, getCssImports, getJsImports, getCssPreloads, getJsPreloads, copySingleAsset, optimizeSingleImage };
+export {
+  copyAssets,
+  optimizeImages,
+  getCssImports,
+  getJsImports,
+  getCssPreloads,
+  getJsPreloads,
+  copySingleAsset,
+  optimizeSingleImage,
+  getNavigationScriptSrc,
+  getResponsiveImage,
+};

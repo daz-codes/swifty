@@ -1,10 +1,13 @@
 import fs from "fs/promises";
-import fsExtra from "fs-extra";
 import path from "path";
-import { dirs, defaultConfig } from "./config.js";
-import { marked } from "marked";
+
+import fsExtra from "fs-extra";
 import { Eta } from "eta";
+
+import { dirs, defaultConfig } from "./config.js";
+import { marked } from "./markdown.js";
 import { loadData } from "./data.js";
+import { getResponsiveImage } from "./assets.js";
 
 const partialCache = new Map();
 const imageExtensionRegex = /\.(png|jpe?g|webp)(?=([?#]|$))/i;
@@ -51,7 +54,15 @@ const generateOgTags = (values) => {
   const description = meta.description || meta.summary || '';
   const url = values.url || '';
   const siteUrl = (meta.site_url || values.site_url || '').replace(/\/$/, '');
-  const image = meta.image || meta.og_image || '';
+  // Rewrite local image paths to .webp so they match the optimized output on disk
+  const image = rewriteImageUrl(
+    meta.image ||
+      meta.og_image ||
+      meta.default_og_image ||
+      values.default_og_image ||
+      defaultConfig.default_og_image ||
+      '',
+  );
   const type = meta.og_type || (values.folder ? 'website' : 'article');
   const author = meta.author || values.author || '';
 
@@ -148,6 +159,36 @@ const rewriteSrcset = (srcset) =>
     })
     .join(", ");
 
+const getAttributeValue = (tag, name) => {
+  const match = tag.match(new RegExp(`\\s${name}=(["'])(.*?)\\1`, "i"));
+  return match ? match[2] : "";
+};
+
+const hasAttribute = (tag, name) =>
+  new RegExp(`\\s${name}(?:=|\\s|>|/)`, "i").test(tag);
+
+const appendAttribute = (tag, name, value) =>
+  tag.replace(/\s*\/?>$/, (ending) => {
+    const close = ending.includes("/") ? " />" : ">";
+    return ` ${name}="${escapeAttr(value)}"${close}`;
+  });
+
+const addResponsiveImageAttributes = (tag) => {
+  const imageUrl = getAttributeValue(tag, "src");
+  const responsiveImage = getResponsiveImage(imageUrl);
+
+  if (!responsiveImage || responsiveImage.variants.length < 2) return tag;
+
+  let nextTag = tag;
+  if (!hasAttribute(nextTag, "srcset")) {
+    nextTag = appendAttribute(nextTag, "srcset", responsiveImage.srcset);
+  }
+  if (!hasAttribute(nextTag, "sizes")) {
+    nextTag = appendAttribute(nextTag, "sizes", responsiveImage.sizes);
+  }
+  return nextTag;
+};
+
 const rewriteLocalImageReferences = (html) =>
   html.replace(/<([a-z][\w:-]*)(\s[^<>]*?)?>/gi, (tag, tagName) => {
     const normalizedTagName = tagName.toLowerCase();
@@ -155,7 +196,7 @@ const rewriteLocalImageReferences = (html) =>
       return tag;
     }
 
-    return tag.replace(
+    const rewrittenTag = tag.replace(
       /\s(src|href|srcset)=(["'])(.*?)\2/gi,
       (attribute, attributeName, quote, value) => {
         const nextValue =
@@ -165,6 +206,10 @@ const rewriteLocalImageReferences = (html) =>
         return ` ${attributeName}=${quote}${nextValue}${quote}`;
       },
     );
+
+    return normalizedTagName === "img"
+      ? addResponsiveImageAttributes(rewrittenTag)
+      : rewrittenTag;
   });
 
 const replacePlaceholders = async (template, values) => {

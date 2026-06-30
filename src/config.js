@@ -40,6 +40,14 @@ const builtInDefaults = {
   // Image optimization settings
   max_image_width: 800,
   image_quality: 80,
+  responsive_image_widths: [320, 640, 800],
+  responsive_image_sizes: '100vw',
+  default_og_image: '',
+  // Output minification
+  minify: true,
+  minify_html: true,
+  minify_css: true,
+  minify_js: true,
   // LiveReload and watcher settings
   livereload_port: 35729,
   watcher_delay: 100,

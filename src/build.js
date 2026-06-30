@@ -1,3 +1,5 @@
+import { argv } from "process";
+import { fileURLToPath } from "url";
 import { copyAssets, optimizeImages } from "./assets.js";
 import { generatePages, createPages, addLinks } from "./pages.js";
 import { generateRssFeeds } from "./rss.js";
@@ -66,4 +68,13 @@ export default async function build(outputDir = dirs.dist) {
   if (process.stdout.isTTY) {
     process.stdout.write('\n');
   }
+}
+
+// Run the build when invoked directly (e.g. `npm run build`, `npm start`),
+// not when imported as a module (e.g. by cli.js).
+if (argv[1] && fileURLToPath(import.meta.url) === argv[1]) {
+  build().catch((error) => {
+    console.error("Build failed:", error);
+    process.exit(1);
+  });
 }

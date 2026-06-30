@@ -2,6 +2,7 @@ import assert from "assert";
 import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
+import sharp from "sharp";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -130,6 +131,17 @@ layout: default
 Email us at **hello@example.com** or visit our *office*.`
     );
 
+    await fs.writeFile(
+      path.join(testDir, "pages", "404.md"),
+      `---
+title: Page Not Found
+layout: default
+---
+# Page Not Found
+
+The page you requested does not exist.`
+    );
+
     // Create blog index
     await fs.writeFile(
       path.join(testDir, "pages", "blog", "index.md"),
@@ -248,7 +260,13 @@ Regular text <%= title %> should be replaced.`
     await fs.writeFile(
       path.join(testDir, "css", "style.css"),
       `body { font-family: sans-serif; }
-.blog-post { max-width: 800px; }`
+.blog-post { max-width: 800px; }
+/* comment with "quoted : value" and url("/ignored.svg") */
+.safe-minify {
+  width: calc(100% + 10px);
+  content: "foo : bar";
+  background-image: url("data:image/svg+xml,<svg viewBox='0 0 10 10'><path d='M0 0 L10 10'/></svg>");
+}`
     );
 
     // Create JS file
@@ -264,7 +282,18 @@ Regular text <%= title %> should be replaced.`
     await Promise.all([
       fs.writeFile(path.join(testDir, "images", "photo.png"), png),
       fs.writeFile(path.join(testDir, "images", "favicon.png"), png),
+      fs.writeFile(path.join(testDir, "images", "default-og.png"), png),
     ]);
+    await sharp({
+      create: {
+        width: 1200,
+        height: 600,
+        channels: 3,
+        background: { r: 180, g: 40, b: 90 },
+      },
+    })
+      .png()
+      .toFile(path.join(testDir, "images", "hero.png"));
 
     // Create posts for pagination testing (5 posts, will paginate with 2 per page)
     for (let i = 1; i <= 5; i++) {
@@ -334,6 +363,8 @@ layout: default
 
 ![Local image](/images/photo.png)
 
+![Large image](/images/hero.png)
+
 <img src="https://cdn.example.com/remote.jpg" alt="Remote image">
 <link rel="icon" type="image/png" href="/images/favicon.png">
 <a href="/images/photo.jpg">Download original</a>
@@ -365,6 +396,7 @@ ${'Here is more content to increase the word count further. '.repeat(20)}`
 default_layout_name: default
 author: Test Author
 site_url: https://example.com
+default_og_image: /images/default-og.png
 rss_feeds:
   - blog
   - folder: docs
@@ -408,6 +440,18 @@ rss_feeds:
       assert.strictEqual(contactExists, true, "contact page should exist");
     });
 
+    it("should emit root 404.md as 404.html", async () => {
+      const root404Exists = await fsExtra.pathExists(path.join(distDir, "404.html"));
+      const nested404Exists = await fsExtra.pathExists(path.join(distDir, "404", "index.html"));
+      assert.strictEqual(root404Exists, true, "404.html should exist at the output root");
+      assert.strictEqual(nested404Exists, false, "404.md should not emit as /404/index.html");
+    });
+
+    it("should minify generated HTML", async () => {
+      const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+      assert.ok(!content.includes("\n  <header>"), "generated HTML should be compacted");
+    });
+
     it("should create blog directory structure", async () => {
       const blogIndex = await fsExtra.pathExists(path.join(distDir, "blog", "index.html"));
       const firstPost = await fsExtra.pathExists(path.join(distDir, "blog", "first-post", "index.html"));
@@ -438,7 +482,20 @@ rss_feeds:
 
     it("should preserve CSS content", async () => {
       const content = await fs.readFile(path.join(distDir, "css", "style.css"), "utf-8");
-      assert.ok(content.includes("font-family: sans-serif"));
+      assert.ok(content.includes("font-family:sans-serif"));
+      assert.ok(!content.includes("\n"), "CSS should be minified");
+      assert.ok(!content.includes("comment with"), "CSS comments should be removed");
+    });
+
+    it("should preserve CSS strings, url values, and calc operator spacing when minifying", async () => {
+      const content = await fs.readFile(path.join(distDir, "css", "style.css"), "utf-8");
+      assert.ok(content.includes("calc(100% + 10px)"), "calc + operator spacing should be preserved");
+      assert.ok(content.includes('content:"foo : bar"'), "string content should not be rewritten");
+      assert.ok(
+        content.includes('url("data:image/svg+xml,<svg viewBox='),
+        "data URI url() content should not be mangled",
+      );
+      assert.ok(content.includes("><path"), "SVG data URI child combinator-like content should be preserved");
     });
 
     it("should inject CSS link in template", async () => {
@@ -452,17 +509,23 @@ rss_feeds:
     });
 
     it("should copy Swifty navigation assets when morphing is enabled", async () => {
-      const navigationExists = await fsExtra.pathExists(path.join(distDir, "swifty", "swifty-navigation.js"));
+      const files = await fs.readdir(path.join(distDir, "swifty"));
+      const navigationExists = files.some((file) =>
+        /^swifty-navigation\.[a-f0-9]{10}\.js$/.test(file),
+      );
       const idiomorphExists = await fsExtra.pathExists(path.join(distDir, "swifty", "idiomorph.esm.js"));
       const licenseExists = await fsExtra.pathExists(path.join(distDir, "swifty", "IDIOMORPH-LICENSE.txt"));
-      assert.strictEqual(navigationExists, true, "swifty-navigation.js should exist");
+      assert.strictEqual(navigationExists, true, "fingerprinted swifty-navigation.js should exist");
       assert.strictEqual(idiomorphExists, true, "idiomorph.esm.js should exist");
       assert.strictEqual(licenseExists, true, "IDIOMORPH-LICENSE.txt should exist");
     });
 
     it("should inject Swifty navigation script with morphing settings", async () => {
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
-      assert.ok(content.includes('src="/swifty/swifty-navigation.js"'), "should include Swifty navigation script");
+      assert.ok(
+        /src="\/swifty\/swifty-navigation\.[a-f0-9]{10}\.js"/.test(content),
+        "should include fingerprinted Swifty navigation script",
+      );
       assert.ok(content.includes("data-swifty-navigation"), "should mark navigation script for auto-start");
       assert.ok(content.includes('data-target="main"'), "should include default morph target");
       assert.ok(content.includes('data-prefetching="intent"'), "should enable intent prefetching by default");
@@ -473,6 +536,15 @@ rss_feeds:
       const faviconExists = await fsExtra.pathExists(path.join(distDir, "images", "favicon.webp"));
       assert.strictEqual(photoExists, true, "photo.webp should exist");
       assert.strictEqual(faviconExists, true, "favicon.webp should exist");
+    });
+
+    it("should generate responsive WebP image variants", async () => {
+      const smallExists = await fsExtra.pathExists(path.join(distDir, "images", "hero-320.webp"));
+      const mediumExists = await fsExtra.pathExists(path.join(distDir, "images", "hero-640.webp"));
+      const defaultExists = await fsExtra.pathExists(path.join(distDir, "images", "hero.webp"));
+      assert.strictEqual(smallExists, true, "hero-320.webp should exist");
+      assert.strictEqual(mediumExists, true, "hero-640.webp should exist");
+      assert.strictEqual(defaultExists, true, "hero.webp should exist");
     });
 
     it("should skip image optimization when WebP output is newer than the source", async () => {
@@ -487,6 +559,23 @@ rss_feeds:
       const after = (await fs.stat(optimizedPath)).mtimeMs;
 
       assert.strictEqual(after, before, "cached WebP should not be rewritten");
+    });
+
+    it("should clear stale responsive image map entries between image optimization runs", async () => {
+      const { getResponsiveImage, optimizeImages, optimizeSingleImage } = await import("../src/assets.js");
+      const sourcePath = path.join(testDir, "images", "stale.png");
+      const png = Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+        "base64",
+      );
+
+      await fs.writeFile(sourcePath, png);
+      await optimizeSingleImage(sourcePath, distDir);
+      assert.ok(getResponsiveImage("/images/stale.png"), "newly optimized image should be registered");
+
+      await fsExtra.remove(sourcePath);
+      await optimizeImages(distDir);
+      assert.strictEqual(getResponsiveImage("/images/stale.png"), null, "deleted image should not stay registered");
     });
   });
 
@@ -538,6 +627,14 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "docs", "getting-started", "index.html"), "utf-8");
       assert.ok(content.includes("<pre>") || content.includes("<code"), "should have code block");
       assert.ok(content.includes("npm install"), "should preserve code content");
+    });
+
+    it("should syntax-highlight fenced code blocks with highlight.js classes", async () => {
+      const content = await fs.readFile(path.join(distDir, "docs", "getting-started", "index.html"), "utf-8");
+      assert.ok(
+        /<code class="hljs language-bash">/.test(content),
+        "code element should carry the hljs class so the highlight stylesheet applies",
+      );
     });
   });
 
@@ -866,6 +963,22 @@ rss_feeds:
       assert.ok(content.includes("/images/featured"), "should include image path");
     });
 
+    it("should rewrite local og:image/twitter:image to WebP to match optimized output", async () => {
+      const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
+      assert.ok(
+        /property="og:image" content="[^"]*\/images\/featured\.webp"/.test(content),
+        "og:image should point to the optimized .webp file",
+      );
+      assert.ok(
+        /name="twitter:image" content="[^"]*\/images\/featured\.webp"/.test(content),
+        "twitter:image should point to the optimized .webp file",
+      );
+      assert.ok(
+        !/content="[^"]*\/images\/featured\.(jpg|jpeg|png)"/.test(content),
+        "should not reference the non-existent original image extension",
+      );
+    });
+
     it("should generate og:type as article for pages", async () => {
       const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
       assert.ok(content.includes('og:type'), "should have og:type");
@@ -876,6 +989,18 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "featured", "index.html"), "utf-8");
       assert.ok(content.includes('twitter:card'), "should have twitter:card");
       assert.ok(content.includes("summary_large_image"), "should be summary_large_image when image exists");
+    });
+
+    it("should use default_og_image when a page has no image", async () => {
+      const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
+      assert.ok(
+        /property="og:image" content="https:\/\/example\.com\/images\/default-og\.webp"/.test(content),
+        "og:image should use the fallback image",
+      );
+      assert.ok(
+        /name="twitter:image" content="https:\/\/example\.com\/images\/default-og\.webp"/.test(content),
+        "twitter:image should use the fallback image",
+      );
     });
 
     it("should generate article:tag for each tag", async () => {
@@ -890,6 +1015,16 @@ rss_feeds:
     it("should rewrite local markdown image sources to WebP", async () => {
       const content = await fs.readFile(path.join(distDir, "images", "index.html"), "utf-8");
       assert.ok(content.includes('src="/images/photo.webp"'), "local image src should point to WebP");
+    });
+
+    it("should add srcset and sizes for responsive local images", async () => {
+      const content = await fs.readFile(path.join(distDir, "images", "index.html"), "utf-8");
+      assert.ok(content.includes('src="/images/hero.webp"'), "large image src should point to default WebP");
+      assert.ok(
+        /srcset="\/images\/hero-320\.webp 320w, \/images\/hero-640\.webp 640w, \/images\/hero\.webp 800w"/.test(content),
+        "large image should include responsive WebP srcset",
+      );
+      assert.ok(content.includes('sizes="100vw"'), "large image should include default sizes");
     });
 
     it("should not rewrite external image URLs, favicon links, or prose", async () => {
@@ -954,6 +1089,25 @@ rss_feeds:
       // The next span should be empty (no link inside)
       assert.ok(content.includes('<span class="next">') &&
                 !content.match(/<span class="next">[^<]*<a/), "last post should have empty next");
+    });
+
+    it("should exclude 404 pages from sibling and previous/next metadata", async () => {
+      const { addLinks } = await import("../src/pages.js");
+      const pages = [
+        { title: "Alpha", name: "Alpha", url: "/alpha", filename: "alpha", folder: false, meta: {} },
+        { title: "Page Not Found", name: "Page Not Found", url: "/404", filename: "404", folder: false, notFound: true, meta: {} },
+        { title: "Beta", name: "Beta", url: "/beta", filename: "beta", folder: false, meta: {} },
+      ];
+
+      await addLinks(pages);
+
+      assert.ok(pages[0].meta.next_page.includes("/beta"), "alpha should link to beta next");
+      assert.ok(!pages[0].meta.next_page.includes("/404"), "alpha should not link to 404 next");
+      assert.ok(pages[2].meta.prev_page.includes("/alpha"), "beta should link to alpha previous");
+      assert.ok(!pages[2].meta.prev_page.includes("/404"), "beta should not link to 404 previous");
+      assert.ok(!pages[0].meta.links_to_siblings.includes("/404"), "sibling links should not include 404");
+      assert.strictEqual(pages[1].meta.prev_page, "", "404 page should not get a previous link");
+      assert.strictEqual(pages[1].meta.next_page, "", "404 page should not get a next link");
     });
   });
 });

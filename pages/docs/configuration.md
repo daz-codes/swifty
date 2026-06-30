@@ -24,7 +24,15 @@ tag_class: tag
 prev_next_class: swifty_link
 default_layout_name: default
 default_link_name: links
-max_image_size: 800
+max_image_width: 800
+image_quality: 80
+responsive_image_widths: [320, 640, 800]
+responsive_image_sizes: 100vw
+default_og_image: /images/share.png
+minify: true
+minify_html: true
+minify_css: true
+minify_js: true
 morphing: true
 prefetching: true
 morph_target: main
@@ -59,7 +67,15 @@ dateFormat:
 | `prev_next_class` | CSS class for previous/next page links |
 | `default_layout_name` | The fallback layout when no other applies |
 | `default_link_name` | The partial used for generating link lists |
-| `max_image_size` | Maximum width for optimized images (in pixels) |
+| `max_image_width` | Maximum width for optimized images (in pixels) |
+| `image_quality` | WebP quality for optimized images |
+| `responsive_image_widths` | Widths Swifty generates for responsive image `srcset` candidates |
+| `responsive_image_sizes` | Default `sizes` attribute added to responsive local images |
+| `default_og_image` | Fallback social sharing image when a page has no `image` or `og_image` |
+| `minify` | Enable or disable all output minification |
+| `minify_html` | Enable or disable HTML minification |
+| `minify_css` | Enable or disable CSS minification |
+| `minify_js` | Enable or disable JavaScript whitespace minification |
 | `morphing` | Enable Idiomorph-powered same-origin page transitions |
 | `prefetching` | Prefetch likely pages on hover, focus, or touch intent |
 | `morph_target` | CSS selector for the element Swifty morphs between pages |

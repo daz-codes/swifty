@@ -8,7 +8,12 @@
       "Bash(npx swifty build:*)",
       "Bash(npm install:*)",
       "Bash(node:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(git checkout *)",
+      "Bash(rm -rf dist/robots.txt dist/sitemap.xml dist/swifty)",
+      "Bash(git rm *)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }

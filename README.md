@@ -7,7 +7,8 @@ Swifty uses convention over configuration to make it super simple to build blazi
 ## Features
 
 - **Markdown pages** with YAML front matter
-- **Automatic image optimization** to WebP
+- **Automatic image optimization** to responsive WebP images with `srcset`
+- **HTML, CSS, and JS minification** during production builds
 - **Layouts and partials** for reusable templates
 - **Auto-injected CSS/JS** from your css/ and js/ folders
 - **Code syntax highlighting** via highlight.js
@@ -19,6 +20,7 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **Pagination** for folders with many pages
 - **Data files** - Load JSON/YAML data and use in templates
 - **Open Graph tags** - Auto-generated social sharing meta tags
+- **404 page convention** - `pages/404.md` builds to `dist/404.html`
 - **Word count & reading time** - Auto-calculated for blog posts
 - **Previous/next navigation** - Auto-generated links between sibling pages
 - **[Eta templating](https://eta.js.org/)** - Full JavaScript in templates with EJS syntax
@@ -45,7 +47,7 @@ your-site/
 ├── data/           # JSON/YAML data files
 ├── css/            # Stylesheets (auto-injected)
 ├── js/             # JavaScript (auto-injected)
-├── images/         # Images (auto-optimized to WebP)
+├── images/         # Images (auto-optimized to responsive WebP)
 ├── template.html   # Base HTML template
 └── config.yaml     # Site configuration
 ```

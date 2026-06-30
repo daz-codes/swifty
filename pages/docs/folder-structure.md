@@ -15,6 +15,7 @@ Swifty loves a tidy project. Here's how to organize your files so everything jus
 your-site/
 ├── pages/           # Your content lives here
 │   ├── index.md     # Homepage
+│   ├── 404.md       # → /404.html
 │   ├── about.md     # → /about
 │   └── blog/        # A section
 │       ├── index.md # → /blog
@@ -55,7 +56,7 @@ Drop your stylesheets here. They're automatically added to every page, sorted al
 Same deal as CSS. All JavaScript files are auto-injected into every page.
 
 ### images/
-Your images go here. JPG, PNG, and JPEG files are automatically converted to WebP and resized for the web. SVGs and GIFs pass through unchanged.
+Your images go here. JPG, PNG, and JPEG files are automatically converted to WebP, resized for the web, and emitted with responsive variants for local image `srcset` output. SVGs and GIFs pass through unchanged.
 
 ### data/
 Store JSON or YAML data files here. The filename becomes the variable name: `data/team.json` is accessible as `data.team` in your templates. Great for lists of team members, products, testimonials, or any structured data you want to loop over.
@@ -70,6 +71,7 @@ Your folder structure *is* your site structure:
 | File | URL |
 |------|-----|
 | `pages/index.md` | `/` |
+| `pages/404.md` | `/404.html` |
 | `pages/about.md` | `/about` |
 | `pages/blog/index.md` | `/blog` |
 | `pages/blog/hello.md` | `/blog/hello` |

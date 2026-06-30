@@ -55,7 +55,7 @@ anything_you_want: totally works
 | `date` | Page date; future dates hide the page until that date |
 | `nav` | Set to `true` to include in main nav, `false` to exclude |
 | `description` | Short description (used for Open Graph tags) |
-| `image` | Image URL for social sharing (used for og:image) |
+| `image` | Image URL for social sharing (used for og:image; falls back to `default_og_image`) |
 | `summary` | Brief summary of the page content |
 
 ### Custom Properties
@@ -84,6 +84,7 @@ Your folder structure *is* your URL structure:
 ```
 pages/
 ├── index.md          → /
+├── 404.md            → /404.html
 ├── about.md          → /about
 ├── blog/
 │   ├── index.md      → /blog

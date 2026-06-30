@@ -1,108 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="Partials">
-  <meta property="og:site_name" content="Swifty">
-  <meta property="og:type" content="article">
-  <meta property="og:description" content="Reusable snippets for DRY content.">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Partials">
-  <meta name="twitter:description" content="Reusable snippets for DRY content.">
-  <meta property="article:tag" content="swifty">
-  <meta property="article:tag" content="docs">
-  <meta property="article:tag" content="partials">
-
-  <title>Swifty</title>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="preload" href="/css/custom (# Edit conflict 2026-01-27 7JR5MPr #).css?v=1769543503885" as="style" />
-<link rel="preload" href="/css/custom (# Edit conflict 2026-01-27 Cm9f3Kb #).css?v=1769554940560" as="style" />
-<link rel="preload" href="/css/custom.css?v=1770203770378" as="style" />
-<link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
-<link rel="stylesheet" href="/css/custom (# Edit conflict 2026-01-27 7JR5MPr #).css?v=1769543503885" />
-<link rel="stylesheet" href="/css/custom (# Edit conflict 2026-01-27 Cm9f3Kb #).css?v=1769554940560" />
-<link rel="stylesheet" href="/css/custom.css?v=1770203770378" />
-<link rel="stylesheet" href="/css/simple.css?v=1769554614320" />
-
-</head>
-<body>
-  <header class="sticky dropshadow opacity-9 align-vertical space-between">
-      <a href="/" class="logo">S</a>
-      <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
-<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
-<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
-  </header>
-    <main>
-    <div class="page-hero">
-  <div class="container">
-    <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/partials">Partials</a></div>
-    <h1>Partials</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/partials">partials</a></div>
-    <p class="page-summary">Reusable snippets for DRY content.</p>
-  </div>
-</div>
-<div class="page-body container">
-  <div class="serif-font">
-    <p>Partials are little snippets of content you can reuse across your site. Got a footer you want on every page? A call-to-action box? A fancy quote format? Partials have got you covered.</p>
-<h2>Creating a Partial</h2>
-<p>Partials live in the <code>partials/</code> folder. They can be Markdown or HTML:</p>
-<p><strong>partials/footer.md</strong></p>
-<pre><code class="language-markdown">---
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta property="og:title" content="Partials"><meta property="og:site_name" content="Swifty"><meta property="og:type" content="article"><meta property="og:description" content="Reusable snippets for DRY content."><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Partials"><meta name="twitter:description" content="Reusable snippets for DRY content."><meta property="article:tag" content="swifty"><meta property="article:tag" content="docs"><meta property="article:tag" content="partials"><title>Swifty</title><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"><link rel="preload" href="/css/custom.css?v=1770203770378" as="style" /><link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
+<script type="module" src="/swifty/swifty-navigation.68f407b862.js" data-swifty-navigation data-target="main" data-prefetching="intent" data-cache-size="20" data-cache-ttl="15"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css"><link rel="stylesheet" href="/css/custom.css?v=1770203770378" /><link rel="stylesheet" href="/css/simple.css?v=1769554614320" /></head><body><header class="sticky dropshadow opacity-9 align-vertical space-between"><a href="/" class="logo">S</a><nav class="tabs"><li><a href="/about" class="swifty_link">About Swifty</a></li><li><a href="/roadmap" class="swifty_link">Swifty Roadmap</a></li><li><a href="/docs" class="swifty_link">Docs</a></li></nav></header><main><div class="page-hero"><div class="container"><div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/partials">Partials</a></div><h1>Partials</h1><div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/partials">partials</a></div><p class="page-summary">Reusable snippets for DRY content.</p></div></div><div class="page-body container"><div class="serif-font"><p>Partials are little snippets of content you can reuse across your site. Got a footer you want on every page? A call-to-action box? A fancy quote format? Partials have got you covered.</p><h2>Creating a Partial</h2><p>Partials live in the <code>partials/</code> folder. They can be Markdown or HTML:</p><p><strong>partials/footer.md</strong></p>
+<pre><code class="hljs language-markdown">---
 
 Made with Swifty. Built with love.
-</code></pre>
-<p><strong>partials/cta.html</strong></p>
-<pre><code class="language-html">&lt;div class=&quot;cta-box&quot;&gt;
-  &lt;h3&gt;Ready to get started?&lt;/h3&gt;
-  &lt;a href=&quot;/signup&quot; class=&quot;button&quot;&gt;Sign Up Now&lt;/a&gt;
-&lt;/div&gt;
-</code></pre>
-<h2>Using a Partial</h2>
-<p>Drop a partial into any page or layout with ERB-style syntax:</p>
-<pre><code class="language-markdown">Here&#39;s my page content...
+</code></pre><p><strong>partials/cta.html</strong></p>
+<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;cta-box&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>Ready to get started?<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;/signup&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;button&quot;</span>&gt;</span>Sign Up Now<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+</code></pre><h2>Using a Partial</h2><p>Drop a partial into any page or layout with ERB-style syntax:</p>
+<pre><code class="hljs language-markdown">Here&#x27;s my page content...
 
 &lt;%= partial: footer %&gt;
-</code></pre>
-<p>That&#39;s it! Swifty finds the partial and inserts it right there.</p>
-<h2>Partials with Variables</h2>
-<p>Here&#39;s where it gets clever. Partials can use the same variables as the page they&#39;re included in:</p>
-<p><strong>partials/author-bio.md</strong></p>
-<pre><code class="language-markdown">*Written by &lt;%= author %&gt; on &lt;%= date %&gt;*
-</code></pre>
-<p>When included in a page with <code>author: Jane</code> in the front matter, it renders with Jane&#39;s name. The partial inherits all the page&#39;s variables.</p>
-<h2>Link List Partials</h2>
-<p>Swifty uses special partials to control how auto-generated links look. Create these in your partials folder:</p>
-<p><strong>partials/links.md</strong> (default for all link lists)</p>
-<pre><code class="language-markdown">- [&lt;%= title %&gt;](&lt;%= url %&gt;)
-</code></pre>
-<p><strong>partials/blog.md</strong> (for links in the blog section)</p>
-<pre><code class="language-markdown">### [&lt;%= title %&gt;](&lt;%= url %&gt;)
-*&lt;%= date %&gt;*
-</code></pre>
-<p><strong>partials/nav.md</strong> (for navigation links)</p>
-<pre><code class="language-html">&lt;a href=&quot;&lt;%= url %&gt;&quot; class=&quot;nav-link&quot;&gt;&lt;%= title %&gt;&lt;/a&gt;
-</code></pre>
-<p>Name a partial after a folder, and it&#39;ll be used for link lists in that section. This lets you style your blog index differently from your docs index.</p>
-<h2>Why Use Partials?</h2>
-<ul>
-<li><strong>Stay DRY</strong>: Write once, use everywhere</li>
-<li><strong>Easy updates</strong>: Change the partial, update every page</li>
-<li><strong>Cleaner pages</strong>: Keep your Markdown focused on content</li>
-<li><strong>Flexible styling</strong>: Different link formats for different sections</li>
-</ul>
-<p>Think of partials as your site&#39;s building blocks. Mix and match them to create consistent, maintainable pages.</p>
-
-  </div>
-</div>
-
-  </main>
-    <footer>
-    <p>This site was built with Swifty, the super speedy static site generator.</p>
-    <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
-  </footer>
-</body>
-</html>
+</code></pre><p>That&#39;s it! Swifty finds the partial and inserts it right there.</p><h2>Partials with Variables</h2><p>Here&#39;s where it gets clever. Partials can use the same variables as the page they&#39;re included in:</p><p><strong>partials/author-bio.md</strong></p>
+<pre><code class="hljs language-markdown"><span class="hljs-emphasis">*Written by &lt;%= author %&gt; on &lt;%= date %&gt;*</span>
+</code></pre><p>When included in a page with <code>author: Jane</code> in the front matter, it renders with Jane&#39;s name. The partial inherits all the page&#39;s variables.</p><h2>Link List Partials</h2><p>Swifty uses special partials to control how auto-generated links look. Create these in your partials folder:</p><p><strong>partials/links.md</strong> (default for all link lists)</p>
+<pre><code class="hljs language-markdown"><span class="hljs-bullet">-</span> [<span class="hljs-string">&lt;%= title %&gt;</span>](<span class="hljs-link">&lt;%= url %&gt;</span>)
+</code></pre><p><strong>partials/blog.md</strong> (for links in the blog section)</p>
+<pre><code class="hljs language-markdown"><span class="hljs-section">### [<span class="hljs-string">&lt;%= title %&gt;</span>](<span class="hljs-link">&lt;%= url %&gt;</span>)</span>
+<span class="hljs-emphasis">*&lt;%= date %&gt;*</span>
+</code></pre><p><strong>partials/nav.md</strong> (for navigation links)</p>
+<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&lt;%= url %&gt;&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;nav-link&quot;</span>&gt;</span>&lt;%= title %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
+</code></pre><p>Name a partial after a folder, and it&#39;ll be used for link lists in that section. This lets you style your blog index differently from your docs index.</p><h2>Why Use Partials?</h2><ul><li><strong>Stay DRY</strong>: Write once, use everywhere</li><li><strong>Easy updates</strong>: Change the partial, update every page</li><li><strong>Cleaner pages</strong>: Keep your Markdown focused on content</li><li><strong>Flexible styling</strong>: Different link formats for different sections</li></ul><p>Think of partials as your site&#39;s building blocks. Mix and match them to create consistent, maintainable pages.</p></div></div></main><footer><p>This site was built with Swifty, the super speedy static site generator.</p><p><a href="/tags.html">All Tags</a></p></footer></body></html>

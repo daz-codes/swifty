@@ -19,7 +19,14 @@ link_class: swifty_link
 tag_class: swifty_tag
 default_layout_name: default
 default_link_name: links
-max_image_size: 800
+max_image_width: 800
+responsive_image_widths:
+  - 320
+  - 640
+  - 800
+responsive_image_sizes: 100vw
+default_og_image: ""
+minify: true
 morphing: true
 prefetching: true
 morph_target: main

@@ -1,14 +1,17 @@
 // pages.js
+import fs from "fs/promises";
+import path from "path";
+
+import fsExtra from "fs-extra";
+import matter from "gray-matter";
+
 import { replacePlaceholders } from "./partials.js";
 import { dirs, defaultConfig, loadConfig } from "./config.js";
 import { getTemplate, applyLayoutAndWrapContent } from "./layout.js";
 import { chunkPages, generatePaginationNav } from "./pagination.js";
-import { marked } from "marked";
-import matter from "gray-matter";
-import fs from "fs/promises";
-import fsExtra from "fs-extra";
-import path from "path";
+import { marked } from "./markdown.js";
 import { mapLimit } from "./concurrency.js";
+import { minifyHtml } from "./minify.js";
 
 // Returns stats if valid (directory or .md file), null otherwise
 const getValidStats = async (filePath) => {
@@ -47,6 +50,8 @@ const pageIndexUrls = new Set();
 const partialExtensions = [".md", ".html"];
 
 const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
+const minificationEnabled = () =>
+  defaultConfig.minify !== false && defaultConfig.minify_html !== false;
 
 const addToTagMap = (tag, page) => {
   if (!tagsMap.has(tag)) tagsMap.set(tag, []);
@@ -78,6 +83,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
         const root = file.name === "index.md" && !parent;
         const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/");
+        const notFound = relativePath === "404.md" && !parent;
         const finalPath = `/${relativePath.replace(/\.md$/, "")}`;
         const name = root
           ? "Home"
@@ -99,11 +105,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           filePath,
           filename: file.name.replace(/\.md$/, ""),
           url: root ? "/" : finalPath,
-          nav: !parent && !root,
+          nav: !parent && !root && !notFound,
           parent: parent
             ? { title: parent.meta.title, url: parent.url }
             : undefined,
           folder: isDirectory,
+          notFound,
           title: name,
           createdAtObj: stats.birthtime,
           updatedAtObj: stats.mtime,
@@ -126,6 +133,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           const markdownContent = await fs.readFile(filePath, "utf-8");
           const { data, content } = matter(markdownContent);
           Object.assign(page, { meta: { ...page.meta, ...data }, content });
+          if (notFound && data.sitemap === undefined) {
+            page.meta.sitemap = false;
+          }
           page.title = page.meta.title || page.title;
           page.name = page.meta.title || page.name;
 
@@ -342,9 +352,12 @@ const createPages = async (pages, distDir = dirs.dist) => {
   await mapLimit(
     pages,
     async (page) => {
-      const html = await render(page);
-      const pageDir = path.join(distDir, page.url);
-      const pagePath = path.join(distDir, page.url, "index.html");
+      const renderedHtml = await render(page);
+      const html = minificationEnabled() ? minifyHtml(renderedHtml) : renderedHtml;
+      const pageDir = page.notFound ? distDir : path.join(distDir, page.url);
+      const pagePath = page.notFound
+        ? path.join(distDir, "404.html")
+        : path.join(distDir, page.url, "index.html");
       await fsExtra.ensureDir(pageDir);
       await fs.writeFile(pagePath, html);
       if (page.folder) {
@@ -360,8 +373,9 @@ const createPages = async (pages, distDir = dirs.dist) => {
 };
 
 const addLinks = async (pages, parent) => {
+  const linkablePages = pages.filter((p) => !p.notFound);
   // Filter out folders and index pages for prev/next calculation (only content pages)
-  const contentPages = pages.filter((p) => !p.folder && p.filename !== 'index');
+  const contentPages = linkablePages.filter((p) => !p.folder && p.filename !== 'index');
 
   await mapLimit(
     pages,
@@ -388,7 +402,7 @@ const addLinks = async (pages, parent) => {
       const linkClass = defaultConfig.prev_next_class || defaultConfig.link_class || '';
       const classAttr = linkClass ? ` class="${linkClass}"` : '';
 
-      if (!page.folder && page.filename !== 'index') {
+      if (!page.folder && page.filename !== 'index' && !page.notFound) {
         const pageIndex = contentPages.indexOf(page);
         const prevSibling = pageIndex > 0 ? contentPages[pageIndex - 1] : null;
         const nextSibling = pageIndex < contentPages.length - 1 ? contentPages[pageIndex + 1] : null;
@@ -414,9 +428,9 @@ const addLinks = async (pages, parent) => {
             : Promise.resolve(""),
           generateLinkList(
             page.parent?.filename || "pages",
-            pages.filter((p) => p.url !== page.url),
+            linkablePages.filter((p) => p.url !== page.url),
           ),
-          generateLinkList(page.parent?.filename || "pages", pages),
+          generateLinkList(page.parent?.filename || "pages", linkablePages),
           generateLinkList("nav", pageIndex.filter((p) => p.nav)),
         ]);
 

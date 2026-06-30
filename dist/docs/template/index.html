@@ -1,205 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="The Template File">
-  <meta property="og:site_name" content="Swifty">
-  <meta property="og:type" content="article">
-  <meta property="og:description" content="The master wrapper for your entire site.">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="The Template File">
-  <meta name="twitter:description" content="The master wrapper for your entire site.">
-  <meta property="article:tag" content="swifty">
-  <meta property="article:tag" content="docs">
-  <meta property="article:tag" content="template">
-
-  <title>Swifty</title>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="preload" href="/css/custom (# Edit conflict 2026-01-27 7JR5MPr #).css?v=1769543503885" as="style" />
-<link rel="preload" href="/css/custom (# Edit conflict 2026-01-27 Cm9f3Kb #).css?v=1769554940560" as="style" />
-<link rel="preload" href="/css/custom.css?v=1770203770378" as="style" />
-<link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
-<link rel="stylesheet" href="/css/custom (# Edit conflict 2026-01-27 7JR5MPr #).css?v=1769543503885" />
-<link rel="stylesheet" href="/css/custom (# Edit conflict 2026-01-27 Cm9f3Kb #).css?v=1769554940560" />
-<link rel="stylesheet" href="/css/custom.css?v=1770203770378" />
-<link rel="stylesheet" href="/css/simple.css?v=1769554614320" />
-
-</head>
-<body>
-  <header class="sticky dropshadow opacity-9 align-vertical space-between">
-      <a href="/" class="logo">S</a>
-      <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
-<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
-<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
-  </header>
-    <main>
-    <div class="page-hero">
-  <div class="container">
-    <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/template">Template</a></div>
-    <h1>The Template File</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/template">template</a></div>
-    <p class="page-summary">The master wrapper for your entire site.</p>
-  </div>
-</div>
-<div class="page-body container">
-  <div class="serif-font">
-    <p>The template file is the big boss - it wraps around <em>everything</em>. While layouts wrap individual page content, the template wraps the whole shebang, including the layout.</p>
-<p>Think of it as your site&#39;s skeleton: the <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, and <code>&lt;body&gt;</code> tags that every page shares.</p>
-<h2>The Basic Template</h2>
-<p>Create a <code>template.html</code> in your project root:</p>
-<pre><code class="language-html">&lt;!DOCTYPE html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-&lt;head&gt;
-  &lt;meta charset=&quot;UTF-8&quot;&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
-  &lt;title&gt;&lt;%= title %&gt; | &lt;%= sitename %&gt;&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;nav&gt;
-    &lt;a href=&quot;/&quot;&gt;&lt;%= sitename %&gt;&lt;/a&gt;
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta property="og:title" content="The Template File"><meta property="og:site_name" content="Swifty"><meta property="og:type" content="article"><meta property="og:description" content="The master wrapper for your entire site."><meta name="twitter:card" content="summary"><meta name="twitter:title" content="The Template File"><meta name="twitter:description" content="The master wrapper for your entire site."><meta property="article:tag" content="swifty"><meta property="article:tag" content="docs"><meta property="article:tag" content="template"><title>Swifty</title><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"><link rel="preload" href="/css/custom.css?v=1770203770378" as="style" /><link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
+<script type="module" src="/swifty/swifty-navigation.68f407b862.js" data-swifty-navigation data-target="main" data-prefetching="intent" data-cache-size="20" data-cache-ttl="15"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css"><link rel="stylesheet" href="/css/custom.css?v=1770203770378" /><link rel="stylesheet" href="/css/simple.css?v=1769554614320" /></head><body><header class="sticky dropshadow opacity-9 align-vertical space-between"><a href="/" class="logo">S</a><nav class="tabs"><li><a href="/about" class="swifty_link">About Swifty</a></li><li><a href="/roadmap" class="swifty_link">Swifty Roadmap</a></li><li><a href="/docs" class="swifty_link">Docs</a></li></nav></header><main><div class="page-hero"><div class="container"><div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/template">The Template File</a></div><h1>The Template File</h1><div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/template">template</a></div><p class="page-summary">The master wrapper for your entire site.</p></div></div><div class="page-body container"><div class="serif-font"><p>The template file is the big boss - it wraps around <em>everything</em>. While layouts wrap individual page content, the template wraps the whole shebang, including the layout.</p><p>Think of it as your site&#39;s skeleton: the <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, and <code>&lt;body&gt;</code> tags that every page shares.</p><h2>The Basic Template</h2><p>Create a <code>template.html</code> in your project root:</p>
+<pre><code class="hljs language-html"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;en&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;UTF-8&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;viewport&quot;</span> <span class="hljs-attr">content</span>=<span class="hljs-string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>&lt;%= title %&gt; | &lt;%= sitename %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">nav</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;/&quot;</span>&gt;</span>&lt;%= sitename %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
     &lt;%= nav_links %&gt;
-  &lt;/nav&gt;
+  <span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
 
-  &lt;main&gt;
+  <span class="hljs-tag">&lt;<span class="hljs-name">main</span>&gt;</span>
     &lt;%= content %&gt;
-  &lt;/main&gt;
+  <span class="hljs-tag">&lt;/<span class="hljs-name">main</span>&gt;</span>
 
-  &lt;footer&gt;
-    &lt;p&gt;&amp;copy; 2025 &lt;%= sitename %&gt;&lt;/p&gt;
-  &lt;/footer&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-<p>The <code>&lt;%= content %&gt;</code> placeholder is where all your page content (including layouts) gets inserted.</p>
-<h2>What Swifty Auto-Injects</h2>
-<p>You might notice your CSS and JS files magically appear in the built pages. That&#39;s because Swifty automatically injects:</p>
-<ul>
-<li><strong>All CSS files</strong> from your <code>css/</code> folder (alphabetically sorted)</li>
-<li><strong>All JS files</strong> from your <code>js/</code> folder (alphabetically sorted)</li>
-<li><strong>Syntax highlighting styles</strong> for code blocks</li>
-<li><strong>Turbo script</strong> (if enabled in config)</li>
-<li><strong>LiveReload script</strong> (only during development with <code>swifty start</code>)</li>
-</ul>
-<p>These get added just before the closing <code>&lt;/head&gt;</code> tag. You don&#39;t need to manually link your stylesheets or scripts - just drop files in the right folders and they&#39;re included.</p>
-<h2>Template Variables</h2>
-<p>Swifty uses <a href="https://eta.js.org/">Eta</a> with EJS-style syntax for templates:</p>
-<ul>
-<li><code>&lt;%= variable %&gt;</code> - Output a variable (escaped)</li>
-<li><code>&lt;% code %&gt;</code> - Execute JavaScript without output</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Syntax</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>sitename</code></td>
-<td><code>&lt;%= sitename %&gt;</code></td>
-<td>Your site&#39;s name from config</td>
-</tr>
-<tr>
-<td><code>title</code></td>
-<td><code>&lt;%= title %&gt;</code></td>
-<td>Current page&#39;s title</td>
-</tr>
-<tr>
-<td><code>content</code></td>
-<td><code>&lt;%= content %&gt;</code></td>
-<td>The page content (required!)</td>
-</tr>
-<tr>
-<td><code>nav_links</code></td>
-<td><code>&lt;%= nav_links %&gt;</code></td>
-<td>Auto-generated navigation</td>
-</tr>
-<tr>
-<td><code>breadcrumbs</code></td>
-<td><code>&lt;%= breadcrumbs %&gt;</code></td>
-<td>Breadcrumb trail</td>
-</tr>
-<tr>
-<td><code>author</code></td>
-<td><code>&lt;%= author %&gt;</code></td>
-<td>Author from config or page</td>
-</tr>
-<tr>
-<td><code>og_tags</code></td>
-<td><code>&lt;%= og_tags %&gt;</code></td>
-<td>Open Graph meta tags for social sharing</td>
-</tr>
-<tr>
-<td><code>word_count</code></td>
-<td><code>&lt;%= word_count %&gt;</code></td>
-<td>Number of words in the page content</td>
-</tr>
-<tr>
-<td><code>reading_time</code></td>
-<td><code>&lt;%= reading_time %&gt;</code></td>
-<td>Estimated reading time (e.g., &quot;3 min read&quot;)</td>
-</tr>
-<tr>
-<td><code>prev_page</code></td>
-<td><code>&lt;%= prev_page %&gt;</code></td>
-<td>Link to previous sibling page</td>
-</tr>
-<tr>
-<td><code>next_page</code></td>
-<td><code>&lt;%= next_page %&gt;</code></td>
-<td>Link to next sibling page</td>
-</tr>
-<tr>
-<td><code>pagination</code></td>
-<td><code>&lt;%= pagination %&gt;</code></td>
-<td>Pagination nav for paginated folders</td>
-</tr>
-<tr>
-<td><code>data.*</code></td>
-<td><code>&lt;%= data.team %&gt;</code></td>
-<td>Data from JSON/YAML files in <code>data/</code> folder</td>
-</tr>
-</tbody></table>
-<h2>Using JavaScript in Templates</h2>
-<p>Since Swifty uses Eta, you can use full JavaScript in your templates:</p>
-<pre><code class="language-html">&lt;!-- Conditionals --&gt;
+  <span class="hljs-tag">&lt;<span class="hljs-name">footer</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span><span class="hljs-symbol">&amp;copy;</span> 2025 &lt;%= sitename %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">footer</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
+</code></pre><p>The <code>&lt;%= content %&gt;</code> placeholder is where all your page content (including layouts) gets inserted.</p><h2>What Swifty Auto-Injects</h2><p>You might notice your CSS and JS files magically appear in the built pages. That&#39;s because Swifty automatically injects:</p><ul><li><strong>All CSS files</strong> from your <code>css/</code> folder (alphabetically sorted)</li><li><strong>All JS files</strong> from your <code>js/</code> folder (alphabetically sorted)</li><li><strong>Syntax highlighting styles</strong> for code blocks</li><li><strong>Swifty navigation script</strong> (if <code>morphing</code> is enabled in config)</li><li><strong>LiveReload script</strong> (only during development with <code>swifty start</code>)</li></ul><p>These get added just before the closing <code>&lt;/head&gt;</code> tag. You don&#39;t need to manually link your stylesheets or scripts - just drop files in the right folders and they&#39;re included.</p><h2>Template Variables</h2><p>Swifty uses <a href="https://eta.js.org/">Eta</a> with EJS-style syntax for templates:</p><ul><li><code>&lt;%= variable %&gt;</code> - Output a variable (escaped)</li><li><code>&lt;% code %&gt;</code> - Execute JavaScript without output</li></ul><table><thead><tr><th>Variable</th><th>Syntax</th><th>What it does</th></tr></thead><tbody><tr><td><code>sitename</code></td><td><code>&lt;%= sitename %&gt;</code></td><td>Your site&#39;s name from config</td></tr><tr><td><code>title</code></td><td><code>&lt;%= title %&gt;</code></td><td>Current page&#39;s title</td></tr><tr><td><code>content</code></td><td><code>&lt;%= content %&gt;</code></td><td>The page content (required!)</td></tr><tr><td><code>nav_links</code></td><td><code>&lt;%= nav_links %&gt;</code></td><td>Auto-generated navigation</td></tr><tr><td><code>breadcrumbs</code></td><td><code>&lt;%= breadcrumbs %&gt;</code></td><td>Breadcrumb trail</td></tr><tr><td><code>author</code></td><td><code>&lt;%= author %&gt;</code></td><td>Author from config or page</td></tr><tr><td><code>og_tags</code></td><td><code>&lt;%= og_tags %&gt;</code></td><td>Open Graph meta tags for social sharing</td></tr><tr><td><code>word_count</code></td><td><code>&lt;%= word_count %&gt;</code></td><td>Number of words in the page content</td></tr><tr><td><code>reading_time</code></td><td><code>&lt;%= reading_time %&gt;</code></td><td>Estimated reading time (e.g., &quot;3 min read&quot;)</td></tr><tr><td><code>prev_page</code></td><td><code>&lt;%= prev_page %&gt;</code></td><td>Link to previous sibling page</td></tr><tr><td><code>next_page</code></td><td><code>&lt;%= next_page %&gt;</code></td><td>Link to next sibling page</td></tr><tr><td><code>pagination</code></td><td><code>&lt;%= pagination %&gt;</code></td><td>Pagination nav for paginated folders</td></tr><tr><td><code>data.*</code></td><td><code>&lt;%= data.team %&gt;</code></td><td>Data from JSON/YAML files in <code>data/</code> folder</td></tr></tbody></table><h2>Using JavaScript in Templates</h2><p>Since Swifty uses Eta, you can use full JavaScript in your templates:</p>
+<pre><code class="hljs language-html"><span class="hljs-comment">&lt;!-- Conditionals --&gt;</span>
 &lt;% if (tags &amp;&amp; tags.length &gt; 0) { %&gt;
-  &lt;div class=&quot;tags&quot;&gt;
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;tags&quot;</span>&gt;</span>
     &lt;% for (const tag of tags) { %&gt;
-      &lt;span class=&quot;tag&quot;&gt;&lt;%= tag %&gt;&lt;/span&gt;
+      <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;tag&quot;</span>&gt;</span>&lt;%= tag %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
     &lt;% } %&gt;
-  &lt;/div&gt;
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
 &lt;% } %&gt;
 
-&lt;!-- Expressions --&gt;
-&lt;p&gt;Published: &lt;%= new Date(date).toLocaleDateString() %&gt;&lt;/p&gt;
+<span class="hljs-comment">&lt;!-- Expressions --&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Published: &lt;%= new Date(date).toLocaleDateString() %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
 
-&lt;!-- Computed values --&gt;
+<span class="hljs-comment">&lt;!-- Computed values --&gt;</span>
 &lt;%= title.toUpperCase() %&gt;
-</code></pre>
-<p>This gives you the power to add conditional content, loops, and dynamic logic right in your templates.</p>
-<h2>Pro Tips</h2>
-<p><strong>Name your CSS files strategically</strong>: Since they&#39;re loaded alphabetically, prefix with numbers for control:</p>
-<pre><code>css/
+</code></pre><p>This gives you the power to add conditional content, loops, and dynamic logic right in your templates.</p><h2>Pro Tips</h2><p><strong>Name your CSS files strategically</strong>: Since they&#39;re loaded alphabetically, prefix with numbers for control:</p>
+<pre><code class="hljs">css/
 ├── 1-reset.css
 ├── 2-base.css
 └── 3-components.css
-</code></pre>
-<p><strong>Keep it lean</strong>: The template appears on every page, so keep it minimal. Put section-specific stuff in layouts instead.</p>
-<p><strong>Test your template</strong>: Since it wraps everything, a broken template breaks your whole site. Start simple and build up.</p>
-
-  </div>
-</div>
-
-  </main>
-    <footer>
-    <p>This site was built with Swifty, the super speedy static site generator.</p>
-    <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
-  </footer>
-</body>
-</html>
+</code></pre><p><strong>Keep it lean</strong>: The template appears on every page, so keep it minimal. Put section-specific stuff in layouts instead.</p><p><strong>Test your template</strong>: Since it wraps everything, a broken template breaks your whole site. Start simple and build up.</p></div></div></main><footer><p>This site was built with Swifty, the super speedy static site generator.</p><p><a href="/tags.html">All Tags</a></p></footer></body></html>

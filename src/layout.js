@@ -2,7 +2,13 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import { dirs, baseDir, defaultConfig } from "./config.js";
-import { getCssImports, getJsImports, getCssPreloads, getJsPreloads } from "./assets.js";
+import {
+  getCssImports,
+  getJsImports,
+  getCssPreloads,
+  getJsPreloads,
+  getNavigationScriptSrc,
+} from "./assets.js";
 
 const layoutCache = new Map();
 let template = null;
@@ -13,8 +19,6 @@ const escapeAttr = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
-const navigationEnabled = () => defaultConfig.morphing !== false;
 
 const getLayout = async (layoutName) => {
   if (!layoutName) return null;
@@ -41,8 +45,9 @@ const createTemplate = async () => {
     '<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">',
   ].join('\n');
 
-  const navigationScript = navigationEnabled()
-    ? `<script type="module" src="/swifty/swifty-navigation.js" data-swifty-navigation data-target="${escapeAttr(defaultConfig.morph_target || "main")}" data-prefetching="${defaultConfig.prefetching === false ? "off" : "intent"}" data-cache-size="${escapeAttr(defaultConfig.navigation_cache_size || 20)}" data-cache-ttl="${escapeAttr(defaultConfig.navigation_cache_ttl || 15)}"></script>`
+  const navigationScriptSrc = await getNavigationScriptSrc();
+  const navigationScript = navigationScriptSrc
+    ? `<script type="module" src="${navigationScriptSrc}" data-swifty-navigation data-target="${escapeAttr(defaultConfig.morph_target || "main")}" data-prefetching="${defaultConfig.prefetching === false ? "off" : "intent"}" data-cache-size="${escapeAttr(defaultConfig.navigation_cache_size || 20)}" data-cache-ttl="${escapeAttr(defaultConfig.navigation_cache_ttl || 15)}"></script>`
     : '';
   const livereloadScript = process.env.SWIFTY_WATCH
     ? `<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':${defaultConfig.livereload_port || 35729}/livereload.js?snipver=1"></' + 'script>')</script>`
@@ -56,7 +61,7 @@ const createTemplate = async () => {
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
-  const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">`;
+  const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css">`;
 
   // Order: preconnect hints -> preloads -> actual assets -> scripts
   const template = templateContent.replace('</head>', `${preconnectHints}\n${preloads}\n${navigationScript}\n${highlightCSS}\n${imports}\n${livereloadScript}\n</head>`);

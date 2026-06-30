@@ -1,113 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="Layouts">
-  <meta property="og:site_name" content="Swifty">
-  <meta property="og:type" content="article">
-  <meta property="og:description" content="Wrap your pages in reusable layouts.">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Layouts">
-  <meta name="twitter:description" content="Wrap your pages in reusable layouts.">
-  <meta property="article:tag" content="swifty">
-  <meta property="article:tag" content="docs">
-  <meta property="article:tag" content="layouts">
-
-  <title>Swifty</title>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="preload" href="/css/custom (# Edit conflict 2026-01-27 7JR5MPr #).css?v=1769543503885" as="style" />
-<link rel="preload" href="/css/custom (# Edit conflict 2026-01-27 Cm9f3Kb #).css?v=1769554940560" as="style" />
-<link rel="preload" href="/css/custom.css?v=1770203770378" as="style" />
-<link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai-sublime.min.css">
-<link rel="stylesheet" href="/css/custom (# Edit conflict 2026-01-27 7JR5MPr #).css?v=1769543503885" />
-<link rel="stylesheet" href="/css/custom (# Edit conflict 2026-01-27 Cm9f3Kb #).css?v=1769554940560" />
-<link rel="stylesheet" href="/css/custom.css?v=1770203770378" />
-<link rel="stylesheet" href="/css/simple.css?v=1769554614320" />
-
-</head>
-<body>
-  <header class="sticky dropshadow opacity-9 align-vertical space-between">
-      <a href="/" class="logo">S</a>
-      <nav class="tabs"><li><a href="/about" class="swifty_link">About</a></li>
-<li><a href="/roadmap" class="swifty_link">Roadmap</a></li>
-<li><a href="/docs" class="swifty_link">Docs</a></li></nav>
-  </header>
-    <main>
-    <div class="page-hero">
-  <div class="container">
-    <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/layouts">Layouts</a></div>
-    <h1>Layouts</h1>
-    <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/layouts">layouts</a></div>
-    <p class="page-summary">Wrap your pages in reusable layouts.</p>
-  </div>
-</div>
-<div class="page-body container">
-  <div class="serif-font">
-    <p>Layouts are like picture frames for your content. They wrap around your page content and give it structure - headers, footers, sidebars, whatever you fancy.</p>
-<h2>Creating a Layout</h2>
-<p>Layouts live in the <code>layouts/</code> folder and are always HTML files. Here&#39;s a simple example:</p>
-<p><strong>layouts/default.html</strong></p>
-<pre><code class="language-html">&lt;article class=&quot;page&quot;&gt;
-  &lt;header&gt;
-    &lt;h1&gt;&lt;%= title %&gt;&lt;/h1&gt;
-    &lt;p class=&quot;meta&quot;&gt;&lt;%= date %&gt;&lt;/p&gt;
-  &lt;/header&gt;
-  &lt;main&gt;
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta property="og:title" content="Layouts"><meta property="og:site_name" content="Swifty"><meta property="og:type" content="article"><meta property="og:description" content="Wrap your pages in reusable layouts."><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Layouts"><meta name="twitter:description" content="Wrap your pages in reusable layouts."><meta property="article:tag" content="swifty"><meta property="article:tag" content="docs"><meta property="article:tag" content="layouts"><title>Swifty</title><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"><link rel="preload" href="/css/custom.css?v=1770203770378" as="style" /><link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
+<script type="module" src="/swifty/swifty-navigation.68f407b862.js" data-swifty-navigation data-target="main" data-prefetching="intent" data-cache-size="20" data-cache-ttl="15"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css"><link rel="stylesheet" href="/css/custom.css?v=1770203770378" /><link rel="stylesheet" href="/css/simple.css?v=1769554614320" /></head><body><header class="sticky dropshadow opacity-9 align-vertical space-between"><a href="/" class="logo">S</a><nav class="tabs"><li><a href="/about" class="swifty_link">About Swifty</a></li><li><a href="/roadmap" class="swifty_link">Swifty Roadmap</a></li><li><a href="/docs" class="swifty_link">Docs</a></li></nav></header><main><div class="page-hero"><div class="container"><div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/layouts">Layouts</a></div><h1>Layouts</h1><div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/layouts">layouts</a></div><p class="page-summary">Wrap your pages in reusable layouts.</p></div></div><div class="page-body container"><div class="serif-font"><p>Layouts are like picture frames for your content. They wrap around your page content and give it structure - headers, footers, sidebars, whatever you fancy.</p><h2>Creating a Layout</h2><p>Layouts live in the <code>layouts/</code> folder and are always HTML files. Here&#39;s a simple example:</p><p><strong>layouts/default.html</strong></p>
+<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;page&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">header</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>&lt;%= title %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;meta&quot;</span>&gt;</span>&lt;%= date %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">header</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">main</span>&gt;</span>
     &lt;%= content %&gt;
-  &lt;/main&gt;
-&lt;/article&gt;
-</code></pre>
-<p>The magic happens with <code>&lt;%= content %&gt;</code> - that&#39;s where your page content gets inserted. You can also use any front matter variables like <code>&lt;%= title %&gt;</code> or config values like <code>&lt;%= sitename %&gt;</code>.</p>
-<h2>How Layouts Are Applied</h2>
-<p>Swifty uses <strong>convention over configuration</strong> (borrowed from Ruby on Rails) to automatically pick layouts:</p>
-<ol>
-<li><strong>Folder-matched layouts</strong>: Pages in a folder called <code>blog/</code> automatically use <code>layouts/blog.html</code> if it exists</li>
-<li><strong>Default fallback</strong>: If no matching layout exists, pages use <code>layouts/default.html</code></li>
-<li><strong>Explicit override</strong>: Set <code>layout: special</code> in front matter to use <code>layouts/special.html</code></li>
-</ol>
-<p>This means you can create different looks for different sections without configuring anything. Just name your layout file after your folder!</p>
-<h2>Choosing a Specific Layout</h2>
-<p>Want a page to use a particular layout? Just say so in the front matter:</p>
-<pre><code class="language-markdown">---
+  <span class="hljs-tag">&lt;/<span class="hljs-name">main</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">article</span>&gt;</span>
+</code></pre><p>The magic happens with <code>&lt;%= content %&gt;</code> - that&#39;s where your page content gets inserted. You can also use any front matter variables like <code>&lt;%= title %&gt;</code> or config values like <code>&lt;%= sitename %&gt;</code>.</p><h2>How Layouts Are Applied</h2><p>Swifty uses <strong>convention over configuration</strong> (borrowed from Ruby on Rails) to automatically pick layouts:</p><ol><li><strong>Folder-matched layouts</strong>: Pages in a folder called <code>blog/</code> automatically use <code>layouts/blog.html</code> if it exists</li><li><strong>Default fallback</strong>: If no matching layout exists, pages use <code>layouts/default.html</code></li><li><strong>Explicit override</strong>: Set <code>layout: special</code> in front matter to use <code>layouts/special.html</code></li></ol><p>This means you can create different looks for different sections without configuring anything. Just name your layout file after your folder!</p><h2>Choosing a Specific Layout</h2><p>Want a page to use a particular layout? Just say so in the front matter:</p>
+<pre><code class="hljs language-markdown">---
 title: My Special Page
-layout: fancy
----
+<span class="hljs-section">layout: fancy
+---</span>
 
 This page will use layouts/fancy.html
-</code></pre>
-<h2>Going Layout-Free</h2>
-<p>Sometimes you want full control. Set <code>layout: false</code> to skip the layout entirely:</p>
-<pre><code class="language-markdown">---
-layout: false
----
+</code></pre><h2>Going Layout-Free</h2><p>Sometimes you want full control. Set <code>layout: false</code> to skip the layout entirely:</p>
+<pre><code class="hljs language-markdown">---
+<span class="hljs-section">layout: false
+---</span>
 
-&lt;div class=&quot;custom-page&quot;&gt;
-  This content won&#39;t be wrapped in any layout.
-&lt;/div&gt;
-</code></pre>
-<p>This is handy for landing pages or anything with a completely custom structure.</p>
-<h2>Nesting Content</h2>
-<p>Layouts are applied <em>after</em> your Markdown is converted to HTML, so you get the full formatted content. The flow goes:</p>
-<ol>
-<li>Your Markdown page is parsed</li>
-<li>Front matter variables are extracted</li>
-<li>Markdown converts to HTML</li>
-<li>Layout wraps around the HTML</li>
-<li>Template wraps around everything</li>
-</ol>
-<p>It&#39;s layouts all the way down!</p>
-
-  </div>
-</div>
-
-  </main>
-    <footer>
-    <p>This site was built with Swifty, the super speedy static site generator.</p>
-    <p><a href="/tags.html" data-turbo-frame="content" data-turbo-action="advance">All Tags</a></p>
-  </footer>
-</body>
-</html>
+<span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;custom-page&quot;</span>&gt;</span></span>
+  This content won&#x27;t be wrapped in any layout.
+<span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
+</code></pre><p>This is handy for landing pages or anything with a completely custom structure.</p><h2>Nesting Content</h2><p>Layouts are applied <em>after</em> your Markdown is converted to HTML, so you get the full formatted content. The flow goes:</p><ol><li>Your Markdown page is parsed</li><li>Front matter variables are extracted</li><li>Markdown converts to HTML</li><li>Layout wraps around the HTML</li><li>Template wraps around everything</li></ol><p>It&#39;s layouts all the way down!</p></div></div></main><footer><p>This site was built with Swifty, the super speedy static site generator.</p><p><a href="/tags.html">All Tags</a></p></footer></body></html>
