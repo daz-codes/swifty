@@ -88,7 +88,8 @@ address: 123 Baker Street, Tastyville
 
 breadcrumb_separator: " > "
 link_class: nav-link
-turbo: false
+morphing: true
+prefetching: true
 ```
 
 We've added custom properties (`tagline`, `address`) that we can use anywhere on the site.
@@ -959,7 +960,7 @@ Now that you've got the basics, try:
 - Adding images to `images/` and referencing them in pages
 - Creating more complex layouts with sidebars or grids
 - Using tags to categorize content
-- Enabling Turbo for SPA-like transitions
+- Tuning morph navigation for SPA-like transitions
 - Adding JavaScript for interactive features
 
 Most importantly: build something real! Swifty gets out of your way so you can focus on content. Happy building!

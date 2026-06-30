@@ -21,8 +21,10 @@ watcher_interval: 500
 # Pagination
 default_page_count: 2
 
-# Performance
-turbo: false
+# Navigation
+morphing: true
+prefetching: true
+morph_target: main
 
 dateFormat:
   weekday: short

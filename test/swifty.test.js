@@ -451,6 +451,23 @@ rss_feeds:
       assert.ok(/src="\/js\/main\.js\?v=\d+"/.test(content), "should have JS script tag with cache-busting query string");
     });
 
+    it("should copy Swifty navigation assets when morphing is enabled", async () => {
+      const navigationExists = await fsExtra.pathExists(path.join(distDir, "swifty", "swifty-navigation.js"));
+      const idiomorphExists = await fsExtra.pathExists(path.join(distDir, "swifty", "idiomorph.esm.js"));
+      const licenseExists = await fsExtra.pathExists(path.join(distDir, "swifty", "IDIOMORPH-LICENSE.txt"));
+      assert.strictEqual(navigationExists, true, "swifty-navigation.js should exist");
+      assert.strictEqual(idiomorphExists, true, "idiomorph.esm.js should exist");
+      assert.strictEqual(licenseExists, true, "IDIOMORPH-LICENSE.txt should exist");
+    });
+
+    it("should inject Swifty navigation script with morphing settings", async () => {
+      const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+      assert.ok(content.includes('src="/swifty/swifty-navigation.js"'), "should include Swifty navigation script");
+      assert.ok(content.includes("data-swifty-navigation"), "should mark navigation script for auto-start");
+      assert.ok(content.includes('data-target="main"'), "should include default morph target");
+      assert.ok(content.includes('data-prefetching="intent"'), "should enable intent prefetching by default");
+    });
+
     it("should optimize local PNG images to WebP", async () => {
       const photoExists = await fsExtra.pathExists(path.join(distDir, "images", "photo.webp"));
       const faviconExists = await fsExtra.pathExists(path.join(distDir, "images", "favicon.webp"));

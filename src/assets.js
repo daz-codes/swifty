@@ -2,8 +2,13 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import sharp from "sharp";
+import { fileURLToPath } from "url";
 import { dirs, defaultConfig } from "./config.js";
 import { mapLimit } from "./concurrency.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientAssetsDir = path.join(__dirname, "client");
 
 // Get file modification timestamp for cache busting
 const getFileMtime = async (filePath) => {
@@ -20,6 +25,7 @@ const validExtensions = {
 const optimizableImageExtensions = [".jpg", ".jpeg", ".png"];
 
 const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
+const navigationEnabled = () => defaultConfig.morphing !== false;
 
 const isDestinationFresh = async (source, destination) => {
   try {
@@ -80,6 +86,29 @@ const ensureAndCopy = async (source, destination, validExts) => {
     console.log(`No ${path.basename(source)} found in ${source}`);
   }
 };
+
+const copyNavigationAssets = async (outputDir = dirs.dist) => {
+  if (!navigationEnabled()) return;
+  if (!(await fsExtra.pathExists(clientAssetsDir))) return;
+
+  const destination = path.join(outputDir, "swifty");
+  await fsExtra.ensureDir(destination);
+
+  const files = await fs.readdir(clientAssetsDir);
+  await mapLimit(
+    files,
+    async (file) => {
+      const sourcePath = path.join(clientAssetsDir, file);
+      const destinationPath = path.join(destination, file);
+      const copied = await copyIfStale(sourcePath, destinationPath);
+      if (copied) {
+        console.log(`Copied Swifty navigation asset ${file}`);
+      }
+    },
+    getBuildConcurrency(),
+  );
+};
+
 const copyAssets = async (outputDir = dirs.dist) => {
   await ensureAndCopy(
     dirs.css,
@@ -87,6 +116,7 @@ const copyAssets = async (outputDir = dirs.dist) => {
     validExtensions.css,
   );
   await ensureAndCopy(dirs.js, path.join(outputDir, "js"), validExtensions.js);
+  await copyNavigationAssets(outputDir);
 };
 async function optimizeImages(outputDir = dirs.dist) {
   try {

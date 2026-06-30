@@ -25,7 +25,9 @@ prev_next_class: swifty_link
 default_layout_name: default
 default_link_name: links
 max_image_size: 800
-turbo: false
+morphing: true
+prefetching: true
+morph_target: main
 
 # Pagination
 page_count: 10
@@ -58,7 +60,9 @@ dateFormat:
 | `default_layout_name` | The fallback layout when no other applies |
 | `default_link_name` | The partial used for generating link lists |
 | `max_image_size` | Maximum width for optimized images (in pixels) |
-| `turbo` | Enable Turbo for SPA-like navigation |
+| `morphing` | Enable Idiomorph-powered same-origin page transitions |
+| `prefetching` | Prefetch likely pages on hover, focus, or touch intent |
+| `morph_target` | CSS selector for the element Swifty morphs between pages |
 | `page_count` | Number of items per page before pagination kicks in |
 | `pagination_class` | CSS class for the pagination container |
 | `pagination_link_class` | CSS class for pagination links |
@@ -77,17 +81,19 @@ Written by <%= author %>.
 
 Simple as that.
 
-## Turbo Mode
+## Morph Navigation
 
-By default, Swifty generates good old-fashioned HTML pages. But if you want that slick single-page-app feel with instant page transitions, flip on Turbo:
+By default, Swifty fetches same-origin HTML links and morphs the configured page target with Idiomorph. It keeps the outer layout in place while updating the URL, title, focus, and scroll position.
 
 ```yaml
-turbo: true
+morphing: true
+prefetching: true
+morph_target: main
 ```
 
-When enabled, [Turbo](https://turbo.hotwired.dev/) intercepts link clicks, fetches pages in the background, and smoothly swaps content. It even prefetches links when you hover over them. Your visitors will think you're some kind of wizard.
+Set `prefetching: false` if you want morphing without hover/focus/touch prefetches. Set `morphing: false` to return to plain browser navigation.
 
-For most sites though, plain HTML is already plenty fast. Only enable Turbo if you really want those buttery transitions.
+`turbo` is deprecated in Swifty 3. Use `morphing` and `prefetching` instead.
 
 ## Folder-Level Config
 

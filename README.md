@@ -22,7 +22,7 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **Word count & reading time** - Auto-calculated for blog posts
 - **Previous/next navigation** - Auto-generated links between sibling pages
 - **[Eta templating](https://eta.js.org/)** - Full JavaScript in templates with EJS syntax
-- **Optional [Turbo](https://turbo.hotwired.dev/)** for SPA-like transitions
+- **Idiomorph navigation** with optional intent prefetching for SPA-like transitions
 
 ## Quickstart
 

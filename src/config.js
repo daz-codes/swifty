@@ -48,9 +48,23 @@ const builtInDefaults = {
   default_page_count: 2,
   // Build safety
   build_concurrency: 16,
+  // Navigation
+  morphing: true,
+  prefetching: true,
+  morph_target: 'main',
+  navigation_cache_size: 20,
+  navigation_cache_ttl: 15,
 };
 
 const loadedConfig = await loadConfig(baseDir);
+const hasConfig = (key) => Object.prototype.hasOwnProperty.call(loadedConfig, key);
+
+if (hasConfig('turbo')) {
+  console.warn('The "turbo" config option is deprecated. Use "morphing" and "prefetching" instead.');
+  if (!hasConfig('morphing')) {
+    loadedConfig.morphing = loadedConfig.turbo;
+  }
+}
 const defaultConfig = { ...builtInDefaults, ...loadedConfig };
 
 export { baseDir, dirs, defaultConfig, loadConfig };

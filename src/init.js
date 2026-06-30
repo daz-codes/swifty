@@ -20,6 +20,9 @@ tag_class: swifty_tag
 default_layout_name: default
 default_link_name: links
 max_image_size: 800
+morphing: true
+prefetching: true
+morph_target: main
 
 dateFormat:
   weekday: short

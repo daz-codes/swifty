@@ -50,7 +50,7 @@ You might notice your CSS and JS files magically appear in the built pages. That
 - **All CSS files** from your `css/` folder (alphabetically sorted)
 - **All JS files** from your `js/` folder (alphabetically sorted)
 - **Syntax highlighting styles** for code blocks
-- **Turbo script** (if enabled in config)
+- **Swifty navigation script** (if `morphing` is enabled in config)
 - **LiveReload script** (only during development with `swifty start`)
 
 These get added just before the closing `</head>` tag. You don't need to manually link your stylesheets or scripts - just drop files in the right folders and they're included.
