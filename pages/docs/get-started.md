@@ -54,7 +54,7 @@ If your site is in a git repo, you can build and deploy in one command:
 npx swifty deploy "Updated content"
 ```
 
-This runs the build, then `git add`, `git commit` with your message, and `git push`. Perfect for quick updates.
+This runs the build, stages only the generated `dist/` folder, commits it with your message, and pushes it. Your source files and other working-tree changes are left untouched.
 
 ## That's It!
 

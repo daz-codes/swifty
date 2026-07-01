@@ -791,7 +791,7 @@ If your site is in a git repo, you can build and deploy in one command:
 npx swifty deploy "Updated menu prices"
 ```
 
-This runs `swifty build`, then `git add .`, `git commit`, and `git push` - perfect for quick updates.
+This runs `swifty build`, stages only the generated `dist/` folder, commits it, and pushes it. Other working-tree changes are not included.
 
 ---
 

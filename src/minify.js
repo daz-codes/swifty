@@ -1,7 +1,10 @@
+let protectionSequence = 0;
+
 const protectBlocks = (content, pattern) => {
   const blocks = [];
+  const tokenPrefix = `__SWIFTY_MINIFY_BLOCK_${protectionSequence++}_`;
   const protectedContent = content.replace(pattern, (match) => {
-    const token = `__SWIFTY_MINIFY_BLOCK_${blocks.length}__`;
+    const token = `${tokenPrefix}${blocks.length}__`;
     blocks.push(match);
     return token;
   });
@@ -9,7 +12,10 @@ const protectBlocks = (content, pattern) => {
   return {
     content: protectedContent,
     restore: (value) =>
-      value.replace(/__SWIFTY_MINIFY_BLOCK_(\d+)__/g, (_, index) => blocks[index]),
+      value.replace(
+        new RegExp(`${tokenPrefix}(\\d+)__`, "g"),
+        (_, index) => blocks[index],
+      ),
   };
 };
 
@@ -116,14 +122,17 @@ const minifyHtml = (html) => {
     html,
     /<(pre|code|textarea|script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
   );
+  const strings = protectBlocks(
+    blocks.content,
+    /(["'])(?:\\[\s\S]|(?!\1)[^\\])*\1/g,
+  );
 
-  const minified = blocks.content
+  const minified = strings.content
     .replace(/<!--(?!\[if|<!|>)[\s\S]*?-->/g, "")
-    .replace(/\s{2,}/g, " ")
-    .replace(/>\s+</g, "><")
+    .replace(/\s+/g, " ")
     .trim();
 
-  return blocks.restore(minified);
+  return blocks.restore(strings.restore(minified));
 };
 
 export { minifyCss, minifyHtml, minifyJs };

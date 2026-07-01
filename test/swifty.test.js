@@ -452,13 +452,55 @@ rss_feeds:
       assert.ok(!content.includes("\n  <header>"), "generated HTML should be compacted");
     });
 
+    it("should preserve meaningful HTML whitespace and quoted values when minifying", async () => {
+      const { minifyHtml } = await import("../src/minify.js");
+      const content = minifyHtml(
+        '<p><span>Hello</span> <span title="two  spaces">world</span></p>',
+      );
+
+      assert.ok(content.includes("</span> <span"), "inline element spacing should remain");
+      assert.ok(content.includes('title="two  spaces"'), "quoted attribute spacing should remain");
+    });
+
+    it("should remove stale output before a full build", async () => {
+      const stalePath = path.join(distDir, "removed-page", "index.html");
+      await fsExtra.ensureDir(path.dirname(stalePath));
+      await fs.writeFile(stalePath, "stale");
+
+      const originalCwd = process.cwd();
+      process.chdir(testDir);
+      try {
+        const buildModule = await import("../src/build.js");
+        await buildModule.default("dist");
+      } finally {
+        process.chdir(originalCwd);
+      }
+
+      assert.strictEqual(
+        await fsExtra.pathExists(stalePath),
+        false,
+        "files not produced by the current build should be removed",
+      );
+    });
+
     it("should create blog directory structure", async () => {
       const blogIndex = await fsExtra.pathExists(path.join(distDir, "blog", "index.html"));
+      const nestedBlogIndex = await fsExtra.pathExists(
+        path.join(distDir, "blog", "index", "index.html"),
+      );
       const firstPost = await fsExtra.pathExists(path.join(distDir, "blog", "first-post", "index.html"));
       const secondPost = await fsExtra.pathExists(path.join(distDir, "blog", "second-post", "index.html"));
       assert.strictEqual(blogIndex, true, "blog index should exist");
+      assert.strictEqual(nestedBlogIndex, false, "folder index.md should not emit /blog/index");
       assert.strictEqual(firstPost, true, "first post should exist");
       assert.strictEqual(secondPost, true, "second post should exist");
+    });
+
+    it("should use folder index.md content and metadata for the folder URL", async () => {
+      const content = await fs.readFile(path.join(distDir, "blog", "index.html"), "utf-8");
+
+      assert.ok(content.includes("<h1>Blog Posts</h1>"), "folder index content should render");
+      assert.ok(content.includes("<title>Blog | Test Site</title>"), "folder index title should render");
     });
 
     it("should create docs directory structure", async () => {
@@ -664,6 +706,24 @@ rss_feeds:
     it("should replace sitename in page content", async () => {
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
       assert.ok(content.includes("Welcome to Test Site"), "should replace sitename in content");
+    });
+
+    it("should reload root configuration without restarting the process", async () => {
+      const configPath = path.join(testDir, "config.yaml");
+      const originalConfig = await fs.readFile(configPath, "utf-8");
+      const { defaultConfig, reloadConfig } = await import("../src/config.js");
+
+      try {
+        await fs.writeFile(
+          configPath,
+          originalConfig.replace("sitename: Test Site", "sitename: Reloaded Site"),
+        );
+        await reloadConfig();
+        assert.strictEqual(defaultConfig.sitename, "Reloaded Site");
+      } finally {
+        await fs.writeFile(configPath, originalConfig);
+        await reloadConfig();
+      }
     });
   });
 
@@ -1061,6 +1121,79 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
       // Short page should be 1 min read
       assert.ok(content.includes("min read"), "should show reading time");
+    });
+  });
+
+  describe("Package API and Deployment", () => {
+    it("should expose a working ESM package entry point", async () => {
+      const swifty = await import("../src/index.js");
+
+      assert.strictEqual(typeof swifty.default, "function");
+      assert.strictEqual(swifty.default, swifty.build);
+      assert.strictEqual(typeof swifty.reloadConfig, "function");
+    });
+
+    it("should stage only generated output and pass commit messages literally", async () => {
+      const { commitAndPushOutput } = await import("../src/cli.js");
+      const calls = [];
+      const commitMessage = 'Release $(touch unsafe) "quoted"';
+      const statuses = [0, 1];
+
+      const deployed = commitAndPushOutput("dist", commitMessage, {
+        execFile: (command, args) => calls.push({ command, args }),
+        spawnFile: (command, args) => {
+          calls.push({ command, args });
+          return { status: statuses.shift() };
+        },
+      });
+
+      assert.strictEqual(deployed, true);
+      assert.deepStrictEqual(calls[0], {
+        command: "git",
+        args: ["diff", "--cached", "--quiet"],
+      });
+      assert.deepStrictEqual(calls[1], {
+        command: "git",
+        args: ["add", "--", "dist"],
+      });
+      assert.deepStrictEqual(calls[3], {
+        command: "git",
+        args: ["commit", "-m", commitMessage],
+      });
+      assert.deepStrictEqual(calls[4], { command: "git", args: ["push"] });
+    });
+
+    it("should not commit or push when generated output is unchanged", async () => {
+      const { commitAndPushOutput } = await import("../src/cli.js");
+      const calls = [];
+      const statuses = [0, 0];
+
+      const deployed = commitAndPushOutput("dist", "No changes", {
+        execFile: (command, args) => calls.push({ command, args }),
+        spawnFile: () => ({ status: statuses.shift() }),
+      });
+
+      assert.strictEqual(deployed, false);
+      assert.deepStrictEqual(calls, [
+        { command: "git", args: ["add", "--", "dist"] },
+      ]);
+    });
+
+    it("should refuse to deploy when other changes are already staged", async () => {
+      const { commitAndPushOutput } = await import("../src/cli.js");
+      let addCalled = false;
+
+      assert.throws(
+        () =>
+          commitAndPushOutput("dist", "Unsafe deploy", {
+            execFile: () => {
+              addCalled = true;
+            },
+            spawnFile: () => ({ status: 1 }),
+          }),
+        /unrelated changes are already staged/,
+      );
+      assert.strictEqual(addCalled, false, "output should not be staged after refusal");
     });
   });
 

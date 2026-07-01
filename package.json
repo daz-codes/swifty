@@ -1,10 +1,16 @@
 {
   "name": "@daz4126/swifty",
   "version": "3.1.0",
-  "main": "index.js",
+  "main": "./src/index.js",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "bin": {
     "swifty": "./src/cli.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "files": [
     "src/"
@@ -45,10 +51,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/daz4126/swifty.git"
+    "url": "git+https://github.com/daz-codes/swifty.git"
   },
   "bugs": {
-    "url": "https://github.com/daz4126/swifty/issues"
+    "url": "https://github.com/daz-codes/swifty/issues"
   },
-  "homepage": "https://github.com/daz4126/swifty#readme"
+  "homepage": "https://github.com/daz-codes/swifty#readme"
 }

@@ -44,6 +44,54 @@ const parseDate = (dateValue) => {
   return isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const applyMarkdownFileToPage = async (
+  page,
+  filePath,
+  { notFound = false, folderIndex = false } = {},
+) => {
+  const markdownContent = await fs.readFile(filePath, "utf-8");
+  const { data, content } = matter(markdownContent);
+  Object.assign(page, { meta: { ...page.meta, ...data }, content });
+
+  if (folderIndex) {
+    const stats = await fs.stat(filePath);
+    const { dateFormat } = page.meta;
+    page.hasIndexContent = true;
+    page.indexFilePath = filePath;
+    page.createdAtObj = stats.birthtime;
+    page.updatedAtObj = stats.mtime;
+    page.created_at = new Date(stats.birthtime).toLocaleDateString(
+      undefined,
+      dateFormat,
+    );
+    page.updated_at = new Date(stats.mtime).toLocaleDateString(
+      undefined,
+      dateFormat,
+    );
+    page.date = new Date(stats.birthtime).toLocaleDateString(undefined, dateFormat);
+  }
+
+  if (notFound && data.sitemap === undefined) {
+    page.meta.sitemap = false;
+  }
+
+  page.title = page.meta.title || page.title;
+  page.name = page.meta.title || page.name;
+
+  if (typeof data.nav === "boolean") {
+    page.nav = data.nav;
+  }
+
+  if (data.date) {
+    const parsedDate = parseDate(data.date);
+    if (parsedDate) {
+      page.dateObj = parsedDate;
+      page.date = parsedDate.toLocaleDateString(undefined, page.meta.dateFormat);
+      page.meta.date = page.date;
+    }
+  }
+};
+
 const tagsMap = new Map();
 const pageIndex = [];
 const pageIndexUrls = new Set();
@@ -78,6 +126,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       files,
       async (file) => {
         const filePath = path.join(sourceDir, file.name);
+        if (parent && file.name === "index.md") return null;
+
         const stats = await getValidStats(filePath);
         if (!stats) return null;
 
@@ -130,28 +180,11 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         };
 
         if (path.extname(file.name) === ".md") {
-          const markdownContent = await fs.readFile(filePath, "utf-8");
-          const { data, content } = matter(markdownContent);
-          Object.assign(page, { meta: { ...page.meta, ...data }, content });
-          if (notFound && data.sitemap === undefined) {
-            page.meta.sitemap = false;
-          }
-          page.title = page.meta.title || page.title;
-          page.name = page.meta.title || page.name;
-
-          // Allow front matter to override nav (opt in or opt out)
-          if (typeof data.nav === "boolean") {
-            page.nav = data.nav;
-          }
-
-          // If front matter has a date, parse and format it
-          if (data.date) {
-            const parsedDate = parseDate(data.date);
-            if (parsedDate) {
-              page.dateObj = parsedDate;
-              page.date = parsedDate.toLocaleDateString(undefined, dateFormat);
-              page.meta.date = page.date;
-            }
+          await applyMarkdownFileToPage(page, filePath, { notFound });
+        } else if (isDirectory) {
+          const indexPath = path.join(filePath, "index.md");
+          if (await fsExtra.pathExists(indexPath)) {
+            await applyMarkdownFileToPage(page, indexPath, { folderIndex: true });
           }
         }
 
@@ -208,7 +241,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           page.visiblePages = chunks[0];
 
           // First page content
-          page.content = await generateLinkList(page.filename, chunks[0]);
+          if (!page.hasIndexContent) {
+            page.content = await generateLinkList(page.filename, chunks[0]);
+          }
           page.meta.pagination = generatePaginationNav({
             currentPage: 1,
             totalPages,
@@ -242,7 +277,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             page.paginatedPages.push(paginatedPage);
           }
         } else {
-          page.content = await generateLinkList(page.filename, page.pages);
+          if (!page.hasIndexContent) {
+            page.content = await generateLinkList(page.filename, page.pages);
+          }
           page.meta.pagination = '';
         }
       }

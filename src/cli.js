@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { spawn, execSync } from "child_process";
+import { execFileSync, spawn, spawnSync } from "child_process";
+import { fileURLToPath } from "url";
 
 const args = process.argv.slice(2);
 let outDir = "dist"; // default
@@ -14,7 +15,46 @@ if (outIndex !== -1 && args[outIndex + 1]) {
 // Pass outDir as an environment variable too (optional, still useful)
 process.env.OUT_DIR = outDir;
 
-const reservedCommands = ["build", "start", "watch", "deploy"];
+const commitAndPushOutput = (
+  outputDir,
+  commitMessage,
+  { execFile = execFileSync, spawnFile = spawnSync } = {},
+) => {
+  const existingDiff = spawnFile("git", ["diff", "--cached", "--quiet"], {
+    stdio: "ignore",
+  });
+  if (existingDiff.error) throw existingDiff.error;
+  if (existingDiff.status === 1) {
+    throw new Error("Refusing to deploy while unrelated changes are already staged.");
+  }
+  if (existingDiff.status !== 0) {
+    throw new Error(
+      `Unable to inspect staged changes (git exited ${existingDiff.status}).`,
+    );
+  }
+
+  console.log(`Adding generated output from ${outputDir} to git...`);
+  execFile("git", ["add", "--", outputDir], { stdio: "inherit" });
+
+  const diffResult = spawnFile("git", ["diff", "--cached", "--quiet"], {
+    stdio: "ignore",
+  });
+  if (diffResult.error) throw diffResult.error;
+  if (diffResult.status === 0) {
+    console.log("No generated output changes to deploy.");
+    return false;
+  }
+  if (diffResult.status !== 1) {
+    throw new Error(`Unable to inspect staged changes (git exited ${diffResult.status}).`);
+  }
+
+  console.log("Committing generated output...");
+  execFile("git", ["commit", "-m", commitMessage], { stdio: "inherit" });
+
+  console.log("Pushing to remote...");
+  execFile("git", ["push"], { stdio: "inherit" });
+  return true;
+};
 
 async function main() {
   const command = args[0];
@@ -64,7 +104,11 @@ async function main() {
       break;
     }
     case "deploy": {
-      const commitMessage = args[1] || "Deploying latest build";
+      const commandArgs = args.slice(1).filter((arg, index, values) => {
+        if (arg === "--out") return false;
+        return index === 0 || values[index - 1] !== "--out";
+      });
+      const commitMessage = commandArgs[0] || "Deploying latest build";
 
       // Build the site
       const build = await import("./build.js");
@@ -74,18 +118,8 @@ async function main() {
 
       // Git operations
       try {
-        console.log("Adding files to git...");
-        execSync("git add .", { stdio: "inherit" });
-
-        console.log("Committing changes...");
-        execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, {
-          stdio: "inherit",
-        });
-
-        console.log("Pushing to remote...");
-        execSync("git push", { stdio: "inherit" });
-
-        console.log("Deployed successfully!");
+        const deployed = commitAndPushOutput(outDir, commitMessage);
+        if (deployed) console.log("Deployed successfully!");
       } catch (error) {
         console.error("Deploy failed:", error.message);
         process.exit(1);
@@ -104,4 +138,8 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main();
+}
+
+export { commitAndPushOutput, main };

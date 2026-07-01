@@ -64,15 +64,27 @@ const builtInDefaults = {
   navigation_cache_ttl: 15,
 };
 
-const loadedConfig = await loadConfig(baseDir);
-const hasConfig = (key) => Object.prototype.hasOwnProperty.call(loadedConfig, key);
+const defaultConfig = {};
 
-if (hasConfig('turbo')) {
-  console.warn('The "turbo" config option is deprecated. Use "morphing" and "prefetching" instead.');
-  if (!hasConfig('morphing')) {
-    loadedConfig.morphing = loadedConfig.turbo;
+const reloadConfig = async () => {
+  const loadedConfig = await loadConfig(baseDir);
+  const hasConfig = (key) =>
+    Object.prototype.hasOwnProperty.call(loadedConfig, key);
+
+  if (hasConfig('turbo')) {
+    console.warn('The "turbo" config option is deprecated. Use "morphing" and "prefetching" instead.');
+    if (!hasConfig('morphing')) {
+      loadedConfig.morphing = loadedConfig.turbo;
+    }
   }
-}
-const defaultConfig = { ...builtInDefaults, ...loadedConfig };
 
-export { baseDir, dirs, defaultConfig, loadConfig };
+  for (const key of Object.keys(defaultConfig)) {
+    delete defaultConfig[key];
+  }
+  Object.assign(defaultConfig, builtInDefaults, loadedConfig);
+  return defaultConfig;
+};
+
+await reloadConfig();
+
+export { baseDir, dirs, defaultConfig, loadConfig, reloadConfig };

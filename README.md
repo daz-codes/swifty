@@ -59,14 +59,14 @@ npx swifty my-site          # Create new site in my-site/ folder
 npx swifty build            # Build static site to dist/ (for production)
 npx swifty start            # Build, watch, and serve at localhost:3000 (for development)
 npx swifty build --out dir  # Build to custom output directory
-npx swifty deploy "message" # Build, git add, commit, and push (message optional)
+npx swifty deploy "message" # Build, commit the output folder, and push
 ```
 
 ### Development vs Production
 
 - **`swifty start`** - For development. Includes live reload (auto-refreshes browser on file changes) and file watching with incremental builds for CSS/JS/images.
 - **`swifty build`** - For production deployment. Produces clean output without any development scripts.
-- **`swifty deploy "message"`** - Builds the site and commits/pushes to git in one command.
+- **`swifty deploy "message"`** - Builds the site, commits only the generated output folder, and pushes it to git.
 
 ## Documentation
 

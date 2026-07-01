@@ -1,22 +1,47 @@
 import { argv } from "process";
+import path from "path";
 import { fileURLToPath } from "url";
+
+import fsExtra from "fs-extra";
+
 import { copyAssets, optimizeImages } from "./assets.js";
 import { generatePages, createPages, addLinks } from "./pages.js";
 import { generateRssFeeds } from "./rss.js";
 import { generateSeoFiles } from "./sitemap.js";
-import { dirs } from "./config.js";
+import { baseDir, dirs } from "./config.js";
+import { clearDataCache } from "./data.js";
+import { resetCaches } from "./layout.js";
+import { clearCache as clearPartialCache } from "./partials.js";
+
+const prepareOutputDirectory = async (outputDir) => {
+  const projectPath = path.resolve(baseDir);
+  const outputPath = path.resolve(baseDir, outputDir);
+  const outputContainsProject =
+    projectPath === outputPath || projectPath.startsWith(`${outputPath}${path.sep}`);
+
+  if (outputContainsProject) {
+    throw new Error(`Refusing to empty unsafe output directory: ${outputPath}`);
+  }
+
+  await fsExtra.emptyDir(outputPath);
+  return outputPath;
+};
 
 export default async function build(outputDir = dirs.dist) {
   const startTime = performance.now();
   console.log("🚀 Starting build...");
+  const resolvedOutputDir = await prepareOutputDirectory(outputDir);
+  clearDataCache();
+  clearPartialCache();
   
   const copyStart = performance.now();
-  await copyAssets(outputDir);
+  await copyAssets(resolvedOutputDir);
   const copyTime = performance.now() - copyStart;
   console.log(`📁 Assets copied in ${(copyTime / 1000).toFixed(2)}s`);
+  await resetCaches();
   
   const imageStart = performance.now();
-  await optimizeImages(outputDir);
+  await optimizeImages(resolvedOutputDir);
   const imageTime = performance.now() - imageStart;
   console.log(`🖼️  Images optimized in ${(imageTime / 1000).toFixed(2)}s`);
   
@@ -31,17 +56,17 @@ export default async function build(outputDir = dirs.dist) {
   console.log(`🔗 Links added in ${(linksTime / 1000).toFixed(2)}s`);
   
   const createStart = performance.now();
-  await createPages(pages, outputDir);
+  await createPages(pages, resolvedOutputDir);
   const createTime = performance.now() - createStart;
   console.log(`✨ Pages created in ${(createTime / 1000).toFixed(2)}s`);
   
   const rssStart = performance.now();
-  await generateRssFeeds(pages, outputDir);
+  await generateRssFeeds(pages, resolvedOutputDir);
   const rssTime = performance.now() - rssStart;
   console.log(`📡 RSS feeds generated in ${(rssTime / 1000).toFixed(2)}s`);
 
   const seoStart = performance.now();
-  await generateSeoFiles(pages, outputDir);
+  await generateSeoFiles(pages, resolvedOutputDir);
   const seoTime = performance.now() - seoStart;
   console.log(`🧭 SEO files generated in ${(seoTime / 1000).toFixed(2)}s`);
   
@@ -69,6 +94,8 @@ export default async function build(outputDir = dirs.dist) {
     process.stdout.write('\n');
   }
 }
+
+export { prepareOutputDirectory };
 
 // Run the build when invoked directly (e.g. `npm run build`, `npm start`),
 // not when imported as a module (e.g. by cli.js).

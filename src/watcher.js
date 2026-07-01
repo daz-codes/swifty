@@ -2,7 +2,7 @@ import chokidar from "chokidar";
 import livereload from "livereload";
 import path from "path";
 import fs from "fs";
-import { defaultConfig } from "./config.js";
+import { defaultConfig, reloadConfig } from "./config.js";
 
 // Directory to extension mapping for filtering
 const dirExtensions = {
@@ -80,6 +80,14 @@ function getChangeType(filePath) {
   return "full"; // pages, layouts, partials, config files
 }
 
+const isRootConfigFile = (filePath) => {
+  const relativePath = path.relative(process.cwd(), filePath);
+  return (
+    !relativePath.includes(path.sep) &&
+    ["config.yaml", "config.yml", "config.json"].includes(relativePath)
+  );
+};
+
 export default async function watch(outDir = "dist") {
   const build = await import("./build.js");
   const { copySingleAsset, optimizeSingleImage } = await import("./assets.js");
@@ -94,12 +102,13 @@ export default async function watch(outDir = "dist") {
   }
 
   // Start livereload server
+  const livereloadPort = defaultConfig.livereload_port || 35729;
   const lrServer = livereload.createServer({
+    port: livereloadPort,
     usePolling: true,
     delay: defaultConfig.watcher_delay || 100,
   });
   const outPath = path.join(process.cwd(), outDir);
-  const livereloadPort = defaultConfig.livereload_port || 35729;
   lrServer.watch(outPath);
   console.log(`LiveReload server started on port ${livereloadPort}`);
 
@@ -128,6 +137,10 @@ export default async function watch(outDir = "dist") {
     const filename = path.basename(filePath);
 
     try {
+      if (isRootConfigFile(filePath)) {
+        await reloadConfig();
+      }
+
       if (event === "deleted") {
         // For deletions, do a full rebuild to clean up
         console.log(`🗑️  File deleted: ${filename}. Running full build...`);

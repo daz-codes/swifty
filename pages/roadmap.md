@@ -73,4 +73,4 @@ Embed YouTube videos, tweets, and other rich content with simple syntax like `<%
 
 ## Want Something?
 
-If you've got ideas, bugs, or just want to say hi, open an issue on [GitHub](https://github.com/daz4126/swifty/issues). Swifty is built by people who use it, and your feedback shapes what comes next.
+If you've got ideas, bugs, or just want to say hi, open an issue on [GitHub](https://github.com/daz-codes/swifty/issues). Swifty is built by people who use it, and your feedback shapes what comes next.
