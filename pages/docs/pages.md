@@ -57,6 +57,7 @@ anything_you_want: totally works
 | `description` | Short description (used for Open Graph tags) |
 | `image` | Image URL for social sharing (used for og:image; falls back to `default_og_image`) |
 | `summary` | Brief summary of the page content |
+| `permalink` | Custom output URL such as `/company/about.html` |
 
 ### Custom Properties
 
@@ -95,6 +96,19 @@ pages/
 ```
 
 No config files, no route definitions. Just folders and files.
+
+### Custom Permalinks
+
+Use `permalink` when a page must keep a legacy URL or use a specific filename:
+
+```markdown
+---
+title: About
+permalink: /company/about.html
+---
+```
+
+This writes `dist/company/about.html` and exposes `/company/about.html` as the page URL.
 
 ## Convention Over Configuration
 

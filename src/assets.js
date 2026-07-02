@@ -9,6 +9,11 @@ import sharp from "sharp";
 import { dirs, defaultConfig } from "./config.js";
 import { mapLimit } from "./concurrency.js";
 import { minifyCss, minifyJs } from "./minify.js";
+import {
+  applyBasePathToCss,
+  withBasePath,
+  withoutBasePath,
+} from "./urls.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +38,52 @@ const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
 const navigationEnabled = () => defaultConfig.morphing !== false;
 const minificationEnabled = (type) =>
   defaultConfig.minify !== false && defaultConfig[`minify_${type}`] !== false;
-const normalizeImageUrl = (url) => (url || "").split(/[?#]/)[0];
+const normalizeImageUrl = (url) =>
+  withoutBasePath((url || "").split(/[?#]/)[0]);
+
+const getImageCacheDirectory = () => {
+  const signature = crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify({
+        image_quality: defaultConfig.image_quality || 80,
+        max_image_width: defaultConfig.max_image_width || 800,
+        responsive_image_widths:
+          defaultConfig.responsive_image_widths || [320, 640, 800],
+      }),
+    )
+    .digest("hex")
+    .slice(0, 12);
+  return path.join(dirs.cache, "images", signature);
+};
+
+const prepareImageCache = async () => {
+  const cacheRoot = path.join(dirs.cache, "images");
+  const cacheDirectory = getImageCacheDirectory();
+  await fsExtra.ensureDir(cacheDirectory);
+
+  const entries = await fs.readdir(cacheRoot, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter(
+        (entry) =>
+          entry.isDirectory() &&
+          path.join(cacheRoot, entry.name) !== cacheDirectory,
+      )
+      .map((entry) => fsExtra.remove(path.join(cacheRoot, entry.name))),
+  );
+
+  return cacheDirectory;
+};
+
+const removeStaleCachedImages = async (cacheDirectory, expectedFiles) => {
+  const files = await fs.readdir(cacheDirectory);
+  await Promise.all(
+    files
+      .filter((file) => !expectedFiles.has(file))
+      .map((file) => fsExtra.remove(path.join(cacheDirectory, file))),
+  );
+};
 
 const getResponsiveWidths = (originalWidth) => {
   const maxWidth = defaultConfig.max_image_width || 800;
@@ -62,7 +112,7 @@ const variantFilename = (filename, ext, width, outputWidth) =>
 const registerResponsiveImage = (filename, ext, variants) => {
   const basename = path.basename(filename, ext);
   const entry = {
-    src: `/images/${basename}.webp`,
+    src: withBasePath(`/images/${basename}.webp`),
     srcset: variants
       .map((variant) => `${variant.url} ${variant.width}w`)
       .join(", "),
@@ -70,7 +120,7 @@ const registerResponsiveImage = (filename, ext, variants) => {
     variants,
   };
 
-  responsiveImageMap.set(normalizeImageUrl(`/images/${filename}`), entry);
+  responsiveImageMap.set(normalizeImageUrl(withBasePath(`/images/${filename}`)), entry);
   responsiveImageMap.set(normalizeImageUrl(entry.src), entry);
 };
 
@@ -91,7 +141,7 @@ const getNavigationAssetName = async (filename = "swifty-navigation.js") => {
 
 const getNavigationScriptSrc = async () => {
   if (!navigationEnabled()) return "";
-  return `/swifty/${await getNavigationAssetName()}`;
+  return withBasePath(`/swifty/${await getNavigationAssetName()}`);
 };
 
 const isDestinationFresh = async (source, destination) => {
@@ -115,22 +165,37 @@ const copyIfStale = async (source, destination) => {
   return true;
 };
 
-const optimizeImageVariantToWebp = async (source, destination, width) => {
-  if (await isDestinationFresh(source, destination)) {
-    return false;
+const optimizeImageVariantToWebp = async (
+  source,
+  destination,
+  cacheDestination,
+  width,
+) => {
+  let optimized = false;
+
+  if (!(await isDestinationFresh(source, cacheDestination))) {
+    const imageQuality = defaultConfig.image_quality || 80;
+    await fsExtra.ensureDir(path.dirname(cacheDestination));
+
+    await sharp(source)
+      .resize({ width })
+      .toFormat("webp", { quality: imageQuality })
+      .toFile(cacheDestination);
+    optimized = true;
   }
 
-  const imageQuality = defaultConfig.image_quality || 80;
-
-  await sharp(source)
-    .resize({ width })
-    .toFormat("webp", { quality: imageQuality })
-    .toFile(destination);
-
-  return true;
+  await copyIfStale(cacheDestination, destination);
+  return optimized;
 };
 
-const optimizeImageToWebp = async (source, imagesFolder, filename, ext) => {
+const optimizeImageToWebp = async (
+  source,
+  imagesFolder,
+  cacheDirectory,
+  filename,
+  ext,
+  expectedCacheFiles,
+) => {
   const metadata = await sharp(source).metadata();
   const originalWidth = metadata.width || 0;
   const maxWidth = defaultConfig.max_image_width || 800;
@@ -138,17 +203,24 @@ const optimizeImageToWebp = async (source, imagesFolder, filename, ext) => {
     originalWidth > 0 ? Math.min(originalWidth, maxWidth) : maxWidth;
   const variants = getResponsiveWidths(originalWidth).map((width) => {
     const file = variantFilename(filename, ext, width, outputWidth);
+    expectedCacheFiles?.add(file);
     return {
       width,
       file,
-      url: `/images/${file}`,
+      url: withBasePath(`/images/${file}`),
       destination: path.join(imagesFolder, file),
+      cacheDestination: path.join(cacheDirectory, file),
     };
   });
 
   const results = await Promise.all(
     variants.map((variant) =>
-      optimizeImageVariantToWebp(source, variant.destination, variant.width),
+      optimizeImageVariantToWebp(
+        source,
+        variant.destination,
+        variant.cacheDestination,
+        variant.width,
+      ),
     ),
   );
 
@@ -163,12 +235,21 @@ const optimizeImageToWebp = async (source, imagesFolder, filename, ext) => {
 
 const processTextAsset = async (source, destination, type) => {
   const content = await fs.readFile(source, "utf-8");
-  const nextContent =
-    type === "css" && minificationEnabled("css")
-      ? minifyCss(content)
-      : type === "js" && minificationEnabled("js")
-        ? minifyJs(content)
-        : content;
+  let nextContent = content;
+
+  try {
+    if (type === "css" && minificationEnabled("css")) {
+      nextContent = minifyCss(applyBasePathToCss(content));
+    } else if (type === "js" && minificationEnabled("js")) {
+      nextContent = await minifyJs(content);
+    } else if (type === "css") {
+      nextContent = applyBasePathToCss(content);
+    }
+  } catch (error) {
+    throw new Error(`Unable to minify ${source}: ${error.message}`, {
+      cause: error,
+    });
+  }
 
   try {
     const currentContent = await fs.readFile(destination, "utf-8");
@@ -236,6 +317,9 @@ const copyNavigationAssets = async (outputDir = dirs.dist) => {
 };
 
 const copyAssets = async (outputDir = dirs.dist) => {
+  if (await fsExtra.pathExists(dirs.public)) {
+    await fsExtra.copy(dirs.public, outputDir, { overwrite: true });
+  }
   await ensureAndCopy(
     dirs.css,
     path.join(outputDir, "css"),
@@ -249,11 +333,14 @@ async function optimizeImages(outputDir = dirs.dist) {
 
   try {
     if (!(await fsExtra.pathExists(dirs.images))) {
+      await fsExtra.remove(path.join(dirs.cache, "images"));
       console.log(`No ${path.basename(dirs.images)} found in ${dirs.images}`);
       return;
     }
 
     const imagesFolder = path.join(outputDir, "images");
+    const cacheDirectory = await prepareImageCache();
+    const expectedCacheFiles = new Set();
     await fsExtra.ensureDir(imagesFolder);
 
     const files = await fs.readdir(dirs.images);
@@ -278,8 +365,10 @@ async function optimizeImages(outputDir = dirs.dist) {
         const optimized = await optimizeImageToWebp(
           filePath,
           imagesFolder,
+          cacheDirectory,
           file,
           ext,
+          expectedCacheFiles,
         );
         if (optimized) {
           console.log(`Optimized ${file}`);
@@ -287,8 +376,11 @@ async function optimizeImages(outputDir = dirs.dist) {
       },
       getBuildConcurrency(),
     );
+    await removeStaleCachedImages(cacheDirectory, expectedCacheFiles);
   } catch (error) {
-    console.error("Error optimizing images:", error);
+    throw new Error(`Unable to optimize images: ${error.message}`, {
+      cause: error,
+    });
   }
 }
 const generateAssetImports = async (dir, tagTemplate, validExts) => {
@@ -309,25 +401,25 @@ const generateAssetImports = async (dir, tagTemplate, validExts) => {
 const getCssImports = () =>
   generateAssetImports(
     dirs.css,
-    (file, mtime) => `<link rel="stylesheet" href="/css/${file}?v=${mtime}" />`,
+    (file, mtime) => `<link rel="stylesheet" href="${withBasePath(`/css/${file}`)}?v=${mtime}" />`,
     validExtensions.css,
   );
 const getJsImports = () =>
   generateAssetImports(
     dirs.js,
-    (file, mtime) => `<script src="/js/${file}?v=${mtime}"></script>`,
+    (file, mtime) => `<script src="${withBasePath(`/js/${file}`)}?v=${mtime}"></script>`,
     validExtensions.js,
   );
 const getCssPreloads = () =>
   generateAssetImports(
     dirs.css,
-    (file, mtime) => `<link rel="preload" href="/css/${file}?v=${mtime}" as="style" />`,
+    (file, mtime) => `<link rel="preload" href="${withBasePath(`/css/${file}`)}?v=${mtime}" as="style" />`,
     validExtensions.css,
   );
 const getJsPreloads = () =>
   generateAssetImports(
     dirs.js,
-    (file, mtime) => `<link rel="preload" href="/js/${file}?v=${mtime}" as="script" />`,
+    (file, mtime) => `<link rel="preload" href="${withBasePath(`/js/${file}`)}?v=${mtime}" as="script" />`,
     validExtensions.js,
   );
 
@@ -359,6 +451,7 @@ const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
   const filename = path.basename(filePath);
   const ext = path.extname(filePath).toLowerCase();
   const imagesFolder = path.join(outputDir, "images");
+  const cacheDirectory = await prepareImageCache();
 
   await fsExtra.ensureDir(imagesFolder);
 
@@ -374,6 +467,7 @@ const optimizeSingleImage = async (filePath, outputDir = dirs.dist) => {
   const optimized = await optimizeImageToWebp(
     filePath,
     imagesFolder,
+    cacheDirectory,
     filename,
     ext,
   );
@@ -394,4 +488,5 @@ export {
   optimizeSingleImage,
   getNavigationScriptSrc,
   getResponsiveImage,
+  getImageCacheDirectory,
 };

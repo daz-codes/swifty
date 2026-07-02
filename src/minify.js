@@ -1,138 +1,44 @@
-let protectionSequence = 0;
-
-const protectBlocks = (content, pattern) => {
-  const blocks = [];
-  const tokenPrefix = `__SWIFTY_MINIFY_BLOCK_${protectionSequence++}_`;
-  const protectedContent = content.replace(pattern, (match) => {
-    const token = `${tokenPrefix}${blocks.length}__`;
-    blocks.push(match);
-    return token;
-  });
-
-  return {
-    content: protectedContent,
-    restore: (value) =>
-      value.replace(
-        new RegExp(`${tokenPrefix}(\\d+)__`, "g"),
-        (_, index) => blocks[index],
-      ),
-  };
-};
-
-const protectCssValues = (css) => {
-  const blocks = [];
-  let content = "";
-
-  const protect = (start, end) => {
-    const token = `__SWIFTY_MINIFY_BLOCK_${blocks.length}__`;
-    blocks.push(css.slice(start, end));
-    content += token;
-    return end;
-  };
-
-  const readStringEnd = (start) => {
-    const quote = css[start];
-    let index = start + 1;
-
-    while (index < css.length) {
-      if (css[index] === "\\") {
-        index += 2;
-        continue;
-      }
-      if (css[index] === quote) return index + 1;
-      index += 1;
-    }
-
-    return css.length;
-  };
-
-  const readUrlEnd = (start) => {
-    let index = start + 4;
-
-    while (index < css.length) {
-      const char = css[index];
-      if (char === "\"" || char === "'") {
-        index = readStringEnd(index);
-        continue;
-      }
-      if (char === "\\") {
-        index += 2;
-        continue;
-      }
-      if (char === ")") return index + 1;
-      index += 1;
-    }
-
-    return css.length;
-  };
-
-  for (let index = 0; index < css.length; ) {
-    const char = css[index];
-    const isUrl = css.slice(index, index + 4).toLowerCase() === "url(";
-
-    if (char === "/" && css[index + 1] === "*") {
-      const commentEnd = css.indexOf("*/", index + 2);
-      const end = commentEnd === -1 ? css.length : commentEnd + 2;
-      content += css.slice(index, end);
-      index = end;
-    } else if (char === "\"" || char === "'") {
-      index = protect(index, readStringEnd(index));
-    } else if (isUrl) {
-      index = protect(index, readUrlEnd(index));
-    } else {
-      content += char;
-      index += 1;
-    }
-  }
-
-  return {
-    content,
-    restore: (value) =>
-      value.replace(/__SWIFTY_MINIFY_BLOCK_(\d+)__/g, (_, index) => blocks[index]),
-  };
-};
+import CleanCSS from "clean-css";
+import { minify as minifyHtmlContent } from "html-minifier-terser";
+import { minify as minifyJsContent } from "terser";
 
 const minifyCss = (css) => {
-  const values = protectCssValues(css);
+  const result = new CleanCSS({
+    level: 1,
+    rebase: false,
+  }).minify(css);
 
-  const minified = values.content
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\s+/g, " ")
-    .replace(/\s*([{}:;,])\s*/g, "$1")
-    .replace(/;}/g, "}")
-    .trim();
+  if (result.errors.length) {
+    throw new Error(result.errors.join("; "));
+  }
 
-  return values.restore(minified);
+  return result.styles;
 };
 
-const minifyJs = (js) => {
-  const strings = protectBlocks(js, /(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g);
+const minifyJs = async (js) => {
+  const result = await minifyJsContent(js, {
+    compress: true,
+    mangle: false,
+    format: {
+      comments: /^!/,
+    },
+  });
 
-  const minified = strings.content
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join("\n");
-
-  return strings.restore(minified);
+  return result.code || "";
 };
 
-const minifyHtml = (html) => {
-  const blocks = protectBlocks(
-    html,
-    /<(pre|code|textarea|script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
-  );
-  const strings = protectBlocks(
-    blocks.content,
-    /(["'])(?:\\[\s\S]|(?!\1)[^\\])*\1/g,
-  );
-
-  const minified = strings.content
-    .replace(/<!--(?!\[if|<!|>)[\s\S]*?-->/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return blocks.restore(strings.restore(minified));
-};
+const minifyHtml = (html) =>
+  minifyHtmlContent(html, {
+    caseSensitive: true,
+    collapseWhitespace: true,
+    conservativeCollapse: true,
+    continueOnParseError: false,
+    keepClosingSlash: true,
+    minifyCSS: false,
+    minifyJS: false,
+    removeComments: true,
+    removeScriptTypeAttributes: true,
+    removeStyleLinkTypeAttributes: true,
+  });
 
 export { minifyCss, minifyHtml, minifyJs };

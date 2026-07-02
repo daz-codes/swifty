@@ -25,6 +25,10 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **Previous/next navigation** - Auto-generated links between sibling pages
 - **[Eta templating](https://eta.js.org/)** - Full JavaScript in templates with EJS syntax
 - **Idiomorph navigation** with optional intent prefetching for SPA-like transitions
+- **Custom permalinks and base paths** for flexible deployment URLs
+- **Public asset passthrough** for files that should be copied unchanged
+
+Requires Node.js 22 or newer. See [Migrating to Swifty 4](MIGRATION.md) when upgrading an existing site.
 
 ## Quickstart
 
@@ -48,6 +52,7 @@ your-site/
 ├── css/            # Stylesheets (auto-injected)
 ├── js/             # JavaScript (auto-injected)
 ├── images/         # Images (auto-optimized to responsive WebP)
+├── public/         # Files copied unchanged to the output root
 ├── template.html   # Base HTML template
 └── config.yaml     # Site configuration
 ```

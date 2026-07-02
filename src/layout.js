@@ -37,7 +37,14 @@ const getLayout = async (layoutName) => {
 const createTemplate = async () => {
   // Read the template from pages folder
   const templatePath = path.join(baseDir, 'template.html');
-  const templateContent = await fs.readFile(templatePath, 'utf-8');
+  let templateContent;
+  try {
+    templateContent = await fs.readFile(templatePath, 'utf-8');
+  } catch (error) {
+    throw new Error(`Unable to read template ${templatePath}: ${error.message}`, {
+      cause: error,
+    });
+  }
 
   // Preconnect hints for external CDNs (improves connection setup time)
   const preconnectHints = [

@@ -18,8 +18,15 @@ const prepareOutputDirectory = async (outputDir) => {
   const outputPath = path.resolve(baseDir, outputDir);
   const outputContainsProject =
     projectPath === outputPath || projectPath.startsWith(`${outputPath}${path.sep}`);
+  const sourceDirectories = Object.entries(dirs)
+    .filter(([name]) => name !== "dist")
+    .map(([, directory]) => path.resolve(directory));
+  const outputOverlapsSource = sourceDirectories.some(
+    (directory) =>
+      outputPath === directory || outputPath.startsWith(`${directory}${path.sep}`),
+  );
 
-  if (outputContainsProject) {
+  if (outputContainsProject || outputOverlapsSource) {
     throw new Error(`Refusing to empty unsafe output directory: ${outputPath}`);
   }
 

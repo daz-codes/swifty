@@ -13,6 +13,7 @@ const dirExtensions = {
   js: [".js"],
   partials: [".md", ".html"],
   data: [".json", ".yaml", ".yml"],
+  public: null,
 };
 
 // Build watch paths

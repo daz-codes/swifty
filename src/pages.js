@@ -3,7 +3,6 @@ import fs from "fs/promises";
 import path from "path";
 
 import fsExtra from "fs-extra";
-import matter from "gray-matter";
 
 import { replacePlaceholders } from "./partials.js";
 import { dirs, defaultConfig, loadConfig } from "./config.js";
@@ -12,6 +11,13 @@ import { chunkPages, generatePaginationNav } from "./pagination.js";
 import { marked } from "./markdown.js";
 import { mapLimit } from "./concurrency.js";
 import { minifyHtml } from "./minify.js";
+import { parseFrontMatter } from "./frontmatter.js";
+import {
+  applyBasePathToHtml,
+  normalizePermalink,
+  routeToOutputPath,
+  withBasePath,
+} from "./urls.js";
 
 // Returns stats if valid (directory or .md file), null otherwise
 const getValidStats = async (filePath) => {
@@ -49,9 +55,22 @@ const applyMarkdownFileToPage = async (
   filePath,
   { notFound = false, folderIndex = false } = {},
 ) => {
-  const markdownContent = await fs.readFile(filePath, "utf-8");
-  const { data, content } = matter(markdownContent);
+  let parsed;
+  try {
+    const markdownContent = await fs.readFile(filePath, "utf-8");
+    parsed = parseFrontMatter(markdownContent);
+  } catch (error) {
+    throw new Error(`Unable to parse Markdown file ${filePath}: ${error.message}`, {
+      cause: error,
+    });
+  }
+  const { data, content } = parsed;
   Object.assign(page, { meta: { ...page.meta, ...data }, content });
+
+  if (data.permalink !== undefined) {
+    page.route = normalizePermalink(data.permalink);
+    page.url = withBasePath(page.route);
+  }
 
   if (folderIndex) {
     const stats = await fs.stat(filePath);
@@ -148,13 +167,15 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             ? parent.layout
             : config.default_layout_name;
 
+        const route = root ? "/" : finalPath;
         const page = {
           name,
           root,
           layout,
           filePath,
           filename: file.name.replace(/\.md$/, ""),
-          url: root ? "/" : finalPath,
+          route,
+          url: withBasePath(route),
           nav: !parent && !root && !notFound,
           parent: parent
             ? { title: parent.meta.title, url: parent.url }
@@ -211,11 +232,11 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
         // Load folder's own config for pagination settings
         const dirConfig = await loadConfig(page.filePath);
-        const mergedConfig = { 
-          ...page.meta, 
+        const mergedConfig = {
           ...dirConfig,
+          ...page.meta,
           // Only set default page_count if explicitly specified in either page meta or dir config
-          page_count: dirConfig.page_count || page.meta.page_count
+          page_count: page.meta.page_count ?? dirConfig.page_count,
         };
         page.meta = mergedConfig;
 
@@ -258,6 +279,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             const paginatedPage = {
               name: `${page.name} - Page ${pageNum}`,
               title: `${page.meta.title || page.name} - Page ${pageNum}`,
+              route: `${page.route}/page/${pageNum}`,
               url: `${page.url}/page/${pageNum}`,
               folder: false,
               layout: page.layout,
@@ -295,15 +317,18 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
       }
     }, getBuildConcurrency());
-  } catch (err) {
-    console.error("Error reading directory:", err);
+  } catch (error) {
+    throw new Error(`Unable to generate pages from ${sourceDir}: ${error.message}`, {
+      cause: error,
+    });
   }
 
   // Make Tags page
   if (!parent && tagsMap.size) {
     const tagLayout = await fsExtra.pathExists(`${dirs.layouts}/tags.html`);
     const tagPage = {
-      url: "/tags",
+      route: "/tags",
+      url: withBasePath("/tags"),
       nav: false,
       folder: true,
       name: "Tags",
@@ -318,6 +343,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     };
 
     for (const [tag, pagesForTag] of tagsMap) {
+      const route = `/tags/${tag}`;
       const page = {
         name: tag,
         title: tag,
@@ -325,7 +351,8 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           undefined,
           defaultConfig.dateFormat,
         ),
-        url: `/tags/${tag}`,
+        route,
+        url: withBasePath(route),
         layout: tagLayout ? "tags" : defaultConfig.default_layout_name,
         meta: { ...config, title: `Pages tagged with ${capitalize(tag)}` },
       };
@@ -372,17 +399,23 @@ const generateLinkList = async (name, pages) => {
 };
 
 const render = async (page) => {
-  const replacedContent = await replacePlaceholders(page.content, page);
-  const htmlContent = marked.parse(replacedContent); // Markdown processed once
-  const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
-  // Use function to avoid $` special replacement patterns in content
-  const template = await getTemplate();
-  const htmlWithTemplate = template.replace(
-    /<%=\s*content\s*%>/g,
-    () => wrappedContent,
-  );
-  const finalContent = await replacePlaceholders(htmlWithTemplate, page);
-  return finalContent;
+  try {
+    const replacedContent = await replacePlaceholders(page.content, page);
+    const htmlContent = marked.parse(replacedContent); // Markdown processed once
+    const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
+    // Use function to avoid $` special replacement patterns in content
+    const template = await getTemplate();
+    const htmlWithTemplate = template.replace(
+      /<%=\s*content\s*%>/g,
+      () => wrappedContent,
+    );
+    const finalContent = await replacePlaceholders(htmlWithTemplate, page);
+    return applyBasePathToHtml(finalContent);
+  } catch (error) {
+    throw new Error(`Unable to render page ${page.url}: ${error.message}`, {
+      cause: error,
+    });
+  }
 };
 
 const createPages = async (pages, distDir = dirs.dist) => {
@@ -390,12 +423,20 @@ const createPages = async (pages, distDir = dirs.dist) => {
     pages,
     async (page) => {
       const renderedHtml = await render(page);
-      const html = minificationEnabled() ? minifyHtml(renderedHtml) : renderedHtml;
-      const pageDir = page.notFound ? distDir : path.join(distDir, page.url);
+      let html = renderedHtml;
+      if (minificationEnabled()) {
+        try {
+          html = await minifyHtml(renderedHtml);
+        } catch (error) {
+          throw new Error(`Unable to minify HTML for ${page.url}: ${error.message}`, {
+            cause: error,
+          });
+        }
+      }
       const pagePath = page.notFound
         ? path.join(distDir, "404.html")
-        : path.join(distDir, page.url, "index.html");
-      await fsExtra.ensureDir(pageDir);
+        : path.join(distDir, routeToOutputPath(page.route || page.url));
+      await fsExtra.ensureDir(path.dirname(pagePath));
       await fs.writeFile(pagePath, html);
       if (page.folder) {
         await createPages(page.pages, distDir);
@@ -422,7 +463,7 @@ const addLinks = async (pages, parent) => {
         ? page.meta.tags
             .map(
               (tag) =>
-                `<a class="${defaultConfig.tag_class}" href="/tags/${tag}">${tag}</a>`,
+                `<a class="${defaultConfig.tag_class}" href="${withBasePath(`/tags/${tag}`)}">${tag}</a>`,
             )
             .join("")
         : "";
@@ -432,7 +473,7 @@ const addLinks = async (pages, parent) => {
         : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${crumbTitle}</a>`;
       page.meta.breadcrumbs = parent
         ? parent.meta.breadcrumbs + crumb
-        : `<a class="${defaultConfig.breadcrumb_class}" href="/">Home</a>` +
+        : `<a class="${defaultConfig.breadcrumb_class}" href="${withBasePath("/")}">Home</a>` +
           crumb;
 
       // Generate prev/next links based on sibling position (only for content pages, not folders or index)

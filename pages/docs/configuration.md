@@ -17,6 +17,7 @@ Here's everything you can configure, with the defaults shown:
 sitename: Swifty
 author: Taylor Swift
 site_url: https://yoursite.com
+base_path: ""
 breadcrumb_separator: "&raquo;"
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link
@@ -36,6 +37,7 @@ minify_js: true
 morphing: true
 prefetching: true
 morph_target: main
+server_port: 3000
 
 # Pagination
 page_count: 10
@@ -60,6 +62,7 @@ dateFormat:
 | `sitename` | Your site's name - use `<%= sitename %>` anywhere to display it |
 | `author` | Your name (or whoever's taking credit) |
 | `site_url` | Full URL of your site (required for RSS feeds and Open Graph tags) |
+| `base_path` | URL prefix such as `/project` when the site is hosted below an origin path |
 | `breadcrumb_separator` | The character between breadcrumb links |
 | `breadcrumb_class` | CSS class for breadcrumb links |
 | `link_class` | CSS class for auto-generated links |
@@ -75,10 +78,11 @@ dateFormat:
 | `minify` | Enable or disable all output minification |
 | `minify_html` | Enable or disable HTML minification |
 | `minify_css` | Enable or disable CSS minification |
-| `minify_js` | Enable or disable JavaScript whitespace minification |
+| `minify_js` | Enable or disable Terser JavaScript compression (identifiers are not mangled) |
 | `morphing` | Enable Idiomorph-powered same-origin page transitions |
 | `prefetching` | Prefetch likely pages on hover, focus, or touch intent |
 | `morph_target` | CSS selector for the element Swifty morphs between pages |
+| `server_port` | Port used by the local development server |
 | `page_count` | Number of items per page before pagination kicks in |
 | `pagination_class` | CSS class for the pagination container |
 | `pagination_link_class` | CSS class for pagination links |
@@ -96,6 +100,17 @@ Written by <%= author %>.
 ```
 
 Simple as that.
+
+## Base Path Deployments
+
+Set `base_path` when the generated site is hosted below the domain root, such as a GitHub Pages project site:
+
+```yaml
+site_url: https://example.github.io
+base_path: /my-project
+```
+
+Swifty prefixes generated and authored root-relative URLs, feeds, sitemap entries, images, CSS, and JavaScript. Output still builds directly into `dist/`; deploy that directory at `/my-project`.
 
 ## Morph Navigation
 

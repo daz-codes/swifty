@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import { defaultConfig } from "./config.js";
+import { withBasePath } from "./urls.js";
 
 // Escape XML special characters
 const escapeXml = (str) => {
@@ -40,8 +41,8 @@ const generateRssFeed = (feedConfig, pages, siteUrl) => {
     folder,
   } = typeof feedConfig === "string" ? { folder: feedConfig } : feedConfig;
 
-  const feedUrl = `${siteUrl}/${folder}/rss.xml`;
-  const feedLink = `${siteUrl}/${folder}`;
+  const feedUrl = `${siteUrl}${withBasePath(`/${folder}/rss.xml`)}`;
+  const feedLink = `${siteUrl}${withBasePath(`/${folder}`)}`;
 
   // Sort pages by date (newest first)
   const sortedPages = [...pages].sort((a, b) => {
@@ -94,7 +95,7 @@ const findPagesInFolder = (pages, folderName) => {
   const searchPages = (pageList) => {
     for (const page of pageList) {
       // Check if this page's URL starts with the folder path
-      if (page.url && page.url.startsWith(`/${folderName}/`) && !page.folder) {
+      if (page.route?.startsWith(`/${folderName}/`) && !page.folder) {
         found.push(page);
       }
       // Recursively search nested pages

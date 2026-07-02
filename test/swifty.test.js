@@ -27,6 +27,7 @@ describe("Swifty", function () {
     await fsExtra.ensureDir(path.join(testDir, "js"));
     await fsExtra.ensureDir(path.join(testDir, "images"));
     await fsExtra.ensureDir(path.join(testDir, "data"));
+    await fsExtra.ensureDir(path.join(testDir, "public", "downloads"));
 
     // Create template.html with sitename and nav
     await fs.writeFile(
@@ -129,6 +130,16 @@ layout: default
 # Contact Us
 
 Email us at **hello@example.com** or visit our *office*.`
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "pages", "legacy.md"),
+      `---
+title: Legacy URL
+layout: default
+permalink: /company/about.html
+---
+# Custom Permalink`,
     );
 
     await fs.writeFile(
@@ -272,7 +283,14 @@ Regular text <%= title %> should be replaced.`
     // Create JS file
     await fs.writeFile(
       path.join(testDir, "js", "main.js"),
-      `console.log("Swifty site loaded");`
+      `// This comment should be removed.
+const message = "Swifty site loaded";
+console.log(message);`
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "public", "downloads", "example.txt"),
+      "public download",
     );
 
     const png = Buffer.from(
@@ -454,7 +472,7 @@ rss_feeds:
 
     it("should preserve meaningful HTML whitespace and quoted values when minifying", async () => {
       const { minifyHtml } = await import("../src/minify.js");
-      const content = minifyHtml(
+      const content = await minifyHtml(
         '<p><span>Hello</span> <span title="two  spaces">world</span></p>',
       );
 
@@ -483,6 +501,17 @@ rss_feeds:
       );
     });
 
+    it("should refuse to use a source directory as build output", async () => {
+      const publicFile = path.join(testDir, "public", "downloads", "example.txt");
+      const { prepareOutputDirectory } = await import("../src/build.js");
+
+      await assert.rejects(
+        () => prepareOutputDirectory(path.join(testDir, "public")),
+        /unsafe output directory/,
+      );
+      assert.strictEqual(await fs.readFile(publicFile, "utf-8"), "public download");
+    });
+
     it("should create blog directory structure", async () => {
       const blogIndex = await fsExtra.pathExists(path.join(distDir, "blog", "index.html"));
       const nestedBlogIndex = await fsExtra.pathExists(
@@ -509,6 +538,17 @@ rss_feeds:
       assert.strictEqual(docsIndex, true, "docs index should exist");
       assert.strictEqual(gettingStarted, true, "getting-started should exist");
     });
+
+    it("should write custom permalink routes without an extra directory", async () => {
+      const permalinkPath = path.join(distDir, "company", "about.html");
+      const legacyPath = path.join(distDir, "legacy", "index.html");
+
+      assert.strictEqual(await fsExtra.pathExists(permalinkPath), true);
+      assert.strictEqual(await fsExtra.pathExists(legacyPath), false);
+      assert.ok(
+        (await fs.readFile(permalinkPath, "utf-8")).includes("Custom Permalink"),
+      );
+    });
   });
 
   describe("Assets", () => {
@@ -520,6 +560,14 @@ rss_feeds:
     it("should copy JS files to dist", async () => {
       const jsExists = await fsExtra.pathExists(path.join(distDir, "js", "main.js"));
       assert.strictEqual(jsExists, true);
+    });
+
+    it("should copy the public directory verbatim", async () => {
+      const content = await fs.readFile(
+        path.join(distDir, "downloads", "example.txt"),
+        "utf-8",
+      );
+      assert.strictEqual(content, "public download");
     });
 
     it("should preserve CSS content", async () => {
@@ -548,6 +596,12 @@ rss_feeds:
     it("should inject JS script in template", async () => {
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
       assert.ok(/src="\/js\/main\.js\?v=\d+"/.test(content), "should have JS script tag with cache-busting query string");
+    });
+
+    it("should use Terser to remove JavaScript comments", async () => {
+      const content = await fs.readFile(path.join(distDir, "js", "main.js"), "utf-8");
+      assert.ok(!content.includes("This comment should be removed"));
+      assert.ok(content.includes("console.log"));
     });
 
     it("should copy Swifty navigation assets when morphing is enabled", async () => {
@@ -589,6 +643,29 @@ rss_feeds:
       assert.strictEqual(defaultExists, true, "hero.webp should exist");
     });
 
+    it("should reuse the persistent image cache across clean full builds", async () => {
+      const { getImageCacheDirectory } = await import("../src/assets.js");
+      const cachePath = path.join(getImageCacheDirectory(), "hero.webp");
+      const before = (await fs.stat(cachePath)).mtimeMs;
+      const originalCwd = process.cwd();
+      process.chdir(testDir);
+
+      try {
+        const buildModule = await import("../src/build.js");
+        await buildModule.default("dist");
+      } finally {
+        process.chdir(originalCwd);
+      }
+
+      const after = (await fs.stat(cachePath)).mtimeMs;
+      assert.strictEqual(after, before, "cached image should not be reprocessed");
+      assert.strictEqual(
+        await fsExtra.pathExists(path.join(distDir, "images", "hero.webp")),
+        true,
+        "cached image should still be copied into clean output",
+      );
+    });
+
     it("should skip image optimization when WebP output is newer than the source", async () => {
       const { optimizeSingleImage } = await import("../src/assets.js");
       const sourcePath = path.join(testDir, "images", "photo.png");
@@ -604,7 +681,12 @@ rss_feeds:
     });
 
     it("should clear stale responsive image map entries between image optimization runs", async () => {
-      const { getResponsiveImage, optimizeImages, optimizeSingleImage } = await import("../src/assets.js");
+      const {
+        getImageCacheDirectory,
+        getResponsiveImage,
+        optimizeImages,
+        optimizeSingleImage,
+      } = await import("../src/assets.js");
       const sourcePath = path.join(testDir, "images", "stale.png");
       const png = Buffer.from(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
@@ -618,6 +700,11 @@ rss_feeds:
       await fsExtra.remove(sourcePath);
       await optimizeImages(distDir);
       assert.strictEqual(getResponsiveImage("/images/stale.png"), null, "deleted image should not stay registered");
+      assert.strictEqual(
+        await fsExtra.pathExists(path.join(getImageCacheDirectory(), "stale.webp")),
+        false,
+        "deleted image should be removed from the persistent cache",
+      );
     });
   });
 
@@ -681,6 +768,13 @@ rss_feeds:
   });
 
   describe("Front Matter", () => {
+    it("should treat non-delimiter dashes as Markdown content", async () => {
+      const { parseFrontMatter } = await import("../src/frontmatter.js");
+      const source = "--- not front matter\n\nPage content";
+
+      assert.deepStrictEqual(parseFrontMatter(source), { data: {}, content: source });
+    });
+
     it("should not render front matter in output", async () => {
       const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
       assert.ok(!content.includes("layout: default"), "front matter should not appear in output");
@@ -724,6 +818,74 @@ rss_feeds:
         await fs.writeFile(configPath, originalConfig);
         await reloadConfig();
       }
+    });
+
+    it("should apply base_path to public URLs without nesting output", async () => {
+      const configPath = path.join(testDir, "config.yaml");
+      const originalConfig = await fs.readFile(configPath, "utf-8");
+      const { reloadConfig } = await import("../src/config.js");
+      const buildModule = await import("../src/build.js");
+      const originalCwd = process.cwd();
+
+      try {
+        await fs.writeFile(configPath, `${originalConfig}\nbase_path: /project\n`);
+        await reloadConfig();
+        process.chdir(testDir);
+        await buildModule.default("dist");
+
+        const home = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+        const imagePage = await fs.readFile(
+          path.join(distDir, "images", "index.html"),
+          "utf-8",
+        );
+        const sitemap = await fs.readFile(path.join(distDir, "sitemap.xml"), "utf-8");
+        const robots = await fs.readFile(path.join(distDir, "robots.txt"), "utf-8");
+
+        assert.ok(home.includes('href="/project/about"'));
+        assert.ok(/href="\/project\/css\/style\.css\?v=\d+"/.test(home));
+        assert.ok(imagePage.includes('src="/project/images/photo.webp"'));
+        assert.ok(sitemap.includes("https://example.com/project/about"));
+        assert.ok(robots.includes("https://example.com/project/sitemap.xml"));
+        assert.strictEqual(
+          await fsExtra.pathExists(path.join(distDir, "project")),
+          false,
+          "base_path should not become an output directory",
+        );
+      } finally {
+        process.chdir(originalCwd);
+        await fs.writeFile(configPath, originalConfig);
+        await reloadConfig();
+        process.chdir(testDir);
+        try {
+          await buildModule.default("dist");
+        } finally {
+          process.chdir(originalCwd);
+        }
+      }
+    });
+
+    it("should not rewrite root-like URLs inside scripts or code blocks", async () => {
+      const { applyBasePathToHtml } = await import("../src/urls.js");
+      const content = applyBasePathToHtml(
+        '<script>const example = \'href="/inside-script"\';</script><code>src="/inside-code"</code><a href="/page">Page</a>',
+        "/project",
+      );
+
+      assert.ok(content.includes('href="/inside-script"'));
+      assert.ok(content.includes('src="/inside-code"'));
+      assert.ok(content.includes('href="/project/page"'));
+    });
+
+    it("should preserve data URIs while rewriting srcset candidates", async () => {
+      const { applyBasePathToHtml } = await import("../src/urls.js");
+      const dataUri = "data:image/svg+xml,%3Csvg%3E%3C/svg%3E";
+      const content = applyBasePathToHtml(
+        `<img srcset="${dataUri} 1x, /images/photo.webp 2x">`,
+        "/project",
+      );
+
+      assert.ok(content.includes(`${dataUri} 1x`));
+      assert.ok(content.includes("/project/images/photo.webp 2x"));
     });
   });
 
@@ -1121,6 +1283,98 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
       // Short page should be 1 min read
       assert.ok(content.includes("min read"), "should show reading time");
+    });
+  });
+
+  describe("Build Diagnostics", () => {
+    it("should reject malformed configuration with its file path", async () => {
+      const invalidDir = path.join(testDir, "invalid-config");
+      const invalidPath = path.join(invalidDir, "config.yaml");
+      const { loadConfig } = await import("../src/config.js");
+      await fsExtra.ensureDir(invalidDir);
+      await fs.writeFile(invalidPath, "base_path: [unterminated");
+
+      await assert.rejects(() => loadConfig(invalidDir), /invalid-config.*config\.yaml/);
+    });
+
+    it("should reject malformed data instead of silently skipping it", async () => {
+      const invalidPath = path.join(testDir, "data", "broken.json");
+      const { clearDataCache, loadData } = await import("../src/data.js");
+
+      try {
+        await fs.writeFile(invalidPath, '{"broken":');
+        clearDataCache();
+        await assert.rejects(() => loadData(), /broken\.json/);
+      } finally {
+        await fsExtra.remove(invalidPath);
+        clearDataCache();
+      }
+    });
+
+    it("should reject malformed front matter with its source path", async () => {
+      const invalidPath = path.join(testDir, "pages", "broken.md");
+      const { generatePages } = await import("../src/pages.js");
+
+      try {
+        await fs.writeFile(invalidPath, "---\ntitle: [unterminated\n---\nBroken");
+        await assert.rejects(
+          () => generatePages(path.join(testDir, "pages")),
+          /broken\.md/,
+        );
+      } finally {
+        await fsExtra.remove(invalidPath);
+      }
+    });
+
+    it("should reject Eta errors and missing partials", async () => {
+      const { replacePlaceholders } = await import("../src/partials.js");
+
+      await assert.rejects(
+        () => replacePlaceholders("<% if ( %>", { url: "/broken" }),
+        /Unable to render \/broken/,
+      );
+      await assert.rejects(
+        () => replacePlaceholders("<%= partial: missing %>", { url: "/broken" }),
+        /Partial "missing" was not found/,
+      );
+    });
+  });
+
+  describe("Development Server", () => {
+    it("should resolve pretty URLs and the generated 404 page", async () => {
+      const { defaultConfig } = await import("../src/config.js");
+      const { readResponseFile } = await import("../src/server.js");
+      const previousBasePath = defaultConfig.base_path;
+      defaultConfig.base_path = "/project";
+
+      try {
+        const pageResponse = await readResponseFile(
+          path.resolve(distDir),
+          "/project/about",
+        );
+        const missingResponse = await readResponseFile(
+          path.resolve(distDir),
+          "/project/missing",
+        );
+
+        assert.strictEqual(pageResponse.status, 200);
+        assert.ok(pageResponse.body.toString().includes("About Us"));
+        assert.strictEqual(missingResponse.status, 404);
+        assert.ok(missingResponse.body.toString().includes("Page Not Found"));
+      } finally {
+        defaultConfig.base_path = previousBasePath;
+      }
+    });
+
+    it("should resolve extensionless public files", async () => {
+      const { readResponseFile } = await import("../src/server.js");
+      const extensionlessPath = path.join(distDir, "security");
+      await fs.writeFile(extensionlessPath, "contact@example.com");
+
+      const response = await readResponseFile(path.resolve(distDir), "/security");
+
+      assert.strictEqual(response.status, 200);
+      assert.strictEqual(response.body.toString(), "contact@example.com");
     });
   });
 

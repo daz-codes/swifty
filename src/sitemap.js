@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import { defaultConfig } from "./config.js";
+import { withBasePath } from "./urls.js";
 
 const escapeXml = (str) =>
   String(str || "")
@@ -69,7 +70,9 @@ ${urls}
 const generateRobotsTxt = (siteUrl = "") => {
   const lines = ["User-agent: *", "Allow: /"];
   if (siteUrl) {
-    lines.push(`Sitemap: ${siteUrl.replace(/\/$/, "")}/sitemap.xml`);
+    lines.push(
+      `Sitemap: ${siteUrl.replace(/\/$/, "")}${withBasePath("/sitemap.xml")}`,
+    );
   }
   return `${lines.join("\n")}\n`;
 };

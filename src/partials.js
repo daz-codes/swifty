@@ -8,6 +8,7 @@ import { dirs, defaultConfig } from "./config.js";
 import { marked } from "./markdown.js";
 import { loadData } from "./data.js";
 import { getResponsiveImage } from "./assets.js";
+import { withBasePath, withoutBasePath } from "./urls.js";
 
 const partialCache = new Map();
 const imageExtensionRegex = /\.(png|jpe?g|webp)(?=([?#]|$))/i;
@@ -130,8 +131,7 @@ const loadPartialData = async (partialName) => {
     return partialData;
   }
 
-  console.warn(`Include "${partialName}" not found.`);
-  return { content: `<p>Include "${partialName}" not found.</p>`, raw: true };
+  throw new Error(`Partial "${partialName}" was not found in ${dirs.partials}`);
 };
 
 const loadPartial = async (partialName) => {
@@ -140,13 +140,14 @@ const loadPartial = async (partialName) => {
 };
 
 const shouldRewriteImageUrl = (url) => {
-  if (!url || !url.startsWith("/images/")) return false;
-  return imageExtensionRegex.test(url);
+  const route = withoutBasePath(url);
+  if (!route || !route.startsWith("/images/")) return false;
+  return imageExtensionRegex.test(route);
 };
 
 const rewriteImageUrl = (url) => {
   if (!shouldRewriteImageUrl(url)) return url;
-  return url.replace(imageExtensionRegex, ".webp");
+  return withBasePath(withoutBasePath(url).replace(imageExtensionRegex, ".webp"));
 };
 
 const rewriteSrcset = (srcset) =>
@@ -299,7 +300,10 @@ const replacePlaceholders = async (template, values) => {
   try {
     template = eta.renderString(template, templateData);
   } catch (error) {
-    console.warn(`Eta template error: ${error.message}`);
+    const source = values.filePath || values.url || values.title || "template";
+    throw new Error(`Unable to render ${source}: ${error.message}`, {
+      cause: error,
+    });
   }
 
   // Restore code blocks

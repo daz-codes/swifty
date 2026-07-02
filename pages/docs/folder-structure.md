@@ -33,8 +33,11 @@ your-site/
 │   └── hero.jpg
 ├── data/            # JSON/YAML data files
 │   └── team.json
+├── public/          # Files copied unchanged
+│   └── manifest.webmanifest
 ├── template.html    # The master wrapper
 ├── config.yaml      # Site configuration
+├── .swifty-cache/   # Generated image cache (ignored)
 └── dist/            # Built output (generated)
 ```
 
@@ -60,6 +63,9 @@ Your images go here. JPG, PNG, and JPEG files are automatically converted to Web
 
 ### data/
 Store JSON or YAML data files here. The filename becomes the variable name: `data/team.json` is accessible as `data.team` in your templates. Great for lists of team members, products, testimonials, or any structured data you want to loop over.
+
+### public/
+Files in this directory are copied unchanged to the output root. Use it for fonts, manifests, verification files, downloads, and other assets that Swifty should not process.
 
 ### dist/
 The output folder. Don't edit files here - they get overwritten on every build. This is what you deploy.
@@ -97,7 +103,7 @@ Add the others as you need them. Swifty won't complain about missing folders.
 By default, Swifty builds to `dist/`. Want it somewhere else?
 
 ```bash
-npx swifty build --out public
+npx swifty build --out build-output
 ```
 
-Now your site builds to `public/` instead.
+Now your site builds to `build-output/` instead. Do not use the source `public/` directory as the output directory.

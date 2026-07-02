@@ -12,7 +12,11 @@ function getStructure(sitename) {
     "js/": null,
     "images/": null,
     "data/": null,
+    "public/": null,
+    ".gitignore": `node_modules/
+.swifty-cache/`,
     "config.yaml": `sitename: ${sitename}
+base_path: ""
 breadcrumb_separator: "&raquo;"
 breadcrumb_class: swifty_breadcrumb
 link_class: swifty_link

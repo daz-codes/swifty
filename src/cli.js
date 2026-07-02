@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync, spawn, spawnSync } from "child_process";
+import { execFileSync, spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const args = process.argv.slice(2);
@@ -92,8 +92,8 @@ async function main() {
         watcher.default(outDir);
       }
 
-      // Start the server (blocking)
-      spawn("npx", ["serve", outDir], { stdio: "inherit" });
+      const server = await import("./server.js");
+      await server.default(outDir);
       break;
     }
     case "watch": {
@@ -139,7 +139,10 @@ async function main() {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  main();
+  main().catch((error) => {
+    console.error(`Swifty failed: ${error.message}`);
+    process.exitCode = 1;
+  });
 }
 
 export { commitAndPushOutput, main };

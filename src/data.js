@@ -24,36 +24,41 @@ async function loadData() {
     return data;
   }
 
+  let files;
   try {
-    const files = await fs.readdir(dirs.data);
-
-    for (const file of files) {
-      const filePath = path.join(dirs.data, file);
-      const stat = await fs.stat(filePath);
-
-      // Skip directories
-      if (stat.isDirectory()) continue;
-
-      const ext = path.extname(file).toLowerCase();
-      const name = path.basename(file, ext);
-
-      // Only process JSON and YAML files
-      if (!['.json', '.yaml', '.yml'].includes(ext)) continue;
-
-      try {
-        const content = await fs.readFile(filePath, 'utf-8');
-
-        if (ext === '.json') {
-          data[name] = JSON.parse(content);
-        } else {
-          data[name] = yaml.load(content);
-        }
-      } catch (error) {
-        console.warn(`Error loading data file ${file}: ${error.message}`);
-      }
-    }
+    files = await fs.readdir(dirs.data);
   } catch (error) {
-    console.warn(`Error reading data directory: ${error.message}`);
+    throw new Error(`Unable to read data directory ${dirs.data}: ${error.message}`, {
+      cause: error,
+    });
+  }
+
+  for (const file of files) {
+    const filePath = path.join(dirs.data, file);
+    const stat = await fs.stat(filePath);
+
+    // Skip directories
+    if (stat.isDirectory()) continue;
+
+    const ext = path.extname(file).toLowerCase();
+    const name = path.basename(file, ext);
+
+    // Only process JSON and YAML files
+    if (!['.json', '.yaml', '.yml'].includes(ext)) continue;
+
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+
+      if (ext === '.json') {
+        data[name] = JSON.parse(content);
+      } else {
+        data[name] = yaml.load(content);
+      }
+    } catch (error) {
+      throw new Error(`Unable to parse data file ${filePath}: ${error.message}`, {
+        cause: error,
+      });
+    }
   }
 
   dataCache = data;
