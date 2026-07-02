@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync, spawnSync } from "child_process";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const args = process.argv.slice(2);
@@ -138,7 +139,10 @@ async function main() {
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === fs.realpathSync(process.argv[1])
+) {
   main().catch((error) => {
     console.error(`Swifty failed: ${error.message}`);
     process.exitCode = 1;

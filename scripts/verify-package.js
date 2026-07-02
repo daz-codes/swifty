@@ -24,6 +24,22 @@ try {
     ["install", "--no-audit", "--no-fund", packagePath],
     { cwd: tempDir, stdio: "inherit" },
   );
+
+  const swifty = path.join(
+    tempDir,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "swifty.cmd" : "swifty",
+  );
+  const cliOutput = execFileSync(swifty, [], {
+    cwd: tempDir,
+    encoding: "utf-8",
+    shell: process.platform === "win32",
+  });
+  if (!cliOutput.includes("Usage:")) {
+    throw new Error("The installed swifty executable did not run the CLI.");
+  }
+
   execFileSync(
     process.execPath,
     [
