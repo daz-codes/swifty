@@ -9,6 +9,7 @@ import { copyAssets, optimizeImages } from "./assets.js";
 import { generatePages, createPages, addLinks } from "./pages.js";
 import { generateRssFeeds } from "./rss.js";
 import { generateSeoFiles } from "./sitemap.js";
+import { generateSearchIndex } from "./search.js";
 import { baseDir, dirs } from "./config.js";
 import { clearDataCache } from "./data.js";
 import { resetCaches } from "./layout.js";
@@ -67,6 +68,15 @@ export default async function build(outputDir = dirs.dist) {
   await createPages(pages, resolvedOutputDir);
   const createTime = performance.now() - createStart;
   console.log(`✨ Pages created in ${(createTime / 1000).toFixed(2)}s`);
+
+  const searchStart = performance.now();
+  const searchIndex = await generateSearchIndex(pages, resolvedOutputDir);
+  const searchTime = performance.now() - searchStart;
+  console.log(
+    searchIndex
+      ? `🔎 Search index generated in ${(searchTime / 1000).toFixed(2)}s`
+      : "🔎 Search index disabled",
+  );
   
   const rssStart = performance.now();
   await generateRssFeeds(pages, resolvedOutputDir);
@@ -88,6 +98,7 @@ export default async function build(outputDir = dirs.dist) {
     { name: "Pages", time: pagesTime },
     { name: "Links", time: linksTime },
     { name: "Create", time: createTime },
+    { name: "Search", time: searchTime },
     { name: "RSS", time: rssTime },
     { name: "SEO", time: seoTime }
   ];

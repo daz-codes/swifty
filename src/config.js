@@ -60,16 +60,21 @@ const validateConfig = (config, filePath = "config") => {
     "minify_js",
     "morphing",
     "prefetching",
+    "search",
   ];
   const positiveNumbers = [
-    "build_concurrency",
-    "image_quality",
-    "livereload_port",
     "max_image_width",
-    "server_port",
+    "navigation_cache_ttl",
     "watcher_delay",
     "watcher_interval",
     "words_per_minute",
+  ];
+  const positiveIntegers = [
+    "build_concurrency",
+    "default_page_count",
+    "navigation_cache_size",
+    "page_count",
+    "rss_max_items",
   ];
 
   for (const key of booleans) {
@@ -83,6 +88,30 @@ const validateConfig = (config, filePath = "config") => {
       (!Number.isFinite(config[key]) || config[key] <= 0)
     ) {
       throw new TypeError(`${key} in ${filePath} must be a positive number`);
+    }
+  }
+  for (const key of positiveIntegers) {
+    if (
+      config[key] !== undefined &&
+      (!Number.isInteger(config[key]) || config[key] <= 0)
+    ) {
+      throw new TypeError(`${key} in ${filePath} must be a positive integer`);
+    }
+  }
+  if (
+    config.image_quality !== undefined &&
+    (!Number.isInteger(config.image_quality) ||
+      config.image_quality < 1 ||
+      config.image_quality > 100)
+  ) {
+    throw new TypeError(`image_quality in ${filePath} must be an integer from 1 to 100`);
+  }
+  for (const key of ["livereload_port", "server_port"]) {
+    if (
+      config[key] !== undefined &&
+      (!Number.isInteger(config[key]) || config[key] < 1 || config[key] > 65535)
+    ) {
+      throw new TypeError(`${key} in ${filePath} must be an integer from 1 to 65535`);
     }
   }
   if (
@@ -107,6 +136,53 @@ const validateConfig = (config, filePath = "config") => {
   }
   if (config.rss_feeds !== undefined && !Array.isArray(config.rss_feeds)) {
     throw new TypeError(`rss_feeds in ${filePath} must be an array`);
+  }
+  if (Array.isArray(config.rss_feeds)) {
+    for (const feed of config.rss_feeds) {
+      const folder = typeof feed === "string" ? feed : feed?.folder;
+      if (
+        !folder ||
+        typeof folder !== "string" ||
+        path.isAbsolute(folder) ||
+        folder.split(/[\\/]/).some((part) => part === "." || part === "..") ||
+        /[?#]/.test(folder)
+      ) {
+        throw new TypeError(
+          `rss_feeds entries in ${filePath} must use safe relative folder paths`,
+        );
+      }
+    }
+  }
+  for (const key of ["site_url", "url"]) {
+    if (config[key] === undefined) continue;
+    let parsed;
+    try {
+      parsed = new URL(config[key]);
+    } catch {
+      throw new TypeError(`${key} in ${filePath} must be an absolute HTTP(S) URL`);
+    }
+    if (
+      !["http:", "https:"].includes(parsed.protocol) ||
+      !parsed.hostname ||
+      parsed.username ||
+      parsed.password ||
+      parsed.search ||
+      parsed.hash
+    ) {
+      throw new TypeError(`${key} in ${filePath} must be an absolute HTTP(S) URL`);
+    }
+  }
+  if (
+    config.date_sort_order !== undefined &&
+    !["asc", "desc"].includes(String(config.date_sort_order).toLowerCase())
+  ) {
+    throw new TypeError(`date_sort_order in ${filePath} must be "asc" or "desc"`);
+  }
+  if (
+    config.morph_target !== undefined &&
+    (typeof config.morph_target !== "string" || !config.morph_target.trim())
+  ) {
+    throw new TypeError(`morph_target in ${filePath} must be a non-empty string`);
   }
 
   return config;
@@ -144,6 +220,8 @@ const builtInDefaults = {
   morph_target: 'main',
   navigation_cache_size: 20,
   navigation_cache_ttl: 15,
+  // Search
+  search: true,
 };
 
 const defaultConfig = {};

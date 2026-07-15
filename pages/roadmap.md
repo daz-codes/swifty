@@ -10,6 +10,9 @@ Here's what's cooking in the Swifty kitchen. Some of these are half-baked ideas,
 
 ## Recently Shipped
 
+### Client-Side Search Index
+Swifty generates `/search.json` with clean page text, titles, summaries, tags, and base-path-aware URLs. Bring any search UI or use the small browser-side example in the configuration guide.
+
 ### RSS Feeds
 Auto-generate RSS/Atom feeds for blog sections. Configure in `config.yaml` and feeds are created automatically.
 
@@ -47,12 +50,6 @@ Add `<%= og_tags %>` to your template and Swifty generates all the meta tags for
 `<%= prev_page %>` and `<%= next_page %>` auto-generate links to sibling pages in the same folder. Pages are linked based on their sort order (date or position). Perfect for blog series and multi-part tutorials.
 
 ## On the Radar
-
-### Sitemap Generation
-Automatic sitemap.xml for better SEO.
-
-### Search
-Add search functionality to find pages across your site. Probably a simple client-side search using a generated JSON index.
 
 ### Table of Contents
 Auto-generate `<%= toc %>` from page headings. Perfect for documentation and long-form content.

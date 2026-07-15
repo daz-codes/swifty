@@ -15,6 +15,7 @@ npx swifty <sitename>           # Create new site in <sitename>/ folder
 npx swifty start                # Development server with live reload
 npx swifty build                # Build for production
 npx swifty build --out dir      # Build to custom output directory
+npx swifty check                # Validate routes, links, assets, templates, and config
 npx swifty deploy ["message"]   # Build, git add, commit, and push
 ```
 
@@ -139,6 +140,9 @@ watcher_interval: 500   # Polling interval in milliseconds for file watching
 
 # Pagination
 default_page_count: 2   # Default items per page for paginated folders
+
+# Client-side search index
+search: true             # Generate /search.json
 
 # Existing options
 default_layout_name: default

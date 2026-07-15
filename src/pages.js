@@ -167,7 +167,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
             ? parent.layout
             : config.default_layout_name;
 
-        const route = root ? "/" : finalPath;
+        const route = root ? "/" : notFound ? "/404.html" : finalPath;
         const page = {
           name,
           root,

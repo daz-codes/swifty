@@ -27,6 +27,8 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **Idiomorph navigation** with optional intent prefetching for SPA-like transitions
 - **Custom permalinks and base paths** for flexible deployment URLs
 - **Public asset passthrough** for files that should be copied unchanged
+- **Site validation** for duplicate routes, broken links, missing assets, and invalid configuration
+- **Client-side search index** generated at `/search.json`
 
 Requires Node.js 22 or newer. See [Migrating to Swifty 4](MIGRATION.md) when upgrading an existing site.
 
@@ -62,10 +64,21 @@ your-site/
 ```bash
 npx swifty my-site          # Create new site in my-site/ folder
 npx swifty build            # Build static site to dist/ (for production)
+npx swifty check            # Validate routes, links, images, templates, and config
 npx swifty start            # Build, watch, and serve at localhost:3000 (for development)
 npx swifty build --out dir  # Build to custom output directory
 npx swifty deploy "message" # Build, commit the output folder, and push
 ```
+
+### Site Validation
+
+Run `npx swifty check` before deploying. It renders every page, including drafts
+and scheduled pages, into a temporary directory and reports duplicate routes,
+broken internal links and anchors, missing images, partials or explicitly requested
+layouts, invalid canonical URLs, and malformed root or folder configuration.
+
+The command does not change `dist/` and exits with a non-zero status when it finds
+an issue. External URLs are not fetched.
 
 ### Development vs Production
 

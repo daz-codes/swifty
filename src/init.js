@@ -33,6 +33,7 @@ default_og_image: ""
 minify: true
 morphing: true
 prefetching: true
+search: true
 morph_target: main
 
 dateFormat:

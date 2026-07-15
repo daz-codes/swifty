@@ -65,6 +65,7 @@ async function main() {
     console.log(`Usage:`);
     console.log(`  swifty <sitename>              Create a new site in <sitename> folder`);
     console.log(`  swifty build [--out folder]    Build the site`);
+    console.log(`  swifty check                   Validate site content and generated routes`);
     console.log(`  swifty start [--out folder]    Build and serve with live reload`);
     console.log(`  swifty deploy ["message"]      Build, commit, and push to git`);
     return;
@@ -76,6 +77,12 @@ async function main() {
       if (typeof build.default === "function") {
         await build.default(outDir);
       }
+      break;
+    }
+    case "check": {
+      const check = await import("./check.js");
+      const report = await check.default();
+      if (!report.ok) process.exitCode = 1;
       break;
     }
     case "start": {

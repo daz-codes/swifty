@@ -54,6 +54,7 @@ anything_you_want: totally works
 | `draft` | Set to `true` to hide page in production builds |
 | `date` | Page date; future dates hide the page until that date |
 | `nav` | Set to `true` to include in main nav, `false` to exclude |
+| `search` | Set to `false` to exclude the page from `/search.json` |
 | `description` | Short description (used for Open Graph tags) |
 | `image` | Image URL for social sharing (used for og:image; falls back to `default_og_image`) |
 | `summary` | Brief summary of the page content |

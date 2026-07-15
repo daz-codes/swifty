@@ -28,6 +28,7 @@ describe("Swifty", function () {
     await fsExtra.ensureDir(path.join(testDir, "images"));
     await fsExtra.ensureDir(path.join(testDir, "data"));
     await fsExtra.ensureDir(path.join(testDir, "public", "downloads"));
+    await fsExtra.ensureDir(path.join(testDir, "public", "images"));
 
     // Create template.html with sitename and nav
     await fs.writeFile(
@@ -130,6 +131,17 @@ layout: default
 # Contact Us
 
 Email us at **hello@example.com** or visit our *office*.`
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "pages", "search-hidden.md"),
+      `---
+title: Hidden From Search
+layout: default
+nav: false
+search: false
+---
+This content must not appear in the generated search index.`,
     );
 
     await fs.writeFile(
@@ -300,7 +312,9 @@ console.log(message);`
     await Promise.all([
       fs.writeFile(path.join(testDir, "images", "photo.png"), png),
       fs.writeFile(path.join(testDir, "images", "favicon.png"), png),
+      fs.writeFile(path.join(testDir, "images", "featured.jpg"), png),
       fs.writeFile(path.join(testDir, "images", "default-og.png"), png),
+      fs.writeFile(path.join(testDir, "public", "images", "favicon.png"), png),
     ]);
     await sharp({
       create: {
@@ -840,12 +854,16 @@ rss_feeds:
         );
         const sitemap = await fs.readFile(path.join(distDir, "sitemap.xml"), "utf-8");
         const robots = await fs.readFile(path.join(distDir, "robots.txt"), "utf-8");
+        const search = JSON.parse(
+          await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+        );
 
         assert.ok(home.includes('href="/project/about"'));
         assert.ok(/href="\/project\/css\/style\.css\?v=\d+"/.test(home));
         assert.ok(imagePage.includes('src="/project/images/photo.webp"'));
         assert.ok(sitemap.includes("https://example.com/project/about"));
         assert.ok(robots.includes("https://example.com/project/sitemap.xml"));
+        assert.ok(search.pages.some((page) => page.url === "/project/about"));
         assert.strictEqual(
           await fsExtra.pathExists(path.join(distDir, "project")),
           false,
@@ -1083,6 +1101,111 @@ rss_feeds:
       assert.ok(content.includes("User-agent: *"), "should include default user agent");
       assert.ok(content.includes("Allow: /"), "should allow crawling by default");
       assert.ok(content.includes("Sitemap: https://example.com/sitemap.xml"), "should reference sitemap");
+    });
+  });
+
+  describe("Search Index", () => {
+    it("should generate a versioned JSON search index", async () => {
+      const index = JSON.parse(
+        await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+      );
+
+      assert.strictEqual(index.version, 1);
+      assert.ok(Array.isArray(index.pages));
+      assert.ok(index.pages.length > 0);
+    });
+
+    it("should include normalized page content, summaries, and tags", async () => {
+      const index = JSON.parse(
+        await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+      );
+      const about = index.pages.find((page) => page.url === "/about");
+      const featured = index.pages.find((page) => page.url === "/featured");
+
+      assert.ok(about.content.includes("Feature one"));
+      assert.ok(!about.content.includes("<"), "search text should not contain HTML tags");
+      assert.strictEqual(
+        featured.summary,
+        "This is a featured article with full Open Graph metadata",
+      );
+      assert.deepStrictEqual(featured.tags, ["featured", "article"]);
+    });
+
+    it("should exclude generated, paginated, 404, and opted-out pages", async () => {
+      const index = JSON.parse(
+        await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+      );
+      const urls = index.pages.map((page) => page.url);
+
+      assert.ok(urls.includes("/blog"), "authored folder index should be searchable");
+      assert.ok(!urls.includes("/posts"), "automatic folder listing should be excluded");
+      assert.ok(!urls.some((url) => url.startsWith("/posts/page/")));
+      assert.ok(!urls.some((url) => url.startsWith("/tags")));
+      assert.ok(!urls.includes("/404.html"));
+      assert.ok(!urls.includes("/search-hidden"));
+    });
+
+    it("should support disabling search index generation", async () => {
+      const outputDir = path.join(testDir, "search-disabled-output");
+      const { defaultConfig } = await import("../src/config.js");
+      const { generateSearchIndex } = await import("../src/search.js");
+      const previous = defaultConfig.search;
+
+      try {
+        defaultConfig.search = false;
+        assert.strictEqual(await generateSearchIndex([], outputDir), false);
+        assert.strictEqual(
+          await fsExtra.pathExists(path.join(outputDir, "search.json")),
+          false,
+        );
+      } finally {
+        defaultConfig.search = previous;
+        await fsExtra.remove(outputDir);
+      }
+    });
+
+    it("should reserve search.json from authored routes", async () => {
+      const outputDir = path.join(testDir, "search-collision-output");
+      const { generateSearchIndex } = await import("../src/search.js");
+
+      try {
+        await assert.rejects(
+          () =>
+            generateSearchIndex(
+              [
+                {
+                  content: "Reserved",
+                  filePath: path.join(testDir, "pages", "reserved.md"),
+                  folder: false,
+                  meta: {},
+                  route: "/search.json",
+                  title: "Reserved",
+                  url: "/search.json",
+                },
+              ],
+              outputDir,
+            ),
+          /reserved for the generated search index/,
+        );
+      } finally {
+        await fsExtra.remove(outputDir);
+      }
+    });
+
+    it("should replace a previously generated index", async () => {
+      const outputDir = path.join(testDir, "search-repeat-output");
+      const { generateSearchIndex } = await import("../src/search.js");
+
+      try {
+        await generateSearchIndex([], outputDir);
+        await generateSearchIndex([], outputDir);
+        const index = JSON.parse(
+          await fs.readFile(path.join(outputDir, "search.json"), "utf-8"),
+        );
+        assert.deepStrictEqual(index.pages, []);
+      } finally {
+        await fsExtra.remove(outputDir);
+      }
     });
   });
 
@@ -1378,6 +1501,162 @@ rss_feeds:
     });
   });
 
+  describe("Site Checker", () => {
+    it("should pass a valid generated site without writing to dist", async () => {
+      const { checkSite } = await import("../src/check.js");
+      const before = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+
+      const report = await checkSite();
+
+      assert.strictEqual(
+        report.ok,
+        true,
+        report.issues
+          .map(
+            (issue) =>
+              `${issue.code}: ${issue.message} (${issue.source}: ${issue.reference})`,
+          )
+          .join("\n"),
+      );
+      assert.ok(report.counts.routes > 0);
+      assert.strictEqual(
+        await fs.readFile(path.join(distDir, "index.html"), "utf-8"),
+        before,
+        "check should not alter the configured output directory",
+      );
+    });
+
+    it("should report duplicate routes", async () => {
+      const duplicatePath = path.join(testDir, "pages", "duplicate.md");
+      const { CHECK_CODES, checkSite } = await import("../src/check.js");
+
+      try {
+        await fs.writeFile(
+          duplicatePath,
+          `---\ntitle: Duplicate\nlayout: default\npermalink: /about\n---\nDuplicate`,
+        );
+        const report = await checkSite();
+        const issue = report.issues.find(
+          (candidate) => candidate.code === CHECK_CODES.DUPLICATE_ROUTE,
+        );
+
+        assert.ok(issue, "duplicate route should be reported");
+        assert.ok(issue.message.includes("about/index.html"));
+      } finally {
+        await fsExtra.remove(duplicatePath);
+      }
+    });
+
+    it("should report broken links, missing images, and invalid canonical URLs", async () => {
+      const brokenPath = path.join(testDir, "pages", "check-links.md");
+      const { CHECK_CODES, checkSite } = await import("../src/check.js");
+
+      try {
+        await fs.writeFile(
+          brokenPath,
+          `---\ntitle: Checker Links\nlayout: default\n---
+# Checker Links
+
+[Missing page](/does-not-exist)
+[Missing anchor](/about#does-not-exist)
+![Missing image](/images/does-not-exist.png)
+<link rel="canonical" href="/relative-canonical">`,
+        );
+        const report = await checkSite();
+
+        assert.ok(
+          report.issues.some(
+            (issue) =>
+              issue.code === CHECK_CODES.BROKEN_LINK &&
+              issue.reference === "/does-not-exist",
+          ),
+        );
+        assert.ok(
+          report.issues.some(
+            (issue) =>
+              issue.code === CHECK_CODES.BROKEN_LINK &&
+              issue.reference === "/about#does-not-exist",
+          ),
+        );
+        assert.ok(
+          report.issues.some(
+            (issue) =>
+              issue.code === CHECK_CODES.MISSING_IMAGE &&
+              issue.reference.includes("does-not-exist.webp"),
+          ),
+        );
+        assert.ok(
+          report.issues.some(
+            (issue) => issue.code === CHECK_CODES.INVALID_CANONICAL,
+          ),
+        );
+      } finally {
+        await fsExtra.remove(brokenPath);
+      }
+    });
+
+    it("should report missing partials and explicitly requested layouts", async () => {
+      const brokenPath = path.join(testDir, "pages", "check-template.md");
+      const { CHECK_CODES, checkSite } = await import("../src/check.js");
+
+      try {
+        await fs.writeFile(
+          brokenPath,
+          `---\ntitle: Checker Template\nlayout: absent-layout\n---\n<%= partial: absent-partial %>`,
+        );
+        const report = await checkSite();
+
+        assert.ok(
+          report.issues.some(
+            (issue) => issue.code === CHECK_CODES.MISSING_LAYOUT,
+          ),
+        );
+        assert.ok(
+          report.issues.some(
+            (issue) => issue.code === CHECK_CODES.MISSING_PARTIAL,
+          ),
+        );
+      } finally {
+        await fsExtra.remove(brokenPath);
+      }
+    });
+
+    it("should report malformed nested configuration", async () => {
+      const configDir = path.join(testDir, "pages", "check-config");
+      const { CHECK_CODES, checkSite } = await import("../src/check.js");
+
+      try {
+        await fsExtra.ensureDir(configDir);
+        await fs.writeFile(path.join(configDir, "config.yaml"), "page_count: -1");
+        const report = await checkSite();
+
+        assert.ok(
+          report.issues.some(
+            (issue) =>
+              issue.code === CHECK_CODES.CONFIG &&
+              issue.source.endsWith("check-config/config.yaml"),
+          ),
+        );
+      } finally {
+        await fsExtra.remove(configDir);
+      }
+    });
+
+    it("should validate canonical URLs and bounded numeric configuration", async () => {
+      const { canonicalUrlError } = await import("../src/check.js");
+      const { validateConfig } = await import("../src/config.js");
+
+      assert.strictEqual(canonicalUrlError("https://example.com/page"), null);
+      assert.ok(canonicalUrlError("/relative"));
+      assert.throws(() => validateConfig({ page_count: -1 }), /positive integer/);
+      assert.throws(() => validateConfig({ image_quality: 101 }), /1 to 100/);
+      assert.throws(
+        () => validateConfig({ rss_feeds: ["../outside"] }),
+        /safe relative folder paths/,
+      );
+    });
+  });
+
   describe("Package API and Deployment", () => {
     it("should expose a working ESM package entry point", async () => {
       const swifty = await import("../src/index.js");
@@ -1385,6 +1664,8 @@ rss_feeds:
       assert.strictEqual(typeof swifty.default, "function");
       assert.strictEqual(swifty.default, swifty.build);
       assert.strictEqual(typeof swifty.reloadConfig, "function");
+      assert.strictEqual(typeof swifty.checkSite, "function");
+      assert.strictEqual(typeof swifty.generateSearchIndex, "function");
     });
 
     it("should stage only generated output and pass commit messages literally", async () => {

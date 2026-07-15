@@ -37,6 +37,7 @@ minify_js: true
 morphing: true
 prefetching: true
 morph_target: main
+search: true
 server_port: 3000
 
 # Pagination
@@ -82,6 +83,7 @@ dateFormat:
 | `morphing` | Enable Idiomorph-powered same-origin page transitions |
 | `prefetching` | Prefetch likely pages on hover, focus, or touch intent |
 | `morph_target` | CSS selector for the element Swifty morphs between pages |
+| `search` | Generate `/search.json` for client-side search |
 | `server_port` | Port used by the local development server |
 | `page_count` | Number of items per page before pagination kicks in |
 | `pagination_class` | CSS class for the pagination container |
@@ -129,6 +131,69 @@ Set `prefetching: false` if you want morphing without hover/focus/touch prefetch
 ## Folder-Level Config
 
 Here's a neat trick: you can add a `config.yaml` inside any folder in `pages/` to set defaults for all pages in that folder. Great for giving a whole section its own author or layout without repeating yourself.
+
+## Client-Side Search
+
+Swifty generates `/search.json` by default. The index contains each searchable
+page's title, URL, summary, normalized text content, and tags. URLs include
+`base_path` automatically.
+
+The file has this shape:
+
+```json
+{
+  "version": 1,
+  "pages": [
+    {
+      "title": "Getting Started",
+      "url": "/docs/get-started",
+      "summary": "Install and build your first Swifty site.",
+      "content": "Getting Started Install Swifty...",
+      "tags": ["docs", "tutorial"]
+    }
+  ]
+}
+```
+
+Here is a minimal browser-side search:
+
+```html
+<input type="search" id="search" placeholder="Search">
+<ul id="search-results"></ul>
+
+<script type="module">
+  const basePath = "<%= base_path %>";
+  const { pages } = await fetch(`${basePath}/search.json`).then((response) => response.json());
+  const input = document.querySelector("#search");
+  const results = document.querySelector("#search-results");
+
+  input.addEventListener("input", () => {
+    const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const matches = terms.length
+      ? pages.filter((page) => {
+          const text = [page.title, page.summary, page.content, ...page.tags]
+            .join(" ")
+            .toLowerCase();
+          return terms.every((term) => text.includes(term));
+        }).slice(0, 10)
+      : [];
+
+    results.replaceChildren(...matches.map((page) => {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = page.url;
+      link.textContent = page.title;
+      item.append(link);
+      return item;
+    }));
+  });
+</script>
+```
+
+Set `search: false` in root configuration to disable the index, or in a page's
+front matter to exclude only that page. Drafts, scheduled pages, 404 pages,
+generated tag pages, pagination pages, and pages with `sitemap: false` are not
+included in production search results.
 
 ## RSS Feeds
 
