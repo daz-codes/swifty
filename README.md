@@ -39,7 +39,7 @@ Requires Node.js 22 or newer. See [Migrating to Swifty 4](MIGRATION.md) when upg
 
 ```bash
 npm install -g @daz4126/swifty
-swifty my-site
+swifty new my-site
 cd my-site
 npx swifty start
 ```
@@ -65,12 +65,15 @@ your-site/
 ## Commands
 
 ```bash
-npx swifty my-site          # Create new site in my-site/ folder
+npx swifty new my-site      # Create new site in my-site/ folder
 npx swifty build            # Build static site to dist/ (for production)
+npx swifty build --drafts   # Preview draft and scheduled pages
 npx swifty check            # Validate routes, links, images, templates, and config
 npx swifty start            # Build, watch, and serve at localhost:3000 (for development)
 npx swifty build --out dir  # Build to custom output directory
 npx swifty deploy "message" # Build, commit the output folder, and push
+npx swifty --help           # Show command help
+npx swifty --version        # Show the installed version
 ```
 
 ### Site Validation

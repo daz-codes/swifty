@@ -11,10 +11,11 @@ npx mocha test/swifty.test.js   # Run single test file
 npx mocha --grep "test name"    # Run specific test by description
 npm run build                   # Build static site to dist/
 npm start                       # Build and serve at http://localhost:3000
-npx swifty <sitename>           # Create new site in <sitename>/ folder
+npx swifty new <sitename>       # Create new site in <sitename>/ folder
 npx swifty start                # Development server with live reload
 npx swifty build                # Build for production
 npx swifty build --out dir      # Build to custom output directory
+npx swifty build --drafts       # Build with draft and scheduled pages
 npx swifty check                # Validate routes, links, assets, templates, and config
 npx swifty deploy ["message"]   # Build, git add, commit, and push
 ```

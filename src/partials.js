@@ -33,6 +33,11 @@ const escapeAttr = (str) => {
 // Count words in content (strips HTML and markdown)
 const countWords = (content) => {
   if (!content) return 0;
+  // Fenced code is executable syntax, not prose reading time.
+  content = content.replace(
+    /(^|\n)[ \t]*(`{3,}|~{3,})[^\n]*(?:\n[\s\S]*?)?\n[ \t]*\2(?=\n|$)/g,
+    " ",
+  );
   // Strip HTML tags
   let text = content.replace(/<[^>]*>/g, ' ');
   // Strip markdown syntax (links, images, emphasis, etc.)

@@ -2,9 +2,12 @@
 
 import { execFileSync, spawnSync } from "child_process";
 import fs from "fs";
+import path from "path";
 import { fileURLToPath } from "url";
 
 const args = process.argv.slice(2);
+const packagePath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+const packageVersion = JSON.parse(fs.readFileSync(packagePath, "utf-8")).version;
 let outDir = "dist"; // default
 
 // Look for --out [folder]
@@ -15,6 +18,30 @@ if (outIndex !== -1 && args[outIndex + 1]) {
 
 // Pass outDir as an environment variable too (optional, still useful)
 process.env.OUT_DIR = outDir;
+
+const printHelp = () => {
+  console.log(`Usage:
+  swifty new <sitename>            Create a new site
+  swifty build [--out dir]         Build for production
+  swifty build --drafts            Build with draft and scheduled pages
+  swifty check                     Validate site content and generated routes
+  swifty start [--out dir]         Build and serve with live reload
+  swifty deploy ["message"]        Build, commit, and push generated output
+  swifty --help                     Show this help
+  swifty --version                  Show the installed version`);
+};
+
+const assertAllowedOptions = (command, allowed) => {
+  const options = args.slice(1).filter((arg) => arg.startsWith("-"));
+  const unknown = options.find((option) => !allowed.has(option));
+  if (unknown) throw new Error(`Unknown option "${unknown}" for swifty ${command}`);
+  if (allowed.has("--out")) {
+    const index = args.indexOf("--out");
+    if (index !== -1 && (!args[index + 1] || args[index + 1].startsWith("-"))) {
+      throw new Error(`--out for swifty ${command} requires a directory`);
+    }
+  }
+};
 
 const commitAndPushOutput = (
   outputDir,
@@ -60,19 +87,26 @@ const commitAndPushOutput = (
 async function main() {
   const command = args[0];
 
-  // No arguments - show usage
-  if (!command) {
-    console.log(`Usage:`);
-    console.log(`  swifty <sitename>              Create a new site in <sitename> folder`);
-    console.log(`  swifty build [--out folder]    Build the site`);
-    console.log(`  swifty check                   Validate site content and generated routes`);
-    console.log(`  swifty start [--out folder]    Build and serve with live reload`);
-    console.log(`  swifty deploy ["message"]      Build, commit, and push to git`);
+  if (!command || ["--help", "-h", "help"].includes(command)) return printHelp();
+  if (["--version", "-v"].includes(command)) {
+    console.log(packageVersion);
     return;
   }
 
   switch (command) {
+    case "new": {
+      assertAllowedOptions(command, new Set());
+      const sitename = args[1];
+      if (!sitename || args.length !== 2) {
+        throw new Error("Usage: swifty new <sitename>");
+      }
+      const init = await import("./init.js");
+      await init.default(sitename);
+      break;
+    }
     case "build": {
+      assertAllowedOptions(command, new Set(["--out", "--drafts"]));
+      if (args.includes("--drafts")) process.env.SWIFTY_DRAFTS = "true";
       const build = await import("./build.js");
       if (typeof build.default === "function") {
         await build.default(outDir);
@@ -80,12 +114,14 @@ async function main() {
       break;
     }
     case "check": {
+      assertAllowedOptions(command, new Set());
       const check = await import("./check.js");
       const report = await check.default();
       if (!report.ok) process.exitCode = 1;
       break;
     }
     case "start": {
+      assertAllowedOptions(command, new Set(["--out"]));
       // Set watch mode so livereload script is injected into pages
       process.env.SWIFTY_WATCH = "true";
 
@@ -105,6 +141,7 @@ async function main() {
       break;
     }
     case "watch": {
+      assertAllowedOptions(command, new Set(["--out"]));
       const watch = await import("./watcher.js");
       if (typeof watch.default === "function") {
         await watch.default(outDir);
@@ -112,6 +149,7 @@ async function main() {
       break;
     }
     case "deploy": {
+      assertAllowedOptions(command, new Set(["--out"]));
       const commandArgs = args.slice(1).filter((arg, index, values) => {
         if (arg === "--out") return false;
         return index === 0 || values[index - 1] !== "--out";
@@ -135,13 +173,9 @@ async function main() {
       break;
     }
     default: {
-      // Treat as sitename for new project creation
-      const sitename = command;
-      const init = await import("./init.js");
-      if (typeof init.default === "function") {
-        await init.default(sitename);
-      }
-      break;
+      throw new Error(
+        `Unknown command "${command}". Use "swifty new <sitename>" to create a site or "swifty --help" for usage.`,
+      );
     }
   }
 }
@@ -156,4 +190,4 @@ if (
   });
 }
 
-export { commitAndPushOutput, main };
+export { commitAndPushOutput, main, printHelp };

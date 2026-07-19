@@ -199,6 +199,7 @@ draft: true
 
 Draft pages:
 - **Show** during development (`swifty start`)
+- **Show** in preview builds (`swifty build --drafts`)
 - **Hidden** in production builds (`swifty build`)
 
 This means drafts won't appear in navigation, tag pages, or RSS feeds when you deploy. Perfect for previewing work before publishing.
@@ -216,9 +217,14 @@ date: 2025-06-15
 
 Pages with a future date:
 - **Show** during development (`swifty start`)
+- **Show** in preview builds (`swifty build --drafts`)
 - **Hidden** in production builds until the date arrives
 
 This lets you write content ahead of time and have it automatically appear when you next build after the scheduled date.
+
+Scheduling does not run builds for you. On Git-based hosting, arrange a cron or
+scheduled deployment if pages must appear without another content commit after
+their publication time.
 
 A calendar date publishes at midnight in the configured `timezone`:
 
@@ -260,8 +266,20 @@ Every page automatically gets some handy variables:
 | `<%= og_tags %>` | Open Graph meta tags for social sharing |
 | `<%= pagination %>` | Pagination navigation (for paginated folders) |
 | `<%= toc %>` | Nested table of contents linked to generated heading anchors |
+| `<%= pages %>` | Immutable authored-page collection for archives, recent posts, and custom lists |
+| `<%= collections.pages %>` | Namespaced alias for the authored-page collection |
 
 Just drop these into your layouts or pages wherever you need them.
+
+Each collection item includes `title`, `url`, display and ISO dates, `summary`,
+and `tags`. Generated tag and pagination routes, 404 pages, and unpublished
+pages are excluded. For example:
+
+```html
+<% for (const item of pages.filter((item) => item.tags.includes("news")).slice(0, 5)) { %>
+  <a href="<%= item.url %>"><%= item.title %></a>
+<% } %>
+```
 
 For tracked files, Swifty uses the file's most recent Git commit date instead of
 filesystem birthtime. This keeps dates stable when a site is cloned in CI or

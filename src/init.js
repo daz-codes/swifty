@@ -5,10 +5,47 @@ import path from "path";
 
 function getStructure(sitename) {
   return {
-    "pages/index.md": `# Welcome to ${sitename}\n\nThis is my home page.`,
-    "layouts/": null,
+    "pages/index.md": `---
+title: Home
+---
+
+# Welcome to ${sitename}
+
+Your new Swifty site is ready. Edit \`pages/index.md\` to make it yours.`,
+    "layouts/default.html": `<article class="page">
+  <%= content %>
+</article>`,
     "partials/": null,
-    "css/": null,
+    "css/style.css": `:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+  --accent: #db2777;
+  --surface: color-mix(in srgb, Canvas 94%, CanvasText 6%);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: Canvas; color: CanvasText; }
+a { color: var(--accent); }
+.site-header, .site-footer, .page {
+  width: min(100% - 2rem, 64rem);
+  margin-inline: auto;
+}
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.25rem;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+}
+.site-title { color: inherit; font-weight: 750; text-decoration: none; }
+.site-header nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+.page { min-height: 70vh; padding-block: clamp(3rem, 8vw, 7rem); }
+.page > :first-child { margin-top: 0; }
+pre { overflow-x: auto; border-radius: .5rem; }
+.site-footer { padding-block: 2rem; color: color-mix(in srgb, CanvasText 70%, transparent); }
+`,
     "js/": null,
     "images/": null,
     "data/": null,
@@ -56,13 +93,14 @@ dateFormat:
   <title><%= sitename %> | <%= title %></title>
 </head>
 <body>
-  <header>
-      <h1>${sitename}</h1>
+  <header class="site-header">
+    <a class="site-title" href="/"><%= sitename %></a>
+    <nav><%= nav_links %></nav>
   </header>
-    <main>
+  <main>
     <%= content %>
   </main>
-    <footer>
+  <footer class="site-footer">
     <p>This site was built with Swifty, the super speedy static site generator.</p>
   </footer>
 </body>
@@ -84,12 +122,21 @@ function createStructure(basePath, structure) {
 }
 
 export default function init(sitename) {
+  if (
+    typeof sitename !== "string" ||
+    !sitename.trim() ||
+    sitename.startsWith("-") ||
+    path.isAbsolute(sitename) ||
+    path.basename(sitename) !== sitename ||
+    [".", ".."].includes(sitename)
+  ) {
+    throw new Error(`Invalid site name "${sitename}"`);
+  }
   const projectRoot = path.join(process.cwd(), sitename);
 
   // Check if folder already exists
   if (fs.existsSync(projectRoot)) {
-    console.error(`Error: Folder "${sitename}" already exists.`);
-    process.exit(1);
+    throw new Error(`Folder "${sitename}" already exists.`);
   }
 
   const structure = getStructure(sitename);

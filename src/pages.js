@@ -168,6 +168,12 @@ let renderedContentTokenId = 0;
 const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
 const minificationEnabled = () =>
   defaultConfig.minify !== false && defaultConfig.minify_html !== false;
+const environmentFlagEnabled = (value) =>
+  value !== undefined && !["", "0", "false", "no"].includes(value.toLowerCase());
+
+const includesUnpublishedPages = () =>
+  environmentFlagEnabled(process.env.SWIFTY_WATCH) ||
+  environmentFlagEnabled(process.env.SWIFTY_DRAFTS);
 const containsHighlightedCode = (html) =>
   /<code\b[^>]*\bclass=["'][^"']*\bhljs\b/i.test(html || "");
 
@@ -230,6 +236,52 @@ const flattenAuthoredPages = (pages) => {
   };
   visit(pages);
   return flattened;
+};
+
+const createTemplatePageCollection = (pages) => {
+  const collection = [];
+  const visit = (pageList) => {
+    for (const page of pageList) {
+      const authoredFolder = page.folder && page.hasIndexContent;
+      if (
+        page.filePath &&
+        (!page.folder || authoredFolder) &&
+        !page.notFound
+      ) {
+        collection.push(
+          Object.freeze({
+            title: page.meta?.title || page.title || page.name,
+            url: page.url,
+            date: page.date,
+            date_iso: page.date_iso,
+            created_at: page.created_at,
+            created_at_iso: page.created_at_iso,
+            updated_at: page.updated_at,
+            updated_at_iso: page.updated_at_iso,
+            summary: page.meta?.summary || page.summary || "",
+            tags: Object.freeze(
+              Array.isArray(page.meta?.tags) ? [...page.meta.tags] : [],
+            ),
+          }),
+        );
+      }
+      if (page.pages) visit(page.pages);
+    }
+  };
+  visit(pages);
+  return Object.freeze(collection);
+};
+
+const attachTemplatePageCollection = (pages, collection) => {
+  for (const page of pages) {
+    page.meta ||= {};
+    page.meta.pages = collection;
+    page.meta.collections = Object.freeze({ pages: collection });
+    if (page.pages) attachTemplatePageCollection(page.pages, collection);
+    if (page.paginatedPages) {
+      attachTemplatePageCollection(page.paginatedPages, collection);
+    }
+  }
 };
 
 const addRelatedPages = async (pages) => {
@@ -400,10 +452,10 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       const { page, isDirectory } = result;
 
       // Skip draft pages in production builds
-      if (page.meta.draft && !process.env.SWIFTY_WATCH) return;
+      if (page.meta.draft && !includesUnpublishedPages()) return;
 
       // Skip scheduled pages (future date) in production builds
-      if (page.dateObj && page.dateObj > new Date() && !process.env.SWIFTY_WATCH) return;
+      if (page.dateObj && page.dateObj > new Date() && !includesUnpublishedPages()) return;
 
       if (isDirectory) {
         page.pages = await generatePages(page.filePath, baseDir, page);
@@ -759,6 +811,10 @@ const createPages = async (pages, distDir = dirs.dist) => {
 };
 
 const addLinks = async (pages, parent, linkCache = createLinkListCache()) => {
+  if (!parent && !linkCache.templatePages) {
+    linkCache.templatePages = createTemplatePageCollection(pages);
+    attachTemplatePageCollection(pages, linkCache.templatePages);
+  }
   const linkablePages = pages.filter((p) => !p.notFound);
   // Filter out folders and index pages for prev/next calculation (only content pages)
   const contentPages = linkablePages.filter((p) => !p.folder && p.filename !== 'index');
@@ -859,6 +915,7 @@ export {
   addLinks,
   comparePages,
   createLinkListCache,
+  createTemplatePageCollection,
   extractSummary,
   flattenAuthoredPages,
   findPageBySource,

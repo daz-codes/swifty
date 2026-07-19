@@ -80,6 +80,8 @@ Swifty uses [Eta](https://eta.js.org/) with EJS-style syntax for templates:
 | `next_page` | `<%= next_page %>` | Link to next sibling page |
 | `pagination` | `<%= pagination %>` | Pagination nav for paginated folders |
 | `toc` | `<%= toc %>` | Nested links to the page's Markdown headings |
+| `pages` | `<%= pages %>` | Immutable authored-page metadata collection |
+| `collections.pages` | `<%= collections.pages %>` | Namespaced alias for `pages` |
 | `data.*` | `<%= data.team %>` | Data from JSON/YAML files in `data/` folder |
 
 ## Using JavaScript in Templates

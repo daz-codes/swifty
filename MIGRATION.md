@@ -7,6 +7,10 @@ Swifty 4 focuses on deterministic builds, safer deployment, and explicit errors.
 - Upgrade Node.js to version 22 or 24. Older Node.js releases are no longer supported.
 - Run `npm install` after upgrading so the tracked lockfile installs the new minifiers.
 
+Site scaffolding now uses `swifty new <sitename>`. Bare unknown arguments are no
+longer treated as directory names, so command typos fail safely. Use
+`swifty --help` or `swifty --version` for CLI information.
+
 ## Clean Output and Public Files
 
 Every full build empties the output directory. Files written directly to `dist/` are removed.

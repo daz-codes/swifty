@@ -1449,6 +1449,28 @@ rss_feeds:
         pages.filter((page) => page.nav).map((page) => page.url),
       );
     });
+
+    it("should expose an immutable authored page collection to templates", async () => {
+      const { addLinks, generatePages } = await import("../src/pages.js");
+      const { replacePlaceholders } = await import("../src/partials.js");
+      const pages = await generatePages(path.join(testDir, "pages"));
+      await addLinks(pages);
+      const about = pages.find((page) => page.url === "/about");
+      const collection = about.meta.pages;
+
+      assert.ok(Object.isFrozen(collection));
+      assert.ok(Object.isFrozen(collection[0]));
+      assert.ok(collection.some((page) => page.url === "/blog/first-post"));
+      assert.ok(!collection.some((page) => page.url.startsWith("/tags")));
+      assert.strictEqual(about.meta.collections.pages, collection);
+      assert.strictEqual(
+        await replacePlaceholders(
+          '<%= pages.find((item) => item.url === "/about").title %>',
+          about,
+        ),
+        "About Us",
+      );
+    });
   });
 
   describe("Page Ordering", () => {
@@ -2092,6 +2114,95 @@ rss_feeds:
       const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
       // Short page should be 1 min read
       assert.ok(content.includes("min read"), "should show reading time");
+    });
+
+    it("should exclude fenced code blocks from word count", async () => {
+      const { replacePlaceholders } = await import("../src/partials.js");
+      const code = "const generatedValue = example token;\n".repeat(100);
+      const page = {
+        content: `Readable prose has four words.\n\n\`\`\`js\n${code}\`\`\``,
+        meta: {},
+        url: "/code-reading-time",
+      };
+
+      assert.strictEqual(await replacePlaceholders("<%= word_count %>", page), "5");
+    });
+  });
+
+  describe("CLI", () => {
+    const cliPath = path.join(__dirname, "..", "src", "cli.js");
+
+    it("should support help and version flags without creating directories", async () => {
+      const sandbox = path.join(testDir, "cli-flags");
+      await fsExtra.ensureDir(sandbox);
+
+      const help = await execFileAsync(process.execPath, [cliPath, "--help"], {
+        cwd: sandbox,
+      });
+      const version = await execFileAsync(process.execPath, [cliPath, "--version"], {
+        cwd: sandbox,
+      });
+      const expectedVersion = JSON.parse(
+        await fs.readFile(path.join(__dirname, "..", "package.json"), "utf-8"),
+      ).version;
+
+      assert.match(help.stdout, /swifty new <sitename>/);
+      assert.strictEqual(version.stdout.trim(), expectedVersion);
+      assert.deepStrictEqual(await fs.readdir(sandbox), []);
+    });
+
+    it("should reject unknown commands and option-like site names", async () => {
+      const sandbox = path.join(testDir, "cli-errors");
+      await fsExtra.ensureDir(sandbox);
+
+      await assert.rejects(
+        () => execFileAsync(process.execPath, [cliPath, "biuld"], { cwd: sandbox }),
+        (error) => error.code === 1 && /Unknown command "biuld"/.test(error.stderr),
+      );
+      await assert.rejects(
+        () => execFileAsync(process.execPath, [cliPath, "new", "--unsafe"], { cwd: sandbox }),
+        (error) => error.code === 1 && /Unknown option/.test(error.stderr),
+      );
+      assert.deepStrictEqual(await fs.readdir(sandbox), []);
+    });
+
+    it("should scaffold a styled site and build unpublished pages with --drafts", async () => {
+      const sandbox = path.join(testDir, "cli-new");
+      await fsExtra.ensureDir(sandbox);
+      await execFileAsync(process.execPath, [cliPath, "new", "preview-site"], {
+        cwd: sandbox,
+      });
+      const site = path.join(sandbox, "preview-site");
+
+      assert.ok(await fsExtra.pathExists(path.join(site, "layouts", "default.html")));
+      assert.ok(await fsExtra.pathExists(path.join(site, "css", "style.css")));
+      assert.match(
+        await fs.readFile(path.join(site, "css", "style.css"), "utf-8"),
+        /\.site-header/,
+      );
+      await fs.writeFile(
+        path.join(site, "pages", "draft.md"),
+        "---\ntitle: Draft\ndraft: true\n---\n# Draft",
+      );
+      await fs.writeFile(
+        path.join(site, "pages", "scheduled.md"),
+        "---\ntitle: Scheduled\ndate: 2099-01-01\n---\n# Scheduled",
+      );
+
+      await execFileAsync(process.execPath, [cliPath, "build"], { cwd: site });
+      assert.strictEqual(
+        await fsExtra.pathExists(path.join(site, "dist", "draft", "index.html")),
+        false,
+      );
+      await execFileAsync(
+        process.execPath,
+        [cliPath, "build", "--drafts", "--out", "preview"],
+        { cwd: site },
+      );
+      assert.ok(await fsExtra.pathExists(path.join(site, "preview", "draft", "index.html")));
+      assert.ok(
+        await fsExtra.pathExists(path.join(site, "preview", "scheduled", "index.html")),
+      );
     });
   });
 

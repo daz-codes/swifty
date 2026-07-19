@@ -21,7 +21,7 @@ npm install @daz4126/swifty
 Swifty comes with a handy command that sets up a fresh project with all the folders you need:
 
 ```bash
-npx swifty my-site
+npx swifty new my-site
 ```
 
 This creates a `my-site/` folder with a starter structure including example pages, layouts, and styles to play with. Replace `my-site` with whatever you want to call your project. Think of it as your creative sandbox.

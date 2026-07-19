@@ -10,6 +10,22 @@ Here's what's cooking in the Swifty kitchen. Some of these are half-baked ideas,
 
 ## Recently Shipped
 
+### Safer CLI and Draft Preview Builds
+Site creation now uses `swifty new`, unknown commands fail safely, help and
+version flags are available, and `swifty build --drafts` includes draft and
+future-dated content without enabling watcher behavior.
+
+### Template Page Collections
+Templates receive immutable `pages` and `collections.pages` metadata arrays for
+recent-post lists, archives, and custom navigation without filesystem work.
+
+### Code-Aware Reading Time
+Fenced code blocks no longer inflate page word counts or reading-time estimates.
+
+### Styled Starter Site
+New projects include a minimal responsive stylesheet and default content layout
+instead of empty presentation directories.
+
 ### Bounded Search Index Entries
 `search_content_limit` caps normalized leading page content at 5,000 characters
 per entry by default. Titles, summaries, tags, and URLs remain complete in their
@@ -156,6 +172,8 @@ on the compatibility adapter while consumers migrate to `morpheus:*` events and
 - Compute word count and reading time once from normalized rendered page content
   so rendered partial/data text is included where appropriate and code and
   template syntax are excluded consistently.
+- Add content-hash-based incremental production builds so unchanged page output
+  can be retained safely between `swifty build` runs.
 ## Deferred
 
 - **Shortcodes**: Eta and partials already cover most shortcode use cases.
@@ -166,6 +184,12 @@ on the compatibility adapter while consumers migrate to `morpheus:*` events and
 - **Multi-site library contexts**: The programmatic API is intentionally
   one-site-per-process until module-level configuration, indexes, caches, and
   incremental state move behind an explicit site context.
+- **HTML parser migration**: Keep the token-protected regex pipeline while its
+  tests remain effective, but move rewriting and attribute inspection to a real
+  HTML parser if valid edge cases begin escaping the current grammar.
+- **JavaScript configuration hooks**: Design an optional `swifty.config.js`
+  context for Eta globals/helpers and marked extensions after the multi-site
+  context defines clear ownership and cache invalidation boundaries.
 
 ## Want Something?
 
