@@ -49,11 +49,14 @@ You might notice your CSS and JS files magically appear in the built pages. That
 
 - **All CSS files** from your `css/` folder (alphabetically sorted)
 - **All JS files** from your `js/` folder (alphabetically sorted)
-- **Syntax highlighting styles** for code blocks
+- **A self-hosted syntax highlighting theme** only on pages with fenced code blocks
 - **Swifty navigation script** (if `morphing` is enabled in config)
 - **LiveReload script** (only during development with `swifty start`)
 
 These get added just before the closing `</head>` tag. You don't need to manually link your stylesheets or scripts - just drop files in the right folders and they're included.
+
+Syntax highlighting does not contact a CDN. Set `highlight_theme` in
+`config.yaml` to select another theme bundled with highlight.js.
 
 ## Template Variables
 
@@ -76,6 +79,7 @@ Swifty uses [Eta](https://eta.js.org/) with EJS-style syntax for templates:
 | `prev_page` | `<%= prev_page %>` | Link to previous sibling page |
 | `next_page` | `<%= next_page %>` | Link to next sibling page |
 | `pagination` | `<%= pagination %>` | Pagination nav for paginated folders |
+| `toc` | `<%= toc %>` | Nested links to the page's Markdown headings |
 | `data.*` | `<%= data.team %>` | Data from JSON/YAML files in `data/` folder |
 
 ## Using JavaScript in Templates
@@ -93,7 +97,7 @@ Since Swifty uses Eta, you can use full JavaScript in your templates:
 <% } %>
 
 <!-- Expressions -->
-<p>Published: <%= new Date(date).toLocaleDateString() %></p>
+<p>Published: <%= date %></p>
 
 <!-- Computed values -->
 <%= title.toUpperCase() %>

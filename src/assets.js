@@ -8,6 +8,10 @@ import sharp from "sharp";
 
 import { dirs, defaultConfig } from "./config.js";
 import { mapLimit } from "./concurrency.js";
+import {
+  HIGHLIGHT_LICENSE_PATH,
+  resolveHighlightTheme,
+} from "./highlight-theme.js";
 import { minifyCss, minifyJs } from "./minify.js";
 import {
   applyBasePathToCss,
@@ -36,6 +40,7 @@ const responsiveImageMap = new Map();
 
 const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
 const navigationEnabled = () => defaultConfig.morphing !== false;
+const searchEnabled = () => defaultConfig.search !== false;
 const minificationEnabled = (type) =>
   defaultConfig.minify !== false && defaultConfig[`minify_${type}`] !== false;
 const normalizeImageUrl = (url) =>
@@ -127,8 +132,7 @@ const registerResponsiveImage = (filename, ext, variants) => {
 const getResponsiveImage = (url) =>
   responsiveImageMap.get(normalizeImageUrl(url)) || null;
 
-const getNavigationAssetName = async (filename = "swifty-navigation.js") => {
-  const sourcePath = path.join(clientAssetsDir, filename);
+const getHashedAssetName = async (sourcePath, filename = path.basename(sourcePath)) => {
   const content = await fs.readFile(sourcePath);
   const hash = crypto
     .createHash("sha256")
@@ -139,9 +143,31 @@ const getNavigationAssetName = async (filename = "swifty-navigation.js") => {
   return `${path.basename(filename, ext)}.${hash}${ext}`;
 };
 
+const getClientAssetName = (filename) =>
+  getHashedAssetName(path.join(clientAssetsDir, filename), filename);
+
+const getHighlightThemeAsset = async () => {
+  const theme = resolveHighlightTheme(defaultConfig.highlight_theme);
+  const filename = `highlight-${theme.name}.css`;
+  return {
+    ...theme,
+    filename: await getHashedAssetName(theme.sourcePath, filename),
+  };
+};
+
+const getHighlightThemeSrc = async () => {
+  const asset = await getHighlightThemeAsset();
+  return withBasePath(`/swifty/${asset.filename}`);
+};
+
 const getNavigationScriptSrc = async () => {
   if (!navigationEnabled()) return "";
-  return withBasePath(`/swifty/${await getNavigationAssetName()}`);
+  return withBasePath(`/swifty/${await getClientAssetName("swifty-navigation.js")}`);
+};
+
+const getSearchScriptSrc = async () => {
+  if (!searchEnabled()) return "";
+  return withBasePath(`/swifty/${await getClientAssetName("swifty-search.js")}`);
 };
 
 const isDestinationFresh = async (source, destination) => {
@@ -290,30 +316,51 @@ const ensureAndCopy = async (source, destination, validExts) => {
   }
 };
 
-const copyNavigationAssets = async (outputDir = dirs.dist) => {
-  if (!navigationEnabled()) return;
-  if (!(await fsExtra.pathExists(clientAssetsDir))) return;
-
+const copySwiftyAssets = async (outputDir = dirs.dist) => {
   const destination = path.join(outputDir, "swifty");
   await fsExtra.ensureDir(destination);
 
-  const files = await fs.readdir(clientAssetsDir);
+  const navigationFiles = new Set([
+    "swifty-navigation.js",
+    "morpheus.js",
+    "idiomorph.esm.js",
+    "IDIOMORPH-LICENSE.txt",
+  ]);
+  const files = (await fs.readdir(clientAssetsDir)).filter(
+    (file) =>
+      (navigationEnabled() && navigationFiles.has(file)) ||
+      (searchEnabled() && file === "swifty-search.js"),
+  );
   await mapLimit(
     files,
     async (file) => {
       const sourcePath = path.join(clientAssetsDir, file);
-      const destinationFilename =
-        file === "swifty-navigation.js"
-          ? await getNavigationAssetName(file)
-          : file;
+      const destinationFilename = file.startsWith("swifty-") && file.endsWith(".js")
+        ? await getClientAssetName(file)
+        : file;
       const destinationPath = path.join(destination, destinationFilename);
       const copied = await copyIfStale(sourcePath, destinationPath);
       if (copied) {
-        console.log(`Copied Swifty navigation asset ${destinationFilename}`);
+        console.log(`Copied Swifty asset ${destinationFilename}`);
       }
     },
     getBuildConcurrency(),
   );
+
+  const theme = await getHighlightThemeAsset();
+  const themeDestination = path.join(destination, theme.filename);
+  const copied = await copyIfStale(theme.sourcePath, themeDestination);
+  if (copied) {
+    console.log(`Copied Swifty asset ${theme.filename}`);
+  }
+  const licenseDestination = path.join(destination, "HIGHLIGHT-LICENSE.txt");
+  const copiedLicense = await copyIfStale(
+    HIGHLIGHT_LICENSE_PATH,
+    licenseDestination,
+  );
+  if (copiedLicense) {
+    console.log("Copied Swifty asset HIGHLIGHT-LICENSE.txt");
+  }
 };
 
 const copyAssets = async (outputDir = dirs.dist) => {
@@ -326,7 +373,7 @@ const copyAssets = async (outputDir = dirs.dist) => {
     validExtensions.css,
   );
   await ensureAndCopy(dirs.js, path.join(outputDir, "js"), validExtensions.js);
-  await copyNavigationAssets(outputDir);
+  await copySwiftyAssets(outputDir);
 };
 async function optimizeImages(outputDir = dirs.dist) {
   responsiveImageMap.clear();
@@ -487,6 +534,9 @@ export {
   copySingleAsset,
   optimizeSingleImage,
   getNavigationScriptSrc,
+  getSearchScriptSrc,
+  getHighlightThemeAsset,
+  getHighlightThemeSrc,
   getResponsiveImage,
   getImageCacheDirectory,
 };

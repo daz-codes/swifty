@@ -1,14 +1,17 @@
 import assert from "assert";
+import { execFile } from "child_process";
 import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
+import { promisify } from "util";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const testDir = path.join(__dirname, "fixtures");
 const distDir = path.join(testDir, "dist");
+const execFileAsync = promisify(execFile);
 
 describe("Swifty", function () {
   this.timeout(15000);
@@ -73,6 +76,7 @@ describe("Swifty", function () {
   <div class="meta">Published: <%= date %></div>
   <div class="tags"><%= links_to_tags %></div>
   <%= content %>
+  <aside class="related"><%= related_pages %></aside>
   <nav class="post-nav">
     <span class="prev"><%= prev_page %></span>
     <span class="next"><%= next_page %></span>
@@ -89,7 +93,9 @@ layout: default
 ---
 # Welcome to <%= sitename %>
 
-This is the home page with a [link to about](/about).`
+This is the home page with a [link to about](/about).
+
+<%= partial: search %>`
     );
 
     // Create about page
@@ -134,6 +140,28 @@ Email us at **hello@example.com** or visit our *office*.`
     );
 
     await fs.writeFile(
+      path.join(testDir, "pages", "toc.md"),
+      `---
+title: Contents Guide
+layout: default
+nav: false
+---
+# Contents Guide
+
+<%= toc %>
+
+## Features & Setup
+
+[Jump back to this section](#features-setup).
+
+### Child \`code\`
+
+## Features & Setup
+
+## Café & Tea`,
+    );
+
+    await fs.writeFile(
       path.join(testDir, "pages", "search-hidden.md"),
       `---
 title: Hidden From Search
@@ -145,6 +173,17 @@ This content must not appear in the generated search index.`,
     );
 
     await fs.writeFile(
+      path.join(testDir, "pages", "eta-literal.md"),
+      `---
+title: Eta Literal
+layout: default
+nav: false
+search: false
+---
+Literal Eta value: <%= data.values.literal_eta %>`,
+    );
+
+    await fs.writeFile(
       path.join(testDir, "pages", "legacy.md"),
       `---
 title: Legacy URL
@@ -152,6 +191,21 @@ layout: default
 permalink: /company/about.html
 ---
 # Custom Permalink`,
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "pages", "summary-marker.md"),
+      `---
+title: Summary Marker
+nav: false
+---
+# Summary Marker
+
+This paragraph is the deliberate excerpt.
+
+<!--more-->
+
+This text must not be part of the summary.`,
     );
 
     await fs.writeFile(
@@ -185,6 +239,7 @@ title: First Blog Post
 layout: blog
 tags: [javascript, tutorial]
 position: 1
+date: 13/01/2024
 ---
 # My First Post
 
@@ -198,10 +253,33 @@ title: Second Blog Post
 layout: blog
 tags: [javascript, advanced]
 position: 2
+date: 2024-02-20
 ---
 # Another Post
 
 This post covers advanced topics.`
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "pages", "tag-a.md"),
+      `---
+title: Canonical Tags One
+nav: false
+position: 90
+tags: ["Web Dev", "Ruby", "C#", "C++", "Café", "東京"]
+---
+First page for canonical tag routing.`,
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "pages", "tag-b.md"),
+      `---
+title: Canonical Tags Two
+nav: false
+position: 91
+tags: ["web   dev", "ruby"]
+---
+Second page for canonical tag routing.`,
     );
 
     // Create docs with nested structure
@@ -253,7 +331,9 @@ Use placeholders like this:
 
 Inline code: \`<%= variable %>\` should also be protected.
 
-Regular text <%= title %> should be replaced.`
+Regular text <%= title %> should be replaced.
+
+<%= partial: code-example %>`
     );
 
     // Create footer partial
@@ -271,12 +351,22 @@ Regular text <%= title %> should be replaced.`
     );
 
     await fs.writeFile(
+      path.join(testDir, "partials", "blog.html"),
+      `<a class="blog-section-link" href="<%= url %>"><%= title %></a>`,
+    );
+
+    await fs.writeFile(
       path.join(testDir, "partials", "htmlnav.html"),
       `<nav class="raw-partial">
   <a href="/about">About</a>
 
   <button type="button">Menu</button>
 </nav>`
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "partials", "code-example.html"),
+      `<pre><code><img src="/images/photo.jpg"><%= title %></code></pre>`,
     );
 
     // Create CSS file
@@ -353,6 +443,10 @@ Content for post ${i}.`
         { name: "Bob", role: "Designer" }
       ])
     );
+    await fs.writeFile(
+      path.join(testDir, "data", "values.json"),
+      JSON.stringify({ literal_eta: "<%= title %>" }),
+    );
 
     // Create a page that uses data folder
     await fs.writeFile(
@@ -428,7 +522,10 @@ ${'Here is more content to increase the word count further. '.repeat(20)}`
 default_layout_name: default
 author: Test Author
 site_url: https://example.com
+date_locale: en-GB
+timezone: UTC
 default_og_image: /images/default-og.png
+highlight_theme: github-dark
 rss_feeds:
   - blog
   - folder: docs
@@ -542,7 +639,10 @@ rss_feeds:
     it("should use folder index.md content and metadata for the folder URL", async () => {
       const content = await fs.readFile(path.join(distDir, "blog", "index.html"), "utf-8");
 
-      assert.ok(content.includes("<h1>Blog Posts</h1>"), "folder index content should render");
+      assert.ok(
+        content.includes('<h1 id="blog-posts">Blog Posts</h1>'),
+        "folder index content should render with a heading anchor",
+      );
       assert.ok(content.includes("<title>Blog | Test Site</title>"), "folder index title should render");
     });
 
@@ -618,16 +718,53 @@ rss_feeds:
       assert.ok(content.includes("console.log"));
     });
 
-    it("should copy Swifty navigation assets when morphing is enabled", async () => {
+    it("should copy fingerprinted Swifty client and highlight theme assets", async () => {
       const files = await fs.readdir(path.join(distDir, "swifty"));
       const navigationExists = files.some((file) =>
         /^swifty-navigation\.[a-f0-9]{10}\.js$/.test(file),
       );
+      const searchExists = files.some((file) =>
+        /^swifty-search\.[a-f0-9]{10}\.js$/.test(file),
+      );
+      const highlightTheme = files.find((file) =>
+        /^highlight-github-dark\.[a-f0-9]{10}\.css$/.test(file),
+      );
+      const morpheusExists = await fsExtra.pathExists(path.join(distDir, "swifty", "morpheus.js"));
       const idiomorphExists = await fsExtra.pathExists(path.join(distDir, "swifty", "idiomorph.esm.js"));
       const licenseExists = await fsExtra.pathExists(path.join(distDir, "swifty", "IDIOMORPH-LICENSE.txt"));
+      const highlightLicenseExists = await fsExtra.pathExists(
+        path.join(distDir, "swifty", "HIGHLIGHT-LICENSE.txt"),
+      );
       assert.strictEqual(navigationExists, true, "fingerprinted swifty-navigation.js should exist");
+      assert.strictEqual(searchExists, true, "fingerprinted swifty-search.js should exist");
+      assert.ok(highlightTheme, "configured highlight.js theme should exist");
+      assert.strictEqual(morpheusExists, true, "reusable morpheus.js core should exist");
       assert.strictEqual(idiomorphExists, true, "idiomorph.esm.js should exist");
       assert.strictEqual(licenseExists, true, "IDIOMORPH-LICENSE.txt should exist");
+      assert.strictEqual(
+        highlightLicenseExists,
+        true,
+        "HIGHLIGHT-LICENSE.txt should exist",
+      );
+
+      const navigationFile = files.find((file) =>
+        /^swifty-navigation\.[a-f0-9]{10}\.js$/.test(file),
+      );
+      const navigationClient = await fs.readFile(
+        path.join(distDir, "swifty", navigationFile),
+        "utf-8",
+      );
+      const morpheusClient = await fs.readFile(
+        path.join(distDir, "swifty", "morpheus.js"),
+        "utf-8",
+      );
+      const highlightCss = await fs.readFile(
+        path.join(distDir, "swifty", highlightTheme),
+        "utf-8",
+      );
+      assert.ok(navigationClient.includes('from "./morpheus.js"'));
+      assert.ok(morpheusClient.includes("export class Morpheus"));
+      assert.ok(highlightCss.includes(".hljs"));
     });
 
     it("should inject Swifty navigation script with morphing settings", async () => {
@@ -745,6 +882,25 @@ rss_feeds:
       assert.ok(content.includes("<h1"), "should have h1 tag");
     });
 
+    it("should generate stable unique heading anchors and a nested table of contents", async () => {
+      const content = await fs.readFile(
+        path.join(distDir, "toc", "index.html"),
+        "utf-8",
+      );
+
+      assert.ok(content.includes('<h1 id="contents-guide">Contents Guide</h1>'));
+      assert.ok(content.includes('<h2 id="features-setup">Features &amp; Setup</h2>'));
+      assert.ok(content.includes('<h2 id="features-setup-1">Features &amp; Setup</h2>'));
+      assert.ok(content.includes('<h2 id="café-tea">Café &amp; Tea</h2>'));
+      assert.ok(content.includes('<nav class="swifty_toc" aria-label="Table of contents">'));
+      assert.ok(content.includes('<a href="#features-setup">Features &amp; Setup</a>'));
+      assert.ok(content.includes('<a href="#features-setup-1">Features &amp; Setup</a>'));
+      assert.match(
+        content,
+        /href="#features-setup">Features &amp; Setup<\/a><ul>.*href="#child-code"/s,
+      );
+    });
+
     it("should convert bold text", async () => {
       const content = await fs.readFile(path.join(distDir, "contact", "index.html"), "utf-8");
       assert.ok(content.includes("<strong>") && content.includes("hello@example.com"), "should convert **text** to strong");
@@ -774,10 +930,21 @@ rss_feeds:
 
     it("should syntax-highlight fenced code blocks with highlight.js classes", async () => {
       const content = await fs.readFile(path.join(distDir, "docs", "getting-started", "index.html"), "utf-8");
+      const plainContent = await fs.readFile(
+        path.join(distDir, "contact", "index.html"),
+        "utf-8",
+      );
       assert.ok(
         /<code class="hljs language-bash">/.test(content),
         "code element should carry the hljs class so the highlight stylesheet applies",
       );
+      assert.match(
+        content,
+        /href="\/swifty\/highlight-github-dark\.[a-f0-9]{10}\.css"/,
+      );
+      assert.ok(!content.includes("cdnjs.cloudflare.com"));
+      assert.ok(!plainContent.includes("highlight-github-dark"));
+      assert.ok(!plainContent.includes("cdnjs.cloudflare.com"));
     });
   });
 
@@ -802,6 +969,128 @@ rss_feeds:
     it("should support custom front matter variables", async () => {
       const content = await fs.readFile(path.join(distDir, "about", "index.html"), "utf-8");
       assert.ok(content.includes("Custom Value Here"), "should replace custom_var placeholder");
+    });
+
+    it("should not evaluate rendered data values as a second Eta template", async () => {
+      const content = await fs.readFile(
+        path.join(distDir, "eta-literal", "index.html"),
+        "utf-8",
+      );
+      assert.ok(
+        content.includes("Literal Eta value: &lt;%= title %&gt;") ||
+          content.includes("Literal Eta value: <%= title %>"),
+        "rendered page content should remain opaque during shell rendering",
+      );
+      assert.ok(!content.includes("Literal Eta value: Eta Literal"));
+    });
+
+    it("should preserve YAML calendar dates as strings", async () => {
+      const { parseFrontMatter } = await import("../src/frontmatter.js");
+      const parsed = parseFrontMatter(
+        "---\ndefaults: &defaults\n  layout: blog\nsettings:\n  <<: *defaults\ndate: 2026-07-18\n---\nScheduled",
+      );
+      assert.strictEqual(parsed.data.date, "2026-07-18");
+      assert.strictEqual(parsed.data.settings.layout, "blog");
+    });
+  });
+
+  describe("Page Dates", () => {
+    it("should prefer a tracked file's Git commit date over filesystem time", async () => {
+      const siteDir = path.join(testDir, "git-date-site");
+      const pagesDir = path.join(siteDir, "pages");
+      const pagePath = path.join(pagesDir, "tracked.md");
+      const commitDate = "2020-01-02T03:04:05Z";
+
+      try {
+        await fsExtra.ensureDir(pagesDir);
+        await fs.writeFile(pagePath, "# Tracked page");
+        await execFileAsync("git", ["init", "-q"], { cwd: siteDir });
+        await execFileAsync("git", ["add", "pages/tracked.md"], { cwd: siteDir });
+        await execFileAsync(
+          "git",
+          [
+            "-c",
+            "user.name=Swifty Tests",
+            "-c",
+            "user.email=tests@example.com",
+            "commit",
+            "-qm",
+            "Add tracked page",
+          ],
+          {
+            cwd: siteDir,
+            env: {
+              ...process.env,
+              GIT_AUTHOR_DATE: commitDate,
+              GIT_COMMITTER_DATE: commitDate,
+            },
+          },
+        );
+        await fs.utimes(pagePath, new Date("2026-07-01"), new Date("2026-07-01"));
+
+        const { generatePages } = await import("../src/pages.js");
+        const pages = await generatePages(pagesDir);
+        assert.strictEqual(pages[0].date_iso, "2020-01-02T03:04:05.000Z");
+        assert.strictEqual(
+          pages[0].updated_at_iso,
+          "2020-01-02T03:04:05.000Z",
+        );
+      } finally {
+        await fsExtra.remove(siteDir);
+      }
+    });
+
+    it("should fall back to mtime when a file has no Git history", async () => {
+      const pagePath = path.join(testDir, "untracked-date.md");
+      const fallbackDate = new Date("2022-04-05T06:07:08.000Z");
+      const { clearGitDateCache, resolveFileDate } = await import("../src/dates.js");
+
+      try {
+        await fs.writeFile(pagePath, "Untracked");
+        clearGitDateCache();
+        const resolvedDate = await resolveFileDate(pagePath, fallbackDate);
+        assert.strictEqual(resolvedDate.toISOString(), fallbackDate.toISOString());
+      } finally {
+        await fsExtra.remove(pagePath);
+        clearGitDateCache();
+      }
+    });
+
+    it("should resolve calendar dates at midnight in the configured timezone", async () => {
+      const { parsePageDate } = await import("../src/dates.js");
+      const summer = parsePageDate("2026-07-18", "Europe/London");
+      const winter = parsePageDate("2026-01-18", "Europe/London");
+
+      assert.strictEqual(summer.date.toISOString(), "2026-07-17T23:00:00.000Z");
+      assert.strictEqual(winter.date.toISOString(), "2026-01-18T00:00:00.000Z");
+      assert.strictEqual(summer.dateOnly, true);
+    });
+
+    it("should preserve exact offset-bearing ISO timestamps", async () => {
+      const { parsePageDate } = await import("../src/dates.js");
+      const parsed = parsePageDate("2026-07-18T08:30:00+02:00", "UTC");
+
+      assert.strictEqual(parsed.date.toISOString(), "2026-07-18T06:30:00.000Z");
+      assert.strictEqual(parsed.dateOnly, false);
+      assert.strictEqual(parsePageDate("2026-07-18T08:30:00", "UTC"), null);
+    });
+
+    it("should format display dates with explicit locale and timezone", async () => {
+      const { formatDisplayDate } = await import("../src/dates.js");
+      const date = new Date("2024-02-20T00:00:00.000Z");
+      const options = {
+        timezone: "UTC",
+        dateFormat: { year: "numeric", month: "2-digit", day: "2-digit" },
+      };
+
+      assert.strictEqual(
+        formatDisplayDate(date, { ...options, date_locale: "en-GB" }),
+        "20/02/2024",
+      );
+      assert.strictEqual(
+        formatDisplayDate(date, { ...options, date_locale: "en-US" }),
+        "02/20/2024",
+      );
     });
   });
 
@@ -848,21 +1137,34 @@ rss_feeds:
         await buildModule.default("dist");
 
         const home = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+        const codePage = await fs.readFile(
+          path.join(distDir, "docs", "getting-started", "index.html"),
+          "utf-8",
+        );
         const imagePage = await fs.readFile(
           path.join(distDir, "images", "index.html"),
           "utf-8",
         );
         const sitemap = await fs.readFile(path.join(distDir, "sitemap.xml"), "utf-8");
         const robots = await fs.readFile(path.join(distDir, "robots.txt"), "utf-8");
+        const tagIndex = await fs.readFile(
+          path.join(distDir, "tags", "index.html"),
+          "utf-8",
+        );
         const search = JSON.parse(
           await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
         );
 
         assert.ok(home.includes('href="/project/about"'));
         assert.ok(/href="\/project\/css\/style\.css\?v=\d+"/.test(home));
+        assert.match(
+          codePage,
+          /href="\/project\/swifty\/highlight-github-dark\.[a-f0-9]{10}\.css"/,
+        );
         assert.ok(imagePage.includes('src="/project/images/photo.webp"'));
         assert.ok(sitemap.includes("https://example.com/project/about"));
         assert.ok(robots.includes("https://example.com/project/sitemap.xml"));
+        assert.ok(tagIndex.includes('href="/project/tags/web-dev"'));
         assert.ok(search.pages.some((page) => page.url === "/project/about"));
         assert.strictEqual(
           await fsExtra.pathExists(path.join(distDir, "project")),
@@ -926,6 +1228,52 @@ rss_feeds:
       assert.ok(content.includes('<nav class="raw-partial">'), "should include raw HTML partial");
       assert.ok(!content.includes('<p><nav class="raw-partial">'), "should not wrap raw HTML partial in paragraphs");
     });
+
+    it("should preserve dollar replacement tokens in rendered partials", async () => {
+      const partialPath = path.join(testDir, "partials", "replacement-tokens.html");
+      const expected = "Before $& middle $` after $'";
+      const { clearCache, replacePlaceholders } = await import("../src/partials.js");
+
+      try {
+        await fs.writeFile(partialPath, expected);
+        clearCache();
+        const content = await replacePlaceholders(
+          "<%= partial: replacement-tokens %>",
+          { url: "/replacement-test", meta: {} },
+        );
+        assert.strictEqual(content, expected);
+      } finally {
+        await fsExtra.remove(partialPath);
+        clearCache();
+      }
+    });
+
+    it("should reuse computed page data while keeping later metadata current", async () => {
+      const { replacePlaceholders } = await import("../src/partials.js");
+      const context = {};
+      const page = {
+        content: "one two three",
+        meta: { dynamic_value: "before" },
+        url: "/context",
+      };
+
+      const first = await replacePlaceholders(
+        "<%= word_count %> <%= dynamic_value %>",
+        page,
+        context,
+      );
+      const computed = context.computed;
+      page.meta.dynamic_value = "after";
+      const second = await replacePlaceholders(
+        "<%= word_count %> <%= dynamic_value %>",
+        page,
+        context,
+      );
+
+      assert.strictEqual(first, "3 before");
+      assert.strictEqual(second, "3 after");
+      assert.strictEqual(context.computed, computed);
+    });
   });
 
   describe("Code Block Protection", () => {
@@ -954,6 +1302,16 @@ rss_feeds:
         "should replace placeholder in normal text"
       );
     });
+
+    it("should protect image and Eta examples supplied by partials", async () => {
+      const content = await fs.readFile(path.join(distDir, "docs", "templates", "index.html"), "utf-8");
+      assert.ok(content.includes('/images/photo.jpg'));
+      assert.ok(!content.includes('/images/photo.webp'));
+      assert.ok(
+        content.includes("&lt;%= title %&gt;") || content.includes("<%= title %>"),
+        "partial code examples should remain literal",
+      );
+    });
   });
 
   describe("Tags", () => {
@@ -975,6 +1333,89 @@ rss_feeds:
         content.includes('href="/tags/javascript"'),
         "should have link to javascript tag"
       );
+    });
+
+    it("should merge case and whitespace variants into canonical tag pages", async () => {
+      const webDev = await fs.readFile(
+        path.join(distDir, "tags", "web-dev", "index.html"),
+        "utf-8",
+      );
+      const ruby = await fs.readFile(
+        path.join(distDir, "tags", "ruby", "index.html"),
+        "utf-8",
+      );
+
+      assert.ok(webDev.includes("Canonical Tags One"));
+      assert.ok(webDev.includes("Canonical Tags Two"));
+      assert.ok(ruby.includes("Canonical Tags One"));
+      assert.ok(ruby.includes("Canonical Tags Two"));
+      assert.strictEqual(
+        await fsExtra.pathExists(path.join(distDir, "tags", "Web Dev")),
+        false,
+      );
+    });
+
+    it("should create safe, collision-free routes for punctuation and Unicode tags", async () => {
+      const content = await fs.readFile(
+        path.join(distDir, "tags", "index.html"),
+        "utf-8",
+      );
+      const collisionRoutes = [...content.matchAll(/href="(\/tags\/c-[a-f0-9]+)"/g)]
+        .map((match) => match[1]);
+
+      assert.strictEqual(new Set(collisionRoutes).size, 2, "C# and C++ need distinct routes");
+      for (const route of collisionRoutes) {
+        assert.strictEqual(
+          await fsExtra.pathExists(
+            path.join(distDir, route.replace(/^\/+/, ""), "index.html"),
+          ),
+          true,
+        );
+      }
+      assert.ok(content.includes('href="/tags/cafe"'));
+      assert.match(content, /href="\/tags\/tag-[a-f0-9]+"[^>]*>東京<\/a>/);
+      assert.ok(!content.includes('/tags/C#'));
+      assert.ok(!content.includes('/tags/C++'));
+    });
+  });
+
+  describe("Summaries and Related Content", () => {
+    it("should generate summaries from the first useful paragraph", async () => {
+      const index = JSON.parse(
+        await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+      );
+      const firstPost = index.pages.find(
+        (page) => page.url === "/blog/first-post",
+      );
+      assert.strictEqual(
+        firstPost.summary,
+        "This is my first blog post about JavaScript.",
+      );
+    });
+
+    it("should honor the summary marker", async () => {
+      const index = JSON.parse(
+        await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+      );
+      const page = index.pages.find((entry) => entry.url === "/summary-marker");
+      assert.strictEqual(
+        page.summary,
+        "This paragraph is the deliberate excerpt.",
+      );
+      assert.ok(!page.summary.includes("must not"));
+    });
+
+    it("should render deterministic related pages from shared tags", async () => {
+      const content = await fs.readFile(
+        path.join(distDir, "blog", "first-post", "index.html"),
+        "utf-8",
+      );
+      const related = content.match(
+        /<aside class="related">([\s\S]*?)<\/aside>/,
+      )?.[1];
+      assert.ok(related);
+      assert.ok(related.includes('href="/blog/second-post"'));
+      assert.ok(!related.includes('href="/blog/first-post"'));
     });
   });
 
@@ -999,6 +1440,51 @@ rss_feeds:
         "should have navigation links"
       );
     });
+
+    it("should keep the global navigation index in root page order", async () => {
+      const { generatePages, pageIndex } = await import("../src/pages.js");
+      const pages = await generatePages(path.join(testDir, "pages"));
+      assert.deepStrictEqual(
+        pageIndex.filter((page) => page.nav).map((page) => page.url),
+        pages.filter((page) => page.nav).map((page) => page.url),
+      );
+    });
+  });
+
+  describe("Page Ordering", () => {
+    it("should sort positioned and dated pages transitively", async () => {
+      const { comparePages } = await import("../src/pages.js");
+      const page = (route, options = {}) => ({
+        route,
+        meta: options.position === undefined ? {} : { position: options.position },
+        dateObj: options.date ? new Date(options.date) : undefined,
+        createdAtObj: new Date(options.date || 0),
+      });
+      const pages = [
+        page("/newest", { date: "2025-01-01" }),
+        page("/position-two", { position: 2, date: "2026-01-01" }),
+        page("/oldest", { date: "2020-01-01" }),
+        page("/position-zero", { position: 0, date: "2019-01-01" }),
+      ];
+
+      pages.sort((a, b) => comparePages(a, b, "desc"));
+      assert.deepStrictEqual(
+        pages.map((item) => item.route),
+        ["/position-zero", "/position-two", "/newest", "/oldest"],
+      );
+    });
+
+    it("should use routes as stable tie-breakers", async () => {
+      const { comparePages } = await import("../src/pages.js");
+      const date = new Date("2024-01-01");
+      const pages = [
+        { route: "/b", meta: {}, createdAtObj: date },
+        { route: "/a", meta: {}, createdAtObj: date },
+      ];
+
+      pages.sort((a, b) => comparePages(a, b));
+      assert.deepStrictEqual(pages.map((page) => page.route), ["/a", "/b"]);
+    });
   });
 
   describe("Child Links", () => {
@@ -1011,6 +1497,61 @@ rss_feeds:
     it("should generate links_to_children for docs index", async () => {
       const content = await fs.readFile(path.join(distDir, "docs", "index.html"), "utf-8");
       assert.ok(content.includes("Getting Started") || content.includes("getting-started"), "should list getting started");
+    });
+
+    it("should use the parent section partial for sibling link lists", async () => {
+      const {
+        addLinks,
+        createLinkListCache,
+        generatePages,
+      } = await import("../src/pages.js");
+      const pages = await generatePages(path.join(testDir, "pages"));
+      const cache = createLinkListCache();
+      await addLinks(pages, undefined, cache);
+      const blog = pages.find((page) => page.filename === "blog");
+      const firstPost = blog.pages.find((page) => page.filename === "first-post");
+
+      assert.strictEqual(firstPost.parent.filename, "blog");
+      assert.ok(firstPost.meta.links_to_siblings.includes('class="blog-section-link"'));
+      assert.ok(firstPost.meta.links_to_self_and_siblings.includes('class="blog-section-link"'));
+      assert.ok(cache.stats.listHits > 0, "addLinks should reuse complete page sets");
+      assert.ok(cache.stats.itemHits > 0, "addLinks should reuse rendered page items");
+    });
+
+    it("should render each partial/page pair once across overlapping sibling lists", async () => {
+      const {
+        createLinkListCache,
+        generateLinkList,
+      } = await import("../src/pages.js");
+      const pages = Array.from({ length: 250 }, (_, index) => ({
+        filename: `post-${index}`,
+        title: `Post ${index}`,
+        url: `/posts/post-${index}`,
+        meta: {},
+      }));
+      const cache = createLinkListCache();
+
+      const allLinks = await generateLinkList("blog", pages, cache);
+      const siblingLinks = await Promise.all(
+        pages.map((page) =>
+          generateLinkList(
+            "blog",
+            pages.filter((candidate) => candidate !== page),
+            cache,
+          ),
+        ),
+      );
+      const repeatedAllLinks = await generateLinkList("blog", pages, cache);
+
+      assert.strictEqual(repeatedAllLinks, allLinks);
+      assert.ok(allLinks.includes('href="/posts/post-249"'));
+      assert.ok(!siblingLinks[0].includes('href="/posts/post-0"'));
+      assert.ok(siblingLinks[0].includes('href="/posts/post-249"'));
+      assert.strictEqual(cache.stats.partialReads, 1);
+      assert.strictEqual(cache.stats.itemRenders, pages.length);
+      assert.strictEqual(cache.stats.listRenders, pages.length + 1);
+      assert.ok(cache.stats.itemHits >= pages.length * (pages.length - 1));
+      assert.ok(cache.stats.listHits >= 1);
     });
   });
 
@@ -1058,6 +1599,43 @@ rss_feeds:
     it("should include pubDate for items", async () => {
       const content = await fs.readFile(path.join(distDir, "blog", "rss.xml"), "utf-8");
       assert.ok(content.includes("<pubDate>"), "should have pubDate elements");
+      assert.ok(!content.includes("Invalid Date"), "should not contain invalid dates");
+      assert.ok(
+        content.includes("<pubDate>Tue, 20 Feb 2024 00:00:00 GMT</pubDate>"),
+        "should use the machine-readable front matter date",
+      );
+    });
+
+    it("should sort feed items using machine-readable dates", async () => {
+      const content = await fs.readFile(path.join(distDir, "blog", "rss.xml"), "utf-8");
+      assert.ok(
+        content.indexOf("Second Blog Post") < content.indexOf("First Blog Post"),
+        "newer posts should appear first",
+      );
+      assert.ok(
+        content.includes("<lastBuildDate>Tue, 20 Feb 2024 00:00:00 GMT</lastBuildDate>"),
+        "lastBuildDate should use the newest feed item",
+      );
+    });
+
+    it("should normalize rendered Markdown in item descriptions", async () => {
+      const content = await fs.readFile(path.join(distDir, "blog", "rss.xml"), "utf-8");
+      const firstPost = content.match(
+        /<title>First Blog Post<\/title>[\s\S]*?<description>(.*?)<\/description>/,
+      )?.[1];
+
+      assert.ok(firstPost.includes("My First Post"));
+      assert.ok(firstPost.includes("JavaScript"));
+      assert.ok(!firstPost.includes("#"));
+      assert.ok(!firstPost.includes("**"));
+    });
+
+    it("should reject impossible calendar dates", async () => {
+      const { parseDate } = await import("../src/pages.js");
+      assert.strictEqual(parseDate("32/01/2024"), null);
+      assert.strictEqual(parseDate("29/02/2023"), null);
+      assert.strictEqual(parseDate(new Date("invalid")), null);
+      assert.strictEqual(parseDate("29/02/2024").getDate(), 29);
     });
 
     it("should include guid for items", async () => {
@@ -1102,6 +1680,15 @@ rss_feeds:
       assert.ok(content.includes("Allow: /"), "should allow crawling by default");
       assert.ok(content.includes("Sitemap: https://example.com/sitemap.xml"), "should reference sitemap");
     });
+
+    it("should not parse locale-formatted display dates for lastmod", async () => {
+      const { generateSitemapXml } = await import("../src/sitemap.js");
+      const sitemap = generateSitemapXml(
+        [{ url: "/display-only", updated_at: "2024-01-02", meta: {} }],
+        "https://example.com",
+      );
+      assert.ok(!sitemap.includes("<lastmod>"));
+    });
   });
 
   describe("Search Index", () => {
@@ -1113,6 +1700,23 @@ rss_feeds:
       assert.strictEqual(index.version, 1);
       assert.ok(Array.isArray(index.pages));
       assert.ok(index.pages.length > 0);
+    });
+
+    it("should ship a drop-in search partial and client", async () => {
+      const home = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
+      assert.ok(home.includes("data-swifty-search"));
+      assert.ok(home.includes('data-index-url="/search.json"'));
+      assert.ok(
+        /src="\/swifty\/swifty-search\.[a-f0-9]{10}\.js"/.test(home),
+      );
+      const files = await fs.readdir(path.join(distDir, "swifty"));
+      const clientName = files.find((file) => /^swifty-search\..+\.js$/.test(file));
+      const client = await fs.readFile(
+        path.join(distDir, "swifty", clientName),
+        "utf-8",
+      );
+      assert.ok(client.includes('textContent = page.title'));
+      assert.ok(client.includes('"swifty:load"'));
     });
 
     it("should include normalized page content, summaries, and tags", async () => {
@@ -1129,6 +1733,29 @@ rss_feeds:
         "This is a featured article with full Open Graph metadata",
       );
       assert.deepStrictEqual(featured.tags, ["featured", "article"]);
+    });
+
+    it("should cap normalized entry content without truncating weighted metadata", async () => {
+      const { createSearchEntry } = await import("../src/search.js");
+      const summary = "An authored summary that remains independently searchable";
+      const entry = await createSearchEntry({
+        content: `Useful opening phrase ${"long content ".repeat(30)}trailing marker`,
+        meta: {
+          search_content_limit: 80,
+          summary,
+          tags: ["Long Form", "Reference"],
+          title: "Complete Search Title",
+        },
+        title: "Complete Search Title",
+        url: "/long-entry",
+      });
+
+      assert.ok(entry.content.length <= 80);
+      assert.ok(entry.content.startsWith("Useful opening phrase"));
+      assert.ok(!entry.content.includes("trailing marker"));
+      assert.strictEqual(entry.title, "Complete Search Title");
+      assert.strictEqual(entry.summary, summary);
+      assert.deepStrictEqual(entry.tags, ["Long Form", "Reference"]);
     });
 
     it("should exclude generated, paginated, 404, and opted-out pages", async () => {
@@ -1255,6 +1882,35 @@ rss_feeds:
       assert.ok(content.includes("/posts/page/3/"), "should link to page 3");
     });
 
+    it("should keep pagination disabled until page_count is explicitly set", async () => {
+      const folderPath = path.join(testDir, "pages", "unpaginated");
+      const { defaultConfig } = await import("../src/config.js");
+      const { generatePages } = await import("../src/pages.js");
+
+      try {
+        await fsExtra.ensureDir(folderPath);
+        await Promise.all(
+          [1, 2, 3].map((number) =>
+            fs.writeFile(
+              path.join(folderPath, `page-${number}.md`),
+              `---\ntitle: Unpaginated ${number}\n---\nPage ${number}`,
+            ),
+          ),
+        );
+        const pages = await generatePages(path.join(testDir, "pages"));
+        const folder = pages.find((page) => page.filename === "unpaginated");
+
+        assert.strictEqual(
+          Object.prototype.hasOwnProperty.call(defaultConfig, "default_page_count"),
+          false,
+        );
+        assert.strictEqual(folder.paginatedPages, undefined);
+        assert.strictEqual(folder.pages.length, 3);
+      } finally {
+        await fsExtra.remove(folderPath);
+      }
+    });
+
     it("should include all posts in RSS feed despite pagination", async () => {
       const content = await fs.readFile(path.join(distDir, "posts", "rss.xml"), "utf-8");
       assert.ok(content.includes("Post Number 1"), "RSS should include post 1");
@@ -1345,6 +2001,36 @@ rss_feeds:
       assert.ok(
         /name="twitter:image" content="https:\/\/example\.com\/images\/default-og\.webp"/.test(content),
         "twitter:image should use the fallback image",
+      );
+    });
+
+    it("should omit relative social images when site_url is unavailable", async () => {
+      const { generateOgTags } = await import("../src/partials.js");
+      const content = generateOgTags({
+        meta: { image: "/images/featured.jpg", site_url: "" },
+        url: "/featured",
+      });
+
+      assert.ok(!content.includes('property="og:image"'));
+      assert.ok(!content.includes('name="twitter:image"'));
+      assert.ok(content.includes('content="summary"'));
+    });
+
+    it("should resolve local social images with site_url and base_path", async () => {
+      const { generateOgTags } = await import("../src/partials.js");
+      const content = generateOgTags({
+        meta: {
+          image: "/images/featured.jpg",
+          site_url: "https://example.com",
+          base_path: "/project",
+        },
+        url: "/featured",
+      });
+
+      assert.ok(
+        content.includes(
+          'property="og:image" content="https://example.com/project/images/featured.webp"',
+        ),
       );
     });
 
@@ -1449,6 +2135,21 @@ rss_feeds:
       }
     });
 
+    it("should reject invalid front matter dates with their source path", async () => {
+      const invalidPath = path.join(testDir, "pages", "invalid-date.md");
+      const { generatePages } = await import("../src/pages.js");
+
+      try {
+        await fs.writeFile(invalidPath, "---\ndate: 32/01/2024\n---\nBroken date");
+        await assert.rejects(
+          () => generatePages(path.join(testDir, "pages")),
+          /Invalid date.*invalid-date\.md/,
+        );
+      } finally {
+        await fsExtra.remove(invalidPath);
+      }
+    });
+
     it("should reject Eta errors and missing partials", async () => {
       const { replacePlaceholders } = await import("../src/partials.js");
 
@@ -1498,6 +2199,63 @@ rss_feeds:
 
       assert.strictEqual(response.status, 200);
       assert.strictEqual(response.body.toString(), "contact@example.com");
+    });
+  });
+
+  describe("Incremental Page Rebuilds", () => {
+    it("should rebuild a body-only page and derived indexes without rebuilding other pages", async () => {
+      const pagePath = path.join(testDir, "pages", "about.md");
+      const outputPath = path.join(distDir, "about", "index.html");
+      const homePath = path.join(distDir, "index.html");
+      const originalSource = await fs.readFile(pagePath, "utf-8");
+      const originalHome = await fs.readFile(homePath, "utf-8");
+      const buildModule = await import("../src/build.js");
+
+      try {
+        await fs.writeFile(
+          pagePath,
+          `${originalSource}\n\nIncremental rebuild marker text.`,
+        );
+        const result = await buildModule.rebuildPage(pagePath, distDir);
+        assert.strictEqual(result.rebuilt, true, result.reason);
+        assert.ok(
+          (await fs.readFile(outputPath, "utf-8")).includes(
+            "Incremental rebuild marker text.",
+          ),
+        );
+        assert.strictEqual(await fs.readFile(homePath, "utf-8"), originalHome);
+
+        const index = JSON.parse(
+          await fs.readFile(path.join(distDir, "search.json"), "utf-8"),
+        );
+        assert.ok(
+          index.pages
+            .find((page) => page.url === "/about")
+            .content.includes("Incremental rebuild marker text"),
+        );
+      } finally {
+        await fs.writeFile(pagePath, originalSource);
+        await buildModule.default("dist");
+      }
+    });
+
+    it("should require a full build when page metadata changes", async () => {
+      const pagePath = path.join(testDir, "pages", "about.md");
+      const originalSource = await fs.readFile(pagePath, "utf-8");
+      const buildModule = await import("../src/build.js");
+
+      try {
+        await fs.writeFile(
+          pagePath,
+          originalSource.replace("title: About Us", "title: Changed Title"),
+        );
+        const result = await buildModule.rebuildPage(pagePath, distDir);
+        assert.strictEqual(result.rebuilt, false);
+        assert.strictEqual(result.requiresFullBuild, true);
+        assert.match(result.reason, /metadata/);
+      } finally {
+        await fs.writeFile(pagePath, originalSource);
+      }
     });
   });
 
@@ -1650,10 +2408,83 @@ rss_feeds:
       assert.ok(canonicalUrlError("/relative"));
       assert.throws(() => validateConfig({ page_count: -1 }), /positive integer/);
       assert.throws(() => validateConfig({ image_quality: 101 }), /1 to 100/);
+      assert.throws(() => validateConfig({ date_locale: "not_a_locale" }), /valid locale/);
+      assert.throws(() => validateConfig({ timezone: "Moon/Base" }), /valid IANA timezone/);
+      assert.throws(
+        () => validateConfig({ watcher_use_polling: "yes" }),
+        /must be a boolean/,
+      );
+      assert.throws(
+        () => validateConfig({ highlight_theme: "../../outside" }),
+        /bundled highlight\.js theme name/,
+      );
+      assert.throws(
+        () => validateConfig({ highlight_theme: "does-not-exist" }),
+        /not bundled with highlight\.js/,
+      );
+      assert.throws(
+        () => validateConfig({ search_content_limit: 0 }),
+        /positive integer/,
+      );
       assert.throws(
         () => validateConfig({ rss_feeds: ["../outside"] }),
         /safe relative folder paths/,
       );
+    });
+
+    it("should use native watcher events by default and make polling opt-in", async () => {
+      const { createLiveReloadOptions, createWatcherOptions } = await import(
+        "../src/watcher.js"
+      );
+
+      assert.deepStrictEqual(
+        createWatcherOptions({ watcher_delay: 100, watcher_interval: 750 }),
+        {
+          persistent: true,
+          ignoreInitial: true,
+          usePolling: false,
+          awaitWriteFinish: {
+            stabilityThreshold: 200,
+            pollInterval: 100,
+          },
+        },
+      );
+      assert.strictEqual(
+        createLiveReloadOptions({}).usePolling,
+        false,
+      );
+      assert.strictEqual(
+        createWatcherOptions({
+          watcher_delay: 100,
+          watcher_interval: 750,
+          watcher_use_polling: true,
+        }).interval,
+        750,
+      );
+      assert.strictEqual(
+        createLiveReloadOptions({ watcher_use_polling: true }).usePolling,
+        true,
+      );
+    });
+
+    it("should explain why local social images need site_url", async () => {
+      const { CHECK_CODES, collectSocialImageIssues } = await import("../src/check.js");
+      const { defaultConfig } = await import("../src/config.js");
+      const previousSiteUrl = defaultConfig.site_url;
+      const issues = [];
+
+      try {
+        delete defaultConfig.site_url;
+        collectSocialImageIssues(
+          [{ filePath: "/site/pages/social.md", url: "/social", meta: { image: "/images/share.png" } }],
+          (issue) => issues.push(issue),
+        );
+      } finally {
+        defaultConfig.site_url = previousSiteUrl;
+      }
+
+      assert.strictEqual(issues[0].code, CHECK_CODES.INVALID_SOCIAL_IMAGE);
+      assert.match(issues[0].message, /requires an absolute site_url/);
     });
   });
 

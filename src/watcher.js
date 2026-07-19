@@ -78,6 +78,9 @@ function getChangeType(filePath) {
   if (topDir === "js") return "js";
   if (topDir === "images") return "image";
   if (topDir === "data") return "data";
+  if (topDir === "pages" && path.extname(filePath).toLowerCase() === ".md") {
+    return "page";
+  }
   return "full"; // pages, layouts, partials, config files
 }
 
@@ -87,6 +90,27 @@ const isRootConfigFile = (filePath) => {
     !relativePath.includes(path.sep) &&
     ["config.yaml", "config.yml", "config.json"].includes(relativePath)
   );
+};
+
+const createLiveReloadOptions = (config = defaultConfig) => ({
+  port: config.livereload_port || 35729,
+  usePolling: config.watcher_use_polling === true,
+  delay: config.watcher_delay || 100,
+});
+
+const createWatcherOptions = (config = defaultConfig) => {
+  const usePolling = config.watcher_use_polling === true;
+  const watcherDelay = config.watcher_delay || 100;
+  return {
+    persistent: true,
+    ignoreInitial: true,
+    usePolling,
+    ...(usePolling ? { interval: config.watcher_interval || 500 } : {}),
+    awaitWriteFinish: {
+      stabilityThreshold: watcherDelay * 2,
+      pollInterval: watcherDelay,
+    },
+  };
 };
 
 export default async function watch(outDir = "dist") {
@@ -104,29 +128,14 @@ export default async function watch(outDir = "dist") {
 
   // Start livereload server
   const livereloadPort = defaultConfig.livereload_port || 35729;
-  const lrServer = livereload.createServer({
-    port: livereloadPort,
-    usePolling: true,
-    delay: defaultConfig.watcher_delay || 100,
-  });
+  const lrServer = livereload.createServer(createLiveReloadOptions());
   const outPath = path.join(process.cwd(), outDir);
   lrServer.watch(outPath);
   console.log(`LiveReload server started on port ${livereloadPort}`);
 
-  // Initialize watcher (chokidar 4.x)
-  // usePolling needed for network/cloud drives that don't emit native fs events
-  const watcherInterval = defaultConfig.watcher_interval || 500;
-  const watcherDelay = defaultConfig.watcher_delay || 100;
-  const watcher = chokidar.watch(watchPaths, {
-    persistent: true,
-    ignoreInitial: true,
-    usePolling: true,
-    interval: watcherInterval,
-    awaitWriteFinish: {
-      stabilityThreshold: watcherDelay * 2,
-      pollInterval: watcherDelay,
-    },
-  });
+  // Native filesystem events are the default. Poll only when explicitly enabled
+  // for cloud folders, network mounts, containers, and similar filesystems.
+  const watcher = chokidar.watch(watchPaths, createWatcherOptions());
 
   // Handle file changes with incremental builds where possible
   async function handleFileChange(event, filePath) {
@@ -174,6 +183,24 @@ export default async function watch(outDir = "dist") {
         await build.default(outDir);
         const rebuildTime = performance.now() - rebuildStart;
         console.log(`   Rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`);
+      } else if (changeType === "page" && event === "changed") {
+        const rebuildStart = performance.now();
+        const result = await build.rebuildPage(filePath, outDir);
+        if (result.rebuilt) {
+          const rebuildTime = performance.now() - rebuildStart;
+          console.log(
+            `⚡ Page changed: ${filename}. Incremental rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`,
+          );
+        } else {
+          console.log(
+            `📝 Page changed: ${filename}. Running full build (${result.reason})...`,
+          );
+          clearPartialCache();
+          await resetCaches();
+          await build.default(outDir);
+          const rebuildTime = performance.now() - rebuildStart;
+          console.log(`   Rebuild completed in ${(rebuildTime / 1000).toFixed(2)}s`);
+        }
       } else {
         // Full rebuild for pages, layouts, partials, config, and new CSS/JS files
         console.log(`📝 File ${event}: ${filename}. Running full build...`);
@@ -200,3 +227,5 @@ export default async function watch(outDir = "dist") {
 
   console.log("Watching for file changes...");
 }
+
+export { createLiveReloadOptions, createWatcherOptions };

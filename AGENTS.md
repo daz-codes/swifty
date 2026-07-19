@@ -133,16 +133,21 @@ words_per_minute: 200  # Default reading speed for reading time
 max_image_width: 800   # Maximum width for resized images
 image_quality: 80      # WebP quality (1-100)
 
+# Syntax highlighting
+highlight_theme: monokai-sublime # Bundled highlight.js theme name
+
 # LiveReload and watcher settings
 livereload_port: 35729 # LiveReload server port
 watcher_delay: 100      # Delay in milliseconds before triggering rebuild
 watcher_interval: 500   # Polling interval in milliseconds for file watching
+watcher_use_polling: false # Enable polling for filesystems that need it
 
-# Pagination
-default_page_count: 2   # Default items per page for paginated folders
+# Pagination is opt-in
+page_count: 10          # Items per page when pagination is enabled
 
 # Client-side search index
 search: true             # Generate /search.json
+search_content_limit: 5000 # Maximum normalized content characters per entry
 
 # Existing options
 default_layout_name: default

@@ -3,6 +3,11 @@ import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import yaml from "js-yaml";
 
+import {
+  DEFAULT_HIGHLIGHT_THEME,
+  resolveHighlightTheme,
+} from "./highlight-theme.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isInstalled = process.cwd() !== __dirname;
@@ -61,6 +66,7 @@ const validateConfig = (config, filePath = "config") => {
     "morphing",
     "prefetching",
     "search",
+    "watcher_use_polling",
   ];
   const positiveNumbers = [
     "max_image_width",
@@ -71,10 +77,13 @@ const validateConfig = (config, filePath = "config") => {
   ];
   const positiveIntegers = [
     "build_concurrency",
-    "default_page_count",
     "navigation_cache_size",
     "page_count",
+    "related_pages_limit",
     "rss_max_items",
+    "search_content_limit",
+    "search_results_limit",
+    "summary_length",
   ];
 
   for (const key of booleans) {
@@ -173,6 +182,32 @@ const validateConfig = (config, filePath = "config") => {
     }
   }
   if (
+    config.date_locale !== undefined &&
+    (typeof config.date_locale !== "string" || !config.date_locale.trim())
+  ) {
+    throw new TypeError(`date_locale in ${filePath} must be a non-empty locale string`);
+  }
+  if (config.date_locale !== undefined) {
+    try {
+      new Intl.DateTimeFormat(config.date_locale);
+    } catch {
+      throw new TypeError(`date_locale in ${filePath} must be a valid locale`);
+    }
+  }
+  if (
+    config.timezone !== undefined &&
+    (typeof config.timezone !== "string" || !config.timezone.trim())
+  ) {
+    throw new TypeError(`timezone in ${filePath} must be a non-empty IANA timezone`);
+  }
+  if (config.timezone !== undefined) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: config.timezone });
+    } catch {
+      throw new TypeError(`timezone in ${filePath} must be a valid IANA timezone`);
+    }
+  }
+  if (
     config.date_sort_order !== undefined &&
     !["asc", "desc"].includes(String(config.date_sort_order).toLowerCase())
   ) {
@@ -183,6 +218,9 @@ const validateConfig = (config, filePath = "config") => {
     (typeof config.morph_target !== "string" || !config.morph_target.trim())
   ) {
     throw new TypeError(`morph_target in ${filePath} must be a non-empty string`);
+  }
+  if (config.highlight_theme !== undefined) {
+    resolveHighlightTheme(config.highlight_theme, filePath);
   }
 
   return config;
@@ -200,6 +238,7 @@ const builtInDefaults = {
   responsive_image_widths: [320, 640, 800],
   responsive_image_sizes: '100vw',
   default_og_image: '',
+  highlight_theme: DEFAULT_HIGHLIGHT_THEME,
   // Output minification
   minify: true,
   minify_html: true,
@@ -210,8 +249,15 @@ const builtInDefaults = {
   livereload_port: 35729,
   watcher_delay: 100,
   watcher_interval: 500,
-  // Pagination
-  default_page_count: 2,
+  watcher_use_polling: false,
+  // Deterministic date display and calendar-date publishing
+  date_locale: 'en-GB',
+  timezone: 'UTC',
+  // Content discovery
+  related_pages_limit: 3,
+  search_content_limit: 5000,
+  search_results_limit: 10,
+  summary_length: 200,
   // Build safety
   build_concurrency: 16,
   // Navigation

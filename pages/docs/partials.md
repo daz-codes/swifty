@@ -71,7 +71,32 @@ Swifty uses special partials to control how auto-generated links look. Create th
 <a href="<%= url %>" class="nav-link"><%= title %></a>
 ```
 
-Name a partial after a folder, and it'll be used for link lists in that section. This lets you style your blog index differently from your docs index.
+Name a partial after a folder, and it'll be used for child, sibling, and
+self-plus-sibling link lists in that section. For example, `partials/blog.md`
+styles `<%= links_to_children %>` on the blog index as well as
+`<%= links_to_siblings %>` and `<%= links_to_self_and_siblings %>` on its posts.
+This lets you style your blog navigation differently from your docs navigation.
+
+`partials/related.md` or `partials/related.html` controls the entries in
+`<%= related_pages %>`. Related entries also expose `related_score` and
+`shared_tags`.
+
+## Built-In Search Partial
+
+Add a complete client-side search interface to any page or layout with:
+
+```html
+<%= partial: search %>
+```
+
+Swifty supplies the accessible form, ranked search client, keyboard navigation,
+base-path-aware index URL, and self-hosted JavaScript. Set `search_results_limit`
+to control the maximum number of matches and `search_content_limit` to bound the
+normalized page text stored per index entry. A local `partials/search.html` or
+`partials/search.md` overrides the built-in markup when you need a custom UI.
+
+Set `search: false` in root configuration to disable both the index and built-in
+interface.
 
 ## Why Use Partials?
 

@@ -1,4 +1,10 @@
-export { default, default as build, prepareOutputDirectory } from "./build.js";
+export {
+  default,
+  default as build,
+  getBuildState,
+  prepareOutputDirectory,
+  rebuildPage,
+} from "./build.js";
 export { CHECK_CODES, checkSite, runCheck } from "./check.js";
 export { defaultConfig, loadConfig, reloadConfig } from "./config.js";
 export { addLinks, createPages, generatePages } from "./pages.js";

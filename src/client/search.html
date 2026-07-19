@@ -1,0 +1,13 @@
+<% if (search !== false) { %>
+<div class="swifty-search" data-swifty-search data-index-url="__SWIFTY_SEARCH_INDEX__" data-limit="<%= search_results_limit %>">
+  <form role="search" class="swifty-search__form">
+    <label>Search this site
+      <input type="search" autocomplete="off" placeholder="Search…" data-swifty-search-input>
+    </label>
+  </form>
+  <p class="swifty-search__status" aria-live="polite" data-swifty-search-status></p>
+  <ul class="swifty-search__results" data-swifty-search-results></ul>
+  <noscript>Search requires JavaScript.</noscript>
+</div>
+<script type="module" src="__SWIFTY_SEARCH_SCRIPT__"></script>
+<% } %>

@@ -13,19 +13,25 @@ image_quality: 80
 # Reading time calculation
 words_per_minute: 200
 
+# Syntax highlighting
+highlight_theme: monokai-sublime
+
 # LiveReload and watcher settings
 livereload_port: 35729
 watcher_delay: 100
 watcher_interval: 500
-
-# Pagination
-default_page_count: 2
+watcher_use_polling: false
 
 # Navigation
 morphing: true
 prefetching: true
 search: true
+search_content_limit: 5000
 morph_target: main
+
+# Deterministic date display and scheduled publishing
+date_locale: en-GB
+timezone: UTC
 
 dateFormat:
   weekday: short

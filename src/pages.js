@@ -4,14 +4,36 @@ import path from "path";
 
 import fsExtra from "fs-extra";
 
-import { replacePlaceholders } from "./partials.js";
+import {
+  replacePlaceholders,
+  rewriteLocalImageReferences,
+} from "./partials.js";
 import { dirs, defaultConfig, loadConfig } from "./config.js";
 import { getTemplate, applyLayoutAndWrapContent } from "./layout.js";
 import { chunkPages, generatePaginationNav } from "./pagination.js";
-import { marked } from "./markdown.js";
+import {
+  collectMarkdownHeadings,
+  renderMarkdown,
+  renderTableOfContents,
+} from "./markdown.js";
 import { mapLimit } from "./concurrency.js";
 import { minifyHtml } from "./minify.js";
 import { parseFrontMatter } from "./frontmatter.js";
+import {
+  clearGitDateCache,
+  formatDisplayDate,
+  parseDate,
+  parsePageDate,
+  resolveFileDate,
+} from "./dates.js";
+import { extractSummary } from "./content.js";
+import {
+  createStandaloneTagSlug,
+  createTagSlugBase,
+  createTagSlugMap,
+  normalizeTagIdentity,
+  normalizeTagLabel,
+} from "./tags.js";
 import {
   applyBasePathToHtml,
   normalizePermalink,
@@ -34,20 +56,54 @@ const getValidStats = async (filePath) => {
 
 const capitalize = (str) => str.replace(/\b\w/g, (char) => char.toUpperCase());
 
-const parseDate = (dateValue) => {
-  if (dateValue instanceof Date) return dateValue;
-  if (typeof dateValue !== "string") return null;
+const setFallbackDates = (page, date, config) => {
+  page.createdAtObj = date;
+  page.updatedAtObj = date;
+  page.created_at_iso = date.toISOString();
+  page.updated_at_iso = date.toISOString();
+  page.date_iso = date.toISOString();
+  page.created_at = formatDisplayDate(date, config);
+  page.updated_at = formatDisplayDate(date, config);
+  page.date = formatDisplayDate(date, config);
+};
 
-  // Try DD/MM/YYYY or D/M/YYYY format
-  const ddmmyyyy = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (ddmmyyyy) {
-    const [, day, month, year] = ddmmyyyy;
-    return new Date(year, month - 1, day);
+const hasPosition = (page) => Number.isFinite(page.meta?.position);
+
+const compareRoutes = (a, b) =>
+  String(a.route || a.url || "").localeCompare(String(b.route || b.url || ""));
+
+const comparePages = (a, b, dateSortOrder = "desc") => {
+  const aPositioned = hasPosition(a);
+  const bPositioned = hasPosition(b);
+
+  if (aPositioned !== bPositioned) return aPositioned ? -1 : 1;
+  if (aPositioned && bPositioned) {
+    const positionDifference = a.meta.position - b.meta.position;
+    return positionDifference || compareRoutes(a, b);
   }
 
-  // Try standard Date parsing (ISO, etc.)
-  const parsed = new Date(dateValue);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  const dateA = (a.dateObj || a.createdAtObj)?.getTime?.() || 0;
+  const dateB = (b.dateObj || b.createdAtObj)?.getTime?.() || 0;
+  const dateDifference =
+    String(dateSortOrder).toLowerCase() === "asc"
+      ? dateA - dateB
+      : dateB - dateA;
+  return dateDifference || compareRoutes(a, b);
+};
+
+const applyPublicationDate = (page, dateValue, filePath) => {
+  const parsed = parsePageDate(dateValue, page.meta.timezone);
+  if (!parsed) {
+    throw new Error(
+      `Invalid date "${String(dateValue)}" in ${filePath}. Use YYYY-MM-DD, DD/MM/YYYY, or an ISO timestamp with a timezone offset.`,
+    );
+  }
+  page.dateObj = parsed.date;
+  page.dateOnly = parsed.dateOnly;
+  page.date_iso = parsed.date.toISOString();
+  page.date = formatDisplayDate(parsed.date, page.meta);
+  page.meta.date = page.date;
+  page.meta.date_iso = page.date_iso;
 };
 
 const applyMarkdownFileToPage = async (
@@ -66,6 +122,13 @@ const applyMarkdownFileToPage = async (
   }
   const { data, content } = parsed;
   Object.assign(page, { meta: { ...page.meta, ...data }, content });
+  page._sourceMeta = { ...data };
+  const summary =
+    data.summary ||
+    data.description ||
+    extractSummary(content, page.meta.summary_length || defaultConfig.summary_length);
+  page.summary = summary;
+  page.meta.summary = summary;
 
   if (data.permalink !== undefined) {
     page.route = normalizePermalink(data.permalink);
@@ -74,20 +137,10 @@ const applyMarkdownFileToPage = async (
 
   if (folderIndex) {
     const stats = await fs.stat(filePath);
-    const { dateFormat } = page.meta;
+    const fallbackDate = await resolveFileDate(filePath, stats.mtime);
     page.hasIndexContent = true;
     page.indexFilePath = filePath;
-    page.createdAtObj = stats.birthtime;
-    page.updatedAtObj = stats.mtime;
-    page.created_at = new Date(stats.birthtime).toLocaleDateString(
-      undefined,
-      dateFormat,
-    );
-    page.updated_at = new Date(stats.mtime).toLocaleDateString(
-      undefined,
-      dateFormat,
-    );
-    page.date = new Date(stats.birthtime).toLocaleDateString(undefined, dateFormat);
+    setFallbackDates(page, fallbackDate, page.meta);
   }
 
   if (notFound && data.sitemap === undefined) {
@@ -101,13 +154,8 @@ const applyMarkdownFileToPage = async (
     page.nav = data.nav;
   }
 
-  if (data.date) {
-    const parsedDate = parseDate(data.date);
-    if (parsedDate) {
-      page.dateObj = parsedDate;
-      page.date = parsedDate.toLocaleDateString(undefined, page.meta.dateFormat);
-      page.meta.date = page.date;
-    }
+  if (data.date !== undefined && data.date !== null && data.date !== "") {
+    applyPublicationDate(page, data.date, filePath);
   }
 };
 
@@ -115,14 +163,152 @@ const tagsMap = new Map();
 const pageIndex = [];
 const pageIndexUrls = new Set();
 const partialExtensions = [".md", ".html"];
+let renderedContentTokenId = 0;
 
 const getBuildConcurrency = () => defaultConfig.build_concurrency || 16;
 const minificationEnabled = () =>
   defaultConfig.minify !== false && defaultConfig.minify_html !== false;
+const containsHighlightedCode = (html) =>
+  /<code\b[^>]*\bclass=["'][^"']*\bhljs\b/i.test(html || "");
 
 const addToTagMap = (tag, page) => {
-  if (!tagsMap.has(tag)) tagsMap.set(tag, []);
-  tagsMap.get(tag).push({ title: page.title, url: page.url });
+  const label = normalizeTagLabel(tag);
+  const identity = normalizeTagIdentity(label);
+  if (!identity) {
+    throw new Error(`Empty tags are not allowed in ${page.filePath || page.url}`);
+  }
+  if (!tagsMap.has(identity)) {
+    tagsMap.set(identity, {
+      identity,
+      label,
+      slugBase: createTagSlugBase(label),
+      slug: "",
+      pages: [],
+    });
+  }
+  const entry = tagsMap.get(identity);
+  if (!entry.pages.some((tagPage) => tagPage.url === page.url)) {
+    entry.pages.push({
+      title: page.title,
+      url: page.url,
+      dateObj: page.dateObj,
+      date_iso: page.date_iso,
+      updatedAtObj: page.updatedAtObj,
+      updated_at_iso: page.updated_at_iso,
+    });
+  }
+};
+
+const newestPageDate = (pages) =>
+  pages.reduce((latest, page) => {
+    const value = page.updatedAtObj || page.dateObj;
+    return value instanceof Date && (!latest || value > latest) ? value : latest;
+  }, null);
+
+const finalizeTagSlugs = () => {
+  const slugs = createTagSlugMap([...tagsMap.values()]);
+  for (const entry of tagsMap.values()) {
+    entry.slug = slugs.get(entry.identity);
+  }
+};
+
+const getTagEntry = (tag) => tagsMap.get(normalizeTagIdentity(tag));
+
+const getTagUrl = (tag) => {
+  const entry = getTagEntry(tag);
+  const slug = entry?.slug || createStandaloneTagSlug(tag);
+  return withBasePath(`/tags/${slug}`);
+};
+
+const flattenAuthoredPages = (pages) => {
+  const flattened = [];
+  const visit = (pageList) => {
+    for (const page of pageList) {
+      if (page.filePath && !page.folder && !page.notFound) flattened.push(page);
+      if (page.pages) visit(page.pages);
+    }
+  };
+  visit(pages);
+  return flattened;
+};
+
+const addRelatedPages = async (pages) => {
+  const authoredPages = flattenAuthoredPages(pages);
+
+  await mapLimit(
+    authoredPages,
+    async (page) => {
+      const pageTags = new Set(
+        Array.isArray(page.meta?.tags)
+          ? page.meta.tags.map(normalizeTagIdentity)
+          : [],
+      );
+      const limit =
+        page.meta?.related_pages_limit || defaultConfig.related_pages_limit || 3;
+      const related = authoredPages
+        .filter((candidate) => candidate !== page)
+        .map((candidate) => {
+          const sharedTags = Array.isArray(candidate.meta?.tags)
+            ? [...new Set(candidate.meta.tags.map(normalizeTagIdentity))]
+                .filter((identity) => pageTags.has(identity))
+                .map((identity) => tagsMap.get(identity)?.label || identity)
+            : [];
+          return { candidate, sharedTags };
+        })
+        .filter(({ sharedTags }) => sharedTags.length > 0)
+        .sort((a, b) => {
+          const scoreDifference = b.sharedTags.length - a.sharedTags.length;
+          return (
+            scoreDifference ||
+            comparePages(a.candidate, b.candidate, page.meta?.date_sort_order)
+          );
+        })
+        .slice(0, limit)
+        .map(({ candidate, sharedTags }) => ({
+          ...candidate,
+          related_score: sharedTags.length,
+          shared_tags: sharedTags,
+        }));
+
+      page.relatedPages = related;
+      page.meta.related_pages = related.length
+        ? await generateLinkList("related", related)
+        : "";
+    },
+    getBuildConcurrency(),
+  );
+};
+
+const findPageBySource = (pages, filePath) => {
+  const target = path.resolve(filePath);
+  const visit = (pageList) => {
+    for (const page of pageList) {
+      const sourcePath = page.indexFilePath || page.filePath;
+      if (sourcePath && path.resolve(sourcePath) === target) return page;
+      const child = page.pages ? visit(page.pages) : null;
+      if (child) return child;
+    }
+    return null;
+  };
+  return visit(pages);
+};
+
+const refreshPageContent = async (page, filePath, content) => {
+  const stats = await fs.stat(filePath);
+  clearGitDateCache(filePath);
+  const fallbackDate = await resolveFileDate(filePath, stats.mtime);
+  setFallbackDates(page, fallbackDate, page.meta);
+  const sourceDate = page._sourceMeta?.date;
+  if (sourceDate !== undefined && sourceDate !== null && sourceDate !== "") {
+    applyPublicationDate(page, sourceDate, filePath);
+  } else {
+    delete page.dateObj;
+    delete page.dateOnly;
+    delete page.meta.date;
+    delete page.meta.date_iso;
+  }
+  page.content = content;
+  return page;
 };
 
 const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
@@ -131,12 +317,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     tagsMap.clear();
     pageIndex.length = 0;
     pageIndexUrls.clear();
+    clearGitDateCache();
   }
 
   const pages = [];
   const folderConfig = await loadConfig(sourceDir);
   const config = { ...defaultConfig, ...parent?.meta, ...folderConfig };
-  const { dateFormat } = config;
 
   try {
     const files = await fs.readdir(sourceDir, { withFileTypes: true });
@@ -149,6 +335,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
 
         const stats = await getValidStats(filePath);
         if (!stats) return null;
+        const fallbackDate = await resolveFileDate(filePath, stats.mtime);
 
         const root = file.name === "index.md" && !parent;
         const relativePath = path.relative(baseDir, filePath).replace(/\\/g, "/");
@@ -178,27 +365,18 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           url: withBasePath(route),
           nav: !parent && !root && !notFound,
           parent: parent
-            ? { title: parent.meta.title, url: parent.url }
+            ? {
+                title: parent.meta.title || parent.title,
+                url: parent.url,
+                filename: parent.filename,
+              }
             : undefined,
           folder: isDirectory,
           notFound,
           title: name,
-          createdAtObj: stats.birthtime,
-          updatedAtObj: stats.mtime,
-          created_at: new Date(stats.birthtime).toLocaleDateString(
-            undefined,
-            dateFormat,
-          ),
-          updated_at: new Date(stats.mtime).toLocaleDateString(
-            undefined,
-            dateFormat,
-          ),
-          date: new Date(stats.birthtime).toLocaleDateString(
-            undefined,
-            dateFormat,
-          ),
           meta: root ? { ...defaultConfig } : { ...config },
         };
+        setFallbackDates(page, fallbackDate, page.meta);
 
         if (path.extname(file.name) === ".md") {
           await applyMarkdownFileToPage(page, filePath, { notFound });
@@ -216,7 +394,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
     );
 
     // Now handle directories recursively
-    await mapLimit(fileResults, async (result) => {
+    const processedPages = await mapLimit(fileResults, async (result) => {
       if (!result) return;
 
       const { page, isDirectory } = result;
@@ -240,15 +418,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         };
         page.meta = mergedConfig;
 
-        page.pages.sort((a, b) => {
-          if (a.meta.position && b.meta.position) {
-            return a.meta.position - b.meta.position;
-          }
-          const dateA = a.dateObj || new Date(a.created_at);
-          const dateB = b.dateObj || new Date(b.created_at);
-          const sortOrder = (mergedConfig.date_sort_order || "desc").toLowerCase();
-          return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-        });
+        page.pages.sort((a, b) =>
+          comparePages(a, b, mergedConfig.date_sort_order),
+        );
 
         // Handle pagination if page_count is set
         const pageCount = mergedConfig.page_count;
@@ -283,7 +455,19 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
               url: `${page.url}/page/${pageNum}`,
               folder: false,
               layout: page.layout,
-              parent: { title: page.meta.title || page.name, url: page.url },
+              createdAtObj: page.createdAtObj,
+              updatedAtObj: page.updatedAtObj,
+              created_at: page.created_at,
+              created_at_iso: page.created_at_iso,
+              updated_at: page.updated_at,
+              updated_at_iso: page.updated_at_iso,
+              date: page.date,
+              date_iso: page.date_iso,
+              parent: {
+                title: page.meta.title || page.name,
+                url: page.url,
+                filename: page.filename,
+              },
               meta: {
                 ...page.meta,
                 title: `${page.meta.title || page.name} - Page ${pageNum}`,
@@ -306,26 +490,37 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
         }
       }
 
-      // Add tags
-      if (page.meta.tags) {
-        page.meta.tags.forEach((tag) => addToTagMap(tag, page));
-      }
-
-      pages.push(page);
-      if (!pageIndexUrls.has(page.url)) {
-        pageIndexUrls.add(page.url);
-        pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
-      }
+      return page;
     }, getBuildConcurrency());
+    pages.push(...processedPages.filter(Boolean));
   } catch (error) {
     throw new Error(`Unable to generate pages from ${sourceDir}: ${error.message}`, {
       cause: error,
     });
   }
 
+  pages.sort((a, b) => comparePages(a, b, config.date_sort_order));
+
   // Make Tags page
+  if (!parent) {
+    const collectTags = (pageList) => {
+      for (const page of pageList) {
+        if (Array.isArray(page.meta?.tags)) {
+          page.meta.tags.forEach((tag) => addToTagMap(tag, page));
+        }
+        if (page.pages) collectTags(page.pages);
+      }
+    };
+    collectTags(pages);
+    finalizeTagSlugs();
+    await addRelatedPages(pages);
+  }
+
   if (!parent && tagsMap.size) {
     const tagLayout = await fsExtra.pathExists(`${dirs.layouts}/tags.html`);
+    const generatedTagDate = newestPageDate(
+      [...tagsMap.values()].flatMap((tag) => tag.pages),
+    ) || new Date(0);
     const tagPage = {
       route: "/tags",
       url: withBasePath("/tags"),
@@ -334,40 +529,78 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       name: "Tags",
       title: "All Tags",
       layout: tagLayout ? "tags" : defaultConfig.default_layout_name,
-      updated_at: new Date().toLocaleDateString(
-        undefined,
-        defaultConfig.dateFormat,
-      ),
       meta: { ...config },
       pages: [],
     };
+    setFallbackDates(tagPage, generatedTagDate, tagPage.meta);
 
-    for (const [tag, pagesForTag] of tagsMap) {
-      const route = `/tags/${tag}`;
+    const tagEntries = [...tagsMap.values()].sort((a, b) =>
+      a.identity.localeCompare(b.identity),
+    );
+    for (const tag of tagEntries) {
+      const route = `/tags/${tag.slug}`;
+      const tagDate = newestPageDate(tag.pages) || generatedTagDate;
       const page = {
-        name: tag,
-        title: tag,
-        updated_at: new Date().toLocaleDateString(
-          undefined,
-          defaultConfig.dateFormat,
-        ),
+        name: tag.label,
+        title: tag.label,
         route,
         url: withBasePath(route),
         layout: tagLayout ? "tags" : defaultConfig.default_layout_name,
-        meta: { ...config, title: `Pages tagged with ${capitalize(tag)}` },
+        meta: { ...config, title: `Pages tagged with ${tag.label}` },
       };
-      page.content = await generateLinkList("tags", pagesForTag);
+      setFallbackDates(page, tagDate, page.meta);
+      page.content = await generateLinkList("tags", tag.pages);
 
       tagPage.pages.push(page);
     }
     tagPage.content = await generateLinkList("tags", tagPage.pages);
     pages.push(tagPage);
   }
+
+  pages.sort((a, b) => comparePages(a, b, config.date_sort_order));
+
+  if (!parent) {
+    const addToPageIndex = (pageList) => {
+      for (const page of pageList) {
+        if (page.filePath && !pageIndexUrls.has(page.url)) {
+          pageIndexUrls.add(page.url);
+          pageIndex.push({ url: page.url, title: page.title, nav: page.nav });
+        }
+        if (page.pages) addToPageIndex(page.pages);
+      }
+    };
+    addToPageIndex(pages);
+  }
   return pages;
 };
 
-const generateLinkList = async (name, pages) => {
-  const findPartialPath = async (partialName) => {
+const createLinkListCache = () => ({
+  partialPaths: new Map(),
+  partialContents: new Map(),
+  items: new Map(),
+  lists: new Map(),
+  pageIds: new WeakMap(),
+  nextPageId: 0,
+  navPages: null,
+  stats: {
+    partialReads: 0,
+    itemRenders: 0,
+    itemHits: 0,
+    listRenders: 0,
+    listHits: 0,
+  },
+});
+
+const getCachedPageId = (page, cache) => {
+  if (!cache.pageIds.has(page)) {
+    cache.pageIds.set(page, cache.nextPageId);
+    cache.nextPageId += 1;
+  }
+  return cache.pageIds.get(page);
+};
+
+const findPartialPath = async (partialName, cache) => {
+  const find = async () => {
     for (const ext of partialExtensions) {
       const partialPath = path.join(dirs.partials, `${partialName}${ext}`);
       if (await fsExtra.pathExists(partialPath)) return partialPath;
@@ -375,42 +608,117 @@ const generateLinkList = async (name, pages) => {
     return null;
   };
 
-  const partialPath = await findPartialPath(name);
-  const defaultPath = await findPartialPath(
-    defaultConfig.default_link_name || "links",
-  );
+  if (!cache) return find();
+  if (!cache.partialPaths.has(partialName)) {
+    cache.partialPaths.set(partialName, find());
+  }
+  return cache.partialPaths.get(partialName);
+};
 
-  if (partialPath || defaultPath) {
-    const partialContent = await fs.readFile(partialPath || defaultPath, "utf-8");
+const resolveLinkPartial = async (name, cache) => {
+  const partialPath = await findPartialPath(name, cache);
+  if (partialPath) return partialPath;
+  return findPartialPath(defaultConfig.default_link_name || "links", cache);
+};
+
+const loadLinkPartial = async (partialPath, cache) => {
+  if (!cache) return fs.readFile(partialPath, "utf-8");
+  if (!cache.partialContents.has(partialPath)) {
+    cache.stats.partialReads += 1;
+    cache.partialContents.set(partialPath, fs.readFile(partialPath, "utf-8"));
+  }
+  return cache.partialContents.get(partialPath);
+};
+
+const renderLinkItem = async (page, partialPath, cache) => {
+  const render = async () => {
+    if (cache) cache.stats.itemRenders += 1;
+    if (partialPath) {
+      const partialContent = await loadLinkPartial(partialPath, cache);
+      return replacePlaceholders(partialContent, page);
+    }
+    return `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`;
+  };
+
+  if (!cache) return render();
+  const key = `${partialPath || "__default_link__"}\0${getCachedPageId(page, cache)}`;
+  if (cache.items.has(key)) {
+    cache.stats.itemHits += 1;
+    return cache.items.get(key);
+  }
+  const rendered = render();
+  cache.items.set(key, rendered);
+  return rendered;
+};
+
+const generateLinkList = async (name, pages, cache) => {
+  const partialPath = await resolveLinkPartial(name, cache);
+  const render = async () => {
+    if (cache) cache.stats.listRenders += 1;
     const content = await mapLimit(
       pages,
-      (page) => replacePlaceholders(partialContent, page),
+      (page) => renderLinkItem(page, partialPath, cache),
       getBuildConcurrency(),
     );
     return content.join("\n");
-  } else {
-    return pages
-      .map(
-        (page) =>
-          `<li><a href="${page.url}" class="${defaultConfig.link_class}">${page.title}</a></li>`,
-      )
-      .join("\n");
+  };
+
+  if (!cache) return render();
+  const pageSet = pages.map((page) => getCachedPageId(page, cache)).join(",");
+  const key = `${partialPath || "__default_link__"}\0${pageSet}`;
+  if (cache.lists.has(key)) {
+    cache.stats.listHits += 1;
+    return cache.lists.get(key);
   }
+  const rendered = render();
+  cache.lists.set(key, rendered);
+  return rendered;
 };
 
 const render = async (page) => {
   try {
-    const replacedContent = await replacePlaceholders(page.content, page);
-    const htmlContent = marked.parse(replacedContent); // Markdown processed once
-    const wrappedContent = await applyLayoutAndWrapContent(page, htmlContent);
-    // Use function to avoid $` special replacement patterns in content
-    const template = await getTemplate();
-    const htmlWithTemplate = template.replace(
+    const renderContext = {};
+    const tocToken = `__SWIFTY_TOC_${renderedContentTokenId}__`;
+    page.meta.toc = tocToken;
+    let replacedContent = await replacePlaceholders(
+      page.content,
+      page,
+      renderContext,
+    );
+    const headings = collectMarkdownHeadings(replacedContent);
+    page.meta.toc = renderTableOfContents(headings);
+    replacedContent = replacedContent.replaceAll(tocToken, () => page.meta.toc);
+    const htmlContent = renderMarkdown(replacedContent); // Markdown processed once
+    const contentToken =
+      `__SWIFTY_RENDERED_PAGE_CONTENT_${renderedContentTokenId}__`;
+    renderedContentTokenId += 1;
+    const wrappedContent = await applyLayoutAndWrapContent(page, contentToken);
+    let highlighted = containsHighlightedCode(htmlContent);
+    let template = await getTemplate({ highlighted });
+    let htmlWithTemplate = template.replace(
       /<%=\s*content\s*%>/g,
       () => wrappedContent,
     );
-    const finalContent = await replacePlaceholders(htmlWithTemplate, page);
-    return applyBasePathToHtml(finalContent);
+    let renderedShell = await replacePlaceholders(
+      htmlWithTemplate,
+      page,
+      renderContext,
+    );
+    if (!highlighted && containsHighlightedCode(renderedShell)) {
+      highlighted = true;
+      template = await getTemplate({ highlighted });
+      htmlWithTemplate = template.replace(
+        /<%=\s*content\s*%>/g,
+        () => wrappedContent,
+      );
+      renderedShell = await replacePlaceholders(
+        htmlWithTemplate,
+        page,
+        renderContext,
+      );
+    }
+    const finalContent = renderedShell.replaceAll(contentToken, () => htmlContent);
+    return applyBasePathToHtml(rewriteLocalImageReferences(finalContent));
   } catch (error) {
     throw new Error(`Unable to render page ${page.url}: ${error.message}`, {
       cause: error,
@@ -450,66 +758,77 @@ const createPages = async (pages, distDir = dirs.dist) => {
   );
 };
 
-const addLinks = async (pages, parent) => {
+const addLinks = async (pages, parent, linkCache = createLinkListCache()) => {
   const linkablePages = pages.filter((p) => !p.notFound);
   // Filter out folders and index pages for prev/next calculation (only content pages)
   const contentPages = linkablePages.filter((p) => !p.folder && p.filename !== 'index');
+  const contentPagePositions = new Map(
+    contentPages.map((page, index) => [page, index]),
+  );
+  if (!linkCache.navPages) {
+    linkCache.navPages = pageIndex.filter((page) => page.nav);
+  }
+
+  // Populate the complete sibling set before rendering cached partial items so
+  // output cannot depend on which concurrent page reaches the cache first.
+  for (const page of pages) {
+    page.meta ||= {};
+    page.meta.links_to_tags = page?.meta?.tags?.length
+      ? page.meta.tags
+          .map(
+            (tag) =>
+              `<a class="${defaultConfig.tag_class}" href="${getTagUrl(tag)}">${normalizeTagLabel(tag)}</a>`,
+          )
+          .join("")
+      : "";
+    const crumbTitle = page.meta.title || page.title || page.name;
+    const crumb = page.root
+      ? ""
+      : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${crumbTitle}</a>`;
+    page.meta.breadcrumbs = parent
+      ? parent.meta.breadcrumbs + crumb
+      : `<a class="${defaultConfig.breadcrumb_class}" href="${withBasePath("/")}">Home</a>` +
+        crumb;
+
+    const linkClass = defaultConfig.prev_next_class || defaultConfig.link_class || '';
+    const classAttr = linkClass ? ` class="${linkClass}"` : '';
+    const position = contentPagePositions.get(page);
+    if (position !== undefined) {
+      const prevSibling = position > 0 ? contentPages[position - 1] : null;
+      const nextSibling = position < contentPages.length - 1
+        ? contentPages[position + 1]
+        : null;
+      page.meta.prev_page = prevSibling
+        ? `<a href="${prevSibling.url}"${classAttr}>${prevSibling.title || prevSibling.name}</a>`
+        : '';
+      page.meta.next_page = nextSibling
+        ? `<a href="${nextSibling.url}"${classAttr}>${nextSibling.title || nextSibling.name}</a>`
+        : '';
+    } else {
+      page.meta.prev_page = '';
+      page.meta.next_page = '';
+    }
+  }
 
   await mapLimit(
     pages,
     async (page) => {
-      page.meta ||= {};
-      page.meta.links_to_tags = page?.meta?.tags?.length
-        ? page.meta.tags
-            .map(
-              (tag) =>
-                `<a class="${defaultConfig.tag_class}" href="${withBasePath(`/tags/${tag}`)}">${tag}</a>`,
-            )
-            .join("")
-        : "";
-      const crumbTitle = page.meta.title || page.title || page.name;
-      const crumb = page.root
-        ? ""
-        : ` ${defaultConfig.breadcrumb_separator} <a class="${defaultConfig.breadcrumb_class}" href="${page.url}">${crumbTitle}</a>`;
-      page.meta.breadcrumbs = parent
-        ? parent.meta.breadcrumbs + crumb
-        : `<a class="${defaultConfig.breadcrumb_class}" href="${withBasePath("/")}">Home</a>` +
-          crumb;
-
-      // Generate prev/next links based on sibling position (only for content pages, not folders or index)
-      const linkClass = defaultConfig.prev_next_class || defaultConfig.link_class || '';
-      const classAttr = linkClass ? ` class="${linkClass}"` : '';
-
-      if (!page.folder && page.filename !== 'index' && !page.notFound) {
-        const pageIndex = contentPages.indexOf(page);
-        const prevSibling = pageIndex > 0 ? contentPages[pageIndex - 1] : null;
-        const nextSibling = pageIndex < contentPages.length - 1 ? contentPages[pageIndex + 1] : null;
-
-        page.meta.prev_page = prevSibling
-          ? `<a href="${prevSibling.url}"${classAttr}>${prevSibling.title || prevSibling.name}</a>`
-          : '';
-        page.meta.next_page = nextSibling
-          ? `<a href="${nextSibling.url}"${classAttr}>${nextSibling.title || nextSibling.name}</a>`
-          : '';
-      } else {
-        page.meta.prev_page = '';
-        page.meta.next_page = '';
-      }
-
       // Run independent link generation in parallel
       // Use visiblePages for paginated folders (first page only shows its chunk)
       const childPages = page.visiblePages || page.pages;
+      const sectionPartial = parent?.filename || page.parent?.filename || "pages";
       const [links_to_children, links_to_siblings, links_to_self_and_siblings, nav_links] =
         await Promise.all([
           childPages
-            ? generateLinkList(page.filename, childPages)
+            ? generateLinkList(page.filename, childPages, linkCache)
             : Promise.resolve(""),
           generateLinkList(
-            page.parent?.filename || "pages",
+            sectionPartial,
             linkablePages.filter((p) => p.url !== page.url),
+            linkCache,
           ),
-          generateLinkList(page.parent?.filename || "pages", linkablePages),
-          generateLinkList("nav", pageIndex.filter((p) => p.nav)),
+          generateLinkList(sectionPartial, linkablePages, linkCache),
+          generateLinkList("nav", linkCache.navPages, linkCache),
         ]);
 
       page.meta.links_to_children = links_to_children;
@@ -518,7 +837,7 @@ const addLinks = async (pages, parent) => {
       page.meta.nav_links = nav_links;
 
       if (page.pages) {
-        await addLinks(page.pages, page);
+        await addLinks(page.pages, page, linkCache);
       }
 
       // Process pagination pages - inherit breadcrumbs and nav_links
@@ -533,4 +852,17 @@ const addLinks = async (pages, parent) => {
   );
 };
 
-export { generatePages, createPages, pageIndex, addLinks };
+export {
+  generatePages,
+  createPages,
+  pageIndex,
+  addLinks,
+  comparePages,
+  createLinkListCache,
+  extractSummary,
+  flattenAuthoredPages,
+  findPageBySource,
+  generateLinkList,
+  refreshPageContent,
+  parseDate,
+};

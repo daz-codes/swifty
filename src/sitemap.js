@@ -50,7 +50,10 @@ const generateSitemapXml = (pages, siteUrl = "") => {
     })
     .map((page) => {
       const lastmod = formatSitemapDate(
-        page.updatedAtObj || page.dateObj || page.updated_at || new Date(),
+        page.updatedAtObj ||
+          page.updated_at_iso ||
+          page.dateObj ||
+          page.date_iso,
       );
       const lastmodLine = lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : "";
 

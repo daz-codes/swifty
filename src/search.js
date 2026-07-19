@@ -83,19 +83,47 @@ const findReservedPathOwner = (pages) => {
   return visit(pages);
 };
 
-const renderSearchText = async (value, page, { markdown = false } = {}) => {
+const renderSearchText = async (
+  value,
+  page,
+  { markdown = false, renderContext } = {},
+) => {
   if (value === undefined || value === null || value === "") return "";
-  const replaced = await replacePlaceholders(String(value), page);
+  const replaced = await replacePlaceholders(String(value), page, renderContext);
   const rendered = markdown ? marked.parse(replaced) : replaced;
   return normalizeSearchText(rendered);
 };
 
+const capSearchContent = (value, limit) => {
+  if (!limit || value.length <= limit) return value;
+  const leading = value.slice(0, limit);
+  const wordBoundary = leading.lastIndexOf(" ");
+  return leading
+    .slice(0, wordBoundary >= Math.floor(limit * 0.8) ? wordBoundary : limit)
+    .trim();
+};
+
 const createSearchEntry = async (page) => {
-  const content = await renderSearchText(page.content || "", page, { markdown: true });
+  const renderContext = {};
+  const renderedContent = await renderSearchText(page.content || "", page, {
+    markdown: true,
+    renderContext,
+  });
+  const contentLimit =
+    page.meta?.search_content_limit ?? defaultConfig.search_content_limit ?? 5000;
+  if (!Number.isInteger(contentLimit) || contentLimit <= 0) {
+    throw new TypeError(
+      `search_content_limit for ${page.filePath || page.url || "search entry"} must be a positive integer`,
+    );
+  }
+  const content = capSearchContent(renderedContent, contentLimit);
   const configuredSummary = page.meta?.summary || page.meta?.description || "";
   const summary = configuredSummary
-    ? await renderSearchText(configuredSummary, page, { markdown: true })
-    : content.slice(0, 200).trim();
+    ? await renderSearchText(configuredSummary, page, {
+        markdown: true,
+        renderContext,
+      })
+    : renderedContent.slice(0, 200).trim();
   const tags = Array.isArray(page.meta?.tags)
     ? page.meta.tags.map((tag) => normalizeSearchText(tag)).filter(Boolean)
     : [];
@@ -137,6 +165,7 @@ const generateSearchIndex = async (pages, outputDir = dirs.dist) => {
 export {
   SEARCH_INDEX_FILENAME,
   SEARCH_INDEX_VERSION,
+  capSearchContent,
   createSearchEntry,
   createSearchIndex,
   findReservedPathOwner,

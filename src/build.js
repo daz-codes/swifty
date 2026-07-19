@@ -1,12 +1,20 @@
 import fs from "fs";
+import fsPromises from "fs/promises";
 import { argv } from "process";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isDeepStrictEqual } from "util";
 
 import fsExtra from "fs-extra";
 
 import { copyAssets, optimizeImages } from "./assets.js";
-import { generatePages, createPages, addLinks } from "./pages.js";
+import {
+  generatePages,
+  createPages,
+  addLinks,
+  findPageBySource,
+  refreshPageContent,
+} from "./pages.js";
 import { generateRssFeeds } from "./rss.js";
 import { generateSeoFiles } from "./sitemap.js";
 import { generateSearchIndex } from "./search.js";
@@ -14,6 +22,10 @@ import { baseDir, dirs } from "./config.js";
 import { clearDataCache } from "./data.js";
 import { resetCaches } from "./layout.js";
 import { clearCache as clearPartialCache } from "./partials.js";
+import { parseFrontMatter } from "./frontmatter.js";
+import { extractSummary } from "./content.js";
+
+let lastBuildState = null;
 
 const prepareOutputDirectory = async (outputDir) => {
   const projectPath = path.resolve(baseDir);
@@ -112,9 +124,52 @@ export default async function build(outputDir = dirs.dist) {
   if (process.stdout.isTTY) {
     process.stdout.write('\n');
   }
+
+  lastBuildState = { pages, outputDir: resolvedOutputDir };
+  return lastBuildState;
 }
 
-export { prepareOutputDirectory };
+const rebuildPage = async (filePath, outputDir = dirs.dist) => {
+  const resolvedOutputDir = path.resolve(baseDir, outputDir);
+  if (!lastBuildState || lastBuildState.outputDir !== resolvedOutputDir) {
+    return { rebuilt: false, requiresFullBuild: true, reason: "no matching build state" };
+  }
+
+  const page = findPageBySource(lastBuildState.pages, filePath);
+  if (!page) {
+    return { rebuilt: false, requiresFullBuild: true, reason: "page is new or was not built" };
+  }
+  if (page.folder || page.indexFilePath) {
+    return { rebuilt: false, requiresFullBuild: true, reason: "folder indexes affect child pages" };
+  }
+
+  const source = await fsPromises.readFile(filePath, "utf-8");
+  const { data, content } = parseFrontMatter(source);
+  const nextSummary =
+    data.summary ||
+    data.description ||
+    extractSummary(content, page.meta.summary_length || 200);
+  if (!isDeepStrictEqual(data, page._sourceMeta) || nextSummary !== page.summary) {
+    return {
+      rebuilt: false,
+      requiresFullBuild: true,
+      reason: "page metadata or automatic summary changed",
+    };
+  }
+
+  await refreshPageContent(page, filePath, content);
+  await createPages([page], resolvedOutputDir);
+  await Promise.all([
+    generateSearchIndex(lastBuildState.pages, resolvedOutputDir),
+    generateRssFeeds(lastBuildState.pages, resolvedOutputDir),
+    generateSeoFiles(lastBuildState.pages, resolvedOutputDir),
+  ]);
+  return { rebuilt: true, requiresFullBuild: false, page };
+};
+
+const getBuildState = () => lastBuildState;
+
+export { getBuildState, prepareOutputDirectory, rebuildPage };
 
 // Run the build when invoked directly (e.g. `npm run build`, `npm start`),
 // not when imported as a module (e.g. by cli.js).

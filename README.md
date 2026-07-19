@@ -11,7 +11,7 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **HTML, CSS, and JS minification** during production builds
 - **Layouts and partials** for reusable templates
 - **Auto-injected CSS/JS** from your css/ and js/ folders
-- **Code syntax highlighting** via highlight.js
+- **Self-hosted code syntax highlighting** via configurable highlight.js themes
 - **Tags and navigation** generated automatically
 - **RSS feed generation** for blogs and content folders
 - **Draft mode** for work-in-progress pages (visible in dev, hidden in production)
@@ -24,11 +24,14 @@ Swifty uses convention over configuration to make it super simple to build blazi
 - **Word count & reading time** - Auto-calculated for blog posts
 - **Previous/next navigation** - Auto-generated links between sibling pages
 - **[Eta templating](https://eta.js.org/)** - Full JavaScript in templates with EJS syntax
-- **Idiomorph navigation** with optional intent prefetching for SPA-like transitions
+- **Morpheus navigation** powered by Idiomorph, with intent prefetching and SPA-like transitions
 - **Custom permalinks and base paths** for flexible deployment URLs
 - **Public asset passthrough** for files that should be copied unchanged
 - **Site validation** for duplicate routes, broken links, missing assets, and invalid configuration
-- **Client-side search index** generated at `/search.json`
+- **Automatic summaries and related content** ranked by shared tags
+- **Drop-in client-side search** backed by the generated `/search.json` index
+- **Incremental page rebuilds** for safe body-only edits during development
+- **Heading anchors and table of contents** generated from Markdown headings
 
 Requires Node.js 22 or newer. See [Migrating to Swifty 4](MIGRATION.md) when upgrading an existing site.
 
@@ -80,11 +83,23 @@ layouts, invalid canonical URLs, and malformed root or folder configuration.
 The command does not change `dist/` and exits with a non-zero status when it finds
 an issue. External URLs are not fetched.
 
+### Programmatic API Scope
+
+The exported Node API currently keeps configuration, page indexes, tag state,
+template caches, and incremental-build state at module scope. Rebuilding one
+site repeatedly in a process is supported; building multiple independent site
+roots in one process is not. Use a separate worker or child process per site
+until the build pipeline gains an explicit site-context object.
+
 ### Development vs Production
 
-- **`swifty start`** - For development. Includes live reload (auto-refreshes browser on file changes) and file watching with incremental builds for CSS/JS/images.
+- **`swifty start`** - For development. Includes live reload and incremental rebuilds for assets and safe body-only page edits; metadata or structural changes trigger a full build.
 - **`swifty build`** - For production deployment. Produces clean output without any development scripts.
 - **`swifty deploy "message"`** - Builds the site, commits only the generated output folder, and pushes it to git.
+
+Native filesystem events are used by default. Set `watcher_use_polling: true`
+when developing on a cloud folder, network mount, container volume, or another
+filesystem that does not reliably emit change events.
 
 ## Documentation
 

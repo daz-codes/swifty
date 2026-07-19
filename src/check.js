@@ -10,7 +10,10 @@ import { baseDir, defaultConfig, dirs, validateConfig } from "./config.js";
 import { clearDataCache } from "./data.js";
 import { resetCaches } from "./layout.js";
 import { addLinks, createPages, generatePages } from "./pages.js";
-import { clearCache as clearPartialCache } from "./partials.js";
+import {
+  clearCache as clearPartialCache,
+  resolveSocialImageUrl,
+} from "./partials.js";
 import { parseFrontMatter } from "./frontmatter.js";
 import { generateRssFeeds } from "./rss.js";
 import { generateSeoFiles } from "./sitemap.js";
@@ -29,12 +32,14 @@ const CHECK_CODES = {
   CONTENT: "content",
   DUPLICATE_ROUTE: "duplicate-route",
   INVALID_CANONICAL: "invalid-canonical",
+  INVALID_SOCIAL_IMAGE: "invalid-social-image",
   MISSING_IMAGE: "missing-image",
   MISSING_LAYOUT: "missing-layout",
   MISSING_PARTIAL: "missing-partial",
 };
 
 const CONFIG_FILENAMES = new Set(["config.yaml", "config.yml", "config.json"]);
+const BUILT_IN_PARTIALS = new Set(["search"]);
 const IMAGE_EXTENSIONS = new Set([
   ".avif",
   ".gif",
@@ -259,7 +264,7 @@ const collectSourceIssues = async (add) => {
         path.join(dirs.partials, `${partialName}.md`),
         path.join(dirs.partials, `${partialName}.html`),
       ];
-      const exists = (
+      const exists = BUILT_IN_PARTIALS.has(partialName) || (
         await Promise.all(candidates.map((candidate) => fsExtra.pathExists(candidate)))
       ).some(Boolean);
       if (!exists) {
@@ -324,6 +329,29 @@ const collectRouteManifest = (pages, add) => {
     manifest.set(outputPath, { page, source });
   }
   return manifest;
+};
+
+const collectSocialImageIssues = (pages, add) => {
+  for (const page of flattenPages(pages)) {
+    const meta = page.meta || {};
+    const image =
+      meta.image ||
+      meta.og_image ||
+      meta.default_og_image ||
+      defaultConfig.default_og_image ||
+      "";
+    if (!image) continue;
+
+    const siteUrl = meta.site_url || meta.url || defaultConfig.site_url || defaultConfig.url || "";
+    if (resolveSocialImageUrl(image, siteUrl, meta.base_path)) continue;
+
+    add({
+      code: CHECK_CODES.INVALID_SOCIAL_IMAGE,
+      source: page.filePath ? displayPath(page.filePath) : `generated ${page.url}`,
+      reference: String(image),
+      message: `Local social image "${image}" requires an absolute site_url before og:image and twitter:image can be emitted`,
+    });
+  }
 };
 
 const parseAttributes = (tag) => {
@@ -606,6 +634,7 @@ const checkSite = async () => {
     await resetCaches();
     await addLinks(pages);
     const manifest = collectRouteManifest(pages, collector.add);
+    collectSocialImageIssues(pages, collector.add);
     report.counts.routes = manifest.size;
 
     const hasMissingPartial = collector.issues.some(
@@ -667,6 +696,7 @@ export {
   canonicalUrlError,
   checkSite,
   collectRouteManifest,
+  collectSocialImageIssues,
   printCheckReport,
   runCheck,
 };

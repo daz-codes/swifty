@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import fsExtra from "fs-extra";
 import { Eta } from "eta";
@@ -7,10 +8,15 @@ import { Eta } from "eta";
 import { dirs, defaultConfig } from "./config.js";
 import { marked } from "./markdown.js";
 import { loadData } from "./data.js";
-import { getResponsiveImage } from "./assets.js";
+import { getResponsiveImage, getSearchScriptSrc } from "./assets.js";
 import { withBasePath, withoutBasePath } from "./urls.js";
 
 const partialCache = new Map();
+const builtInSearchPartial = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "client",
+  "search.html",
+);
 const imageExtensionRegex = /\.(png|jpe?g|webp)(?=([?#]|$))/i;
 const rewriteableImageTags = new Set(["a", "img", "source"]);
 
@@ -44,6 +50,31 @@ const calculateReadingTime = (wordCount, wordsPerMinute = defaultConfig.words_pe
   return minutes === 1 ? '1 min read' : `${minutes} min read`;
 };
 
+const isAbsoluteHttpUrl = (value) => {
+  try {
+    const parsed = new URL(value);
+    return ["http:", "https:"].includes(parsed.protocol) && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+
+const resolveSocialImageUrl = (image, siteUrl, basePath) => {
+  if (!image) return "";
+  if (isAbsoluteHttpUrl(image)) return image;
+  if (!isAbsoluteHttpUrl(siteUrl)) return "";
+
+  try {
+    const publicImage = image.startsWith("/")
+      ? withBasePath(image, basePath)
+      : image;
+    const resolved = new URL(publicImage, `${siteUrl.replace(/\/$/, "")}/`);
+    return isAbsoluteHttpUrl(resolved.href) ? resolved.href : "";
+  } catch {
+    return "";
+  }
+};
+
 // Generate Open Graph meta tags from page data
 const generateOgTags = (values) => {
   const meta = values.meta || {};
@@ -54,7 +85,8 @@ const generateOgTags = (values) => {
   const sitename = meta.sitename || values.sitename || '';
   const description = meta.description || meta.summary || '';
   const url = values.url || '';
-  const siteUrl = (meta.site_url || values.site_url || '').replace(/\/$/, '');
+  const siteUrl = (meta.site_url || meta.url || values.site_url || '')
+    .replace(/\/$/, '');
   // Rewrite local image paths to .webp so they match the optimized output on disk
   const image = rewriteImageUrl(
     meta.image ||
@@ -63,6 +95,11 @@ const generateOgTags = (values) => {
       values.default_og_image ||
       defaultConfig.default_og_image ||
       '',
+  );
+  const imageUrl = resolveSocialImageUrl(
+    image,
+    siteUrl,
+    meta.base_path ?? values.base_path,
   );
   const type = meta.og_type || (values.folder ? 'website' : 'article');
   const author = meta.author || values.author || '';
@@ -73,17 +110,15 @@ const generateOgTags = (values) => {
   if (siteUrl && url) tags.push(`<meta property="og:url" content="${escapeAttr(siteUrl + url)}">`);
   tags.push(`<meta property="og:type" content="${escapeAttr(type)}">`);
   if (description) tags.push(`<meta property="og:description" content="${escapeAttr(description)}">`);
-  if (image) {
-    const imageUrl = image.startsWith('http') ? image : siteUrl + image;
+  if (imageUrl) {
     tags.push(`<meta property="og:image" content="${escapeAttr(imageUrl)}">`);
   }
 
   // Twitter Card tags
-  tags.push(`<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">`);
+  tags.push(`<meta name="twitter:card" content="${imageUrl ? 'summary_large_image' : 'summary'}">`);
   if (title) tags.push(`<meta name="twitter:title" content="${escapeAttr(title)}">`);
   if (description) tags.push(`<meta name="twitter:description" content="${escapeAttr(description)}">`);
-  if (image) {
-    const imageUrl = image.startsWith('http') ? image : siteUrl + image;
+  if (imageUrl) {
     tags.push(`<meta name="twitter:image" content="${escapeAttr(imageUrl)}">`);
   }
 
@@ -127,6 +162,18 @@ const loadPartialData = async (partialName) => {
 
     const partialContent = await fs.readFile(partialPath, "utf-8");
     const partialData = { content: partialContent, raw: partialFile.raw };
+    partialCache.set(partialName, partialData);
+    return partialData;
+  }
+
+  if (partialName === "search") {
+    const source = await fs.readFile(builtInSearchPartial, "utf-8");
+    const partialData = {
+      raw: true,
+      content: source
+        .replace("__SWIFTY_SEARCH_INDEX__", withBasePath("/search.json"))
+        .replace("__SWIFTY_SEARCH_SCRIPT__", await getSearchScriptSrc()),
+    };
     partialCache.set(partialName, partialData);
     return partialData;
   }
@@ -190,7 +237,23 @@ const addResponsiveImageAttributes = (tag) => {
   return nextTag;
 };
 
-const rewriteLocalImageReferences = (html) =>
+const codeBlockRegex =
+  /```[\s\S]*?\n```|`[^`\n]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/gi;
+
+const protectCodeBlocks = (value, blocks, tokenPrefix) =>
+  value.replace(codeBlockRegex, (match) => {
+    const token = `__SWIFTY_${tokenPrefix}_${blocks.length}__`;
+    blocks.push(match);
+    return token;
+  });
+
+const restoreBlocks = (value, blocks, tokenPrefix) =>
+  value.replace(
+    new RegExp(`__SWIFTY_${tokenPrefix}_(\\d+)__`, "g"),
+    (_, index) => blocks[Number(index)],
+  );
+
+const rewriteImageTags = (html) =>
   html.replace(/<([a-z][\w:-]*)(\s[^<>]*?)?>/gi, (tag, tagName) => {
     const normalizedTagName = tagName.toLowerCase();
     if (!rewriteableImageTags.has(normalizedTagName)) {
@@ -213,7 +276,18 @@ const rewriteLocalImageReferences = (html) =>
       : rewrittenTag;
   });
 
-const replacePlaceholders = async (template, values) => {
+const rewriteLocalImageReferences = (html) => {
+  const codeBlocks = [];
+  const protectedHtml = protectCodeBlocks(
+    html,
+    codeBlocks,
+    "IMAGE_CODE_BLOCK",
+  );
+  const rewrittenHtml = rewriteImageTags(protectedHtml);
+  return restoreBlocks(rewrittenHtml, codeBlocks, "IMAGE_CODE_BLOCK");
+};
+
+const replacePlaceholders = async (template, values, renderContext = {}) => {
   // Default values for optional variables
   const defaults = {
     pagination: '',
@@ -223,7 +297,11 @@ const replacePlaceholders = async (template, values) => {
     links_to_siblings: '',
     links_to_tags: '',
     links_to_self_and_siblings: '',
+    related_pages: '',
+    toc: '',
+    summary: '',
     content: '',
+    filename: 'page',
     title: '',
     sitename: '',
     author: '',
@@ -237,15 +315,26 @@ const replacePlaceholders = async (template, values) => {
     next_page: '',
   };
 
-  // Load data files from data/ folder
-  const dataFiles = await loadData();
-
-  // Generate OG tags
-  const og_tags = generateOgTags(values);
-
-  // Calculate word count and reading time from content
-  const word_count = countWords(values.content);
-  const reading_time = calculateReadingTime(word_count);
+  // Nested partials for the same page share expensive computed values. Keep the
+  // final object merge below per render so metadata populated later in the
+  // pipeline (such as toc) is still current.
+  renderContext.computed ||= Promise.resolve().then(async () => {
+    const dataFiles = await loadData();
+    const og_tags = generateOgTags(values);
+    const word_count = countWords(values.content);
+    return {
+      dataFiles,
+      og_tags,
+      word_count,
+      reading_time: calculateReadingTime(word_count),
+    };
+  });
+  const {
+    dataFiles,
+    og_tags,
+    word_count,
+    reading_time,
+  } = await renderContext.computed;
 
   // Build the data object for Eta
   // Merge defaults, config values, page metadata, and computed values
@@ -271,25 +360,29 @@ const replacePlaceholders = async (template, values) => {
   };
 
   // Protect code blocks BEFORE Eta processing
-  const codeBlockRegex =
-    /```[\s\S]*?\n```|`[^`\n]+`|<(pre|code)[^>]*>[\s\S]*?<\/\1>/g;
   const codeBlocks = [];
-  template = template.replace(codeBlockRegex, (match) => {
-    codeBlocks.push(match);
-    return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
-  });
+  template = protectCodeBlocks(template, codeBlocks, "ETA_CODE_BLOCK");
 
   // Handle <%= partial: name %> syntax
   const partialRegex = /<%=\s*partial:\s*([\w-]+)\s*%>/g;
   const partialMatches = [...template.matchAll(partialRegex)];
+  const renderedPartials = [];
 
   for (const match of partialMatches) {
     const [fullMatch, partialName] = match;
     const partialData = await loadPartialData(partialName);
     let partialContent = partialData.content;
-    partialContent = await replacePlaceholders(partialContent, values);
-    const renderedPartial = partialData.raw ? partialContent : marked(partialContent);
-    template = template.replace(fullMatch, renderedPartial);
+    partialContent = await replacePlaceholders(
+      partialContent,
+      values,
+      renderContext,
+    );
+    const renderedPartial = rewriteLocalImageReferences(
+      partialData.raw ? partialContent : marked(partialContent),
+    );
+    const partialToken = `__SWIFTY_RENDERED_PARTIAL_${renderedPartials.length}__`;
+    renderedPartials.push(renderedPartial);
+    template = template.replace(fullMatch, () => partialToken);
   }
 
   // Convert <%- to <%= since autoEscape is false (all output is raw)
@@ -306,13 +399,14 @@ const replacePlaceholders = async (template, values) => {
     });
   }
 
-  // Restore code blocks
-  template = template.replace(
-    /__CODE_BLOCK_(\d+)__/g,
-    (_, index) => codeBlocks[index],
-  );
-
+  // Rewrite authored image references while code and rendered partials remain
+  // opaque, then restore both without interpreting replacement tokens.
   template = rewriteLocalImageReferences(template);
+  template = restoreBlocks(template, codeBlocks, "ETA_CODE_BLOCK");
+  template = template.replace(
+    /__SWIFTY_RENDERED_PARTIAL_(\d+)__/g,
+    (_, index) => renderedPartials[Number(index)],
+  );
 
   return template;
 };
@@ -321,4 +415,12 @@ const clearCache = () => {
   partialCache.clear();
 };
 
-export { loadPartial, replacePlaceholders, clearCache };
+export {
+  generateOgTags,
+  isAbsoluteHttpUrl,
+  loadPartial,
+  replacePlaceholders,
+  resolveSocialImageUrl,
+  rewriteLocalImageReferences,
+  clearCache,
+};

@@ -10,8 +10,100 @@ Here's what's cooking in the Swifty kitchen. Some of these are half-baked ideas,
 
 ## Recently Shipped
 
+### Bounded Search Index Entries
+`search_content_limit` caps normalized leading page content at 5,000 characters
+per entry by default. Titles, summaries, tags, and URLs remain complete in their
+separate weighted fields.
+
+### Shared Template Computations
+Nested partial rendering now reuses page data, Open Graph tags, word count, and
+reading-time computations while still merging late metadata for each render.
+
+### Self-Hosted Syntax Highlighting Themes
+Highlighted code now uses a fingerprinted local highlight.js theme with no CDN
+or connection hints. `highlight_theme` selects any bundled theme, and code-free
+pages omit the stylesheet entirely.
+
+### Cached Navigation and Sibling Rendering
+`addLinks` now caches resolved partials, rendered partial/page pairs, and complete
+ordered page sets for the duration of each build. Large sibling collections no
+longer repeat equivalent Eta work for every page, while distinct sibling output
+and ordering remain unchanged.
+
+### Table of Contents and Heading Anchors
+Markdown headings now receive stable, unique IDs, and `<%= toc %>` renders an
+accessible nested outline. Generated and authored anchor links are validated by
+`swifty check`.
+
+### Opt-In Watcher Polling
+Chokidar and LiveReload now use native filesystem events by default. A validated
+`watcher_use_polling` option enables polling for cloud folders, network mounts,
+containers, and other filesystems that require it.
+
+### Reusable Morpheus Navigation Core
+Swifty's Idiomorph navigation and intent prefetching now live in a reusable,
+Node-import-safe `Morpheus` browser class. A small compatibility adapter keeps
+existing `swifty:*` events, data attributes, headers, history state, and globals
+working while the standalone npm package API is prepared.
+
+### Site Checker
+`swifty check` catches duplicate routes, broken internal links, missing images,
+partials and layouts, invalid canonical URLs, and malformed configuration before
+deployment.
+
+### Stable Dates and Deterministic Ordering
+Undated tracked pages now use their Git commit date, with mtime as the non-Git
+fallback. One transitive comparator handles positioned and dated pages at every
+level, including root navigation and `position: 0`.
+
+### Safer Single-Pass Content Rendering
+Rendered page content and partials stay opaque during outer Eta rendering.
+Replacement tokens remain literal, and code examples are protected from Eta and
+image rewriting through the complete pipeline.
+
 ### Client-Side Search Index
-Swifty generates `/search.json` with clean page text, titles, summaries, tags, and base-path-aware URLs. Bring any search UI or use the small browser-side example in the configuration guide.
+Swifty generates `/search.json` with clean page text, titles, summaries, tags,
+and base-path-aware URLs.
+
+### Related Content and Automatic Summaries
+`<%= summary %>` now preserves authored summaries or derives them from an
+`<!--more-->` marker or the first useful paragraph. `<%= related_pages %>` ranks
+tag-related pages deterministically with a configurable limit.
+
+### Drop-In Search UI
+`<%= partial: search %>` provides a self-hosted search interface with weighted
+results, keyboard navigation, accessible status updates, base-path support, and
+no external dependencies.
+
+### Incremental Page Rebuilds
+During `swifty start`, safe body-only Markdown edits rebuild the changed page and
+derived search, feed, and SEO files. Metadata and structural changes clearly
+fall back to a full build.
+
+### Canonical Tag Routes
+Tag identities now merge case and whitespace variants while preserving authored
+display labels. Generated routes use safe lowercase slugs, with deterministic
+hash suffixes preventing punctuation and Unicode slug collisions.
+
+### Section-Specific Sibling Links
+Child pages retain their parent section filename, so folder partials such as
+`partials/blog.md` now consistently style child, sibling, and self-plus-sibling
+link lists.
+
+### Deterministic Dates and Scheduling
+Display dates use validated `date_locale` and `timezone` settings with stable
+defaults. Calendar dates publish at midnight in that timezone, exact ISO
+timestamps retain their offset-defined instant, and sitemap/feed metadata stays
+machine-readable throughout the pipeline.
+
+### Valid Social Images and Clean RSS Excerpts
+Relative Open Graph and Twitter images are emitted only with an absolute
+`site_url`; otherwise they are omitted and `swifty check` reports the source.
+RSS excerpts now come from normalized rendered content rather than raw Markdown.
+
+### Explicit Pagination Contract
+The unused `default_page_count` setting is gone. Pagination remains disabled
+until `page_count` is explicitly configured at the site or folder level.
 
 ### RSS Feeds
 Auto-generate RSS/Atom feeds for blog sections. Configure in `config.yaml` and feeds are created automatically.
@@ -49,24 +141,31 @@ Add `<%= og_tags %>` to your template and Swifty generates all the meta tags for
 ### Previous/Next Navigation
 `<%= prev_page %>` and `<%= next_page %>` auto-generate links to sibling pages in the same folder. Pages are linked based on their sort order (date or position). Perfect for blog series and multi-part tutorials.
 
-## On the Radar
+## Next Features
 
-### Table of Contents
-Auto-generate `<%= toc %>` from page headings. Perfect for documentation and long-form content.
+### 1. Standalone Morpheus Package
 
-### Content Summaries
-Auto-generate `<%= summary %>` from the first paragraph or a `<!--more-->` marker. Great for blog index pages showing excerpts.
+Move the extracted browser core into its own package, add browser-level
+navigation, history, prefetch, cancellation, focus, and fallback tests, and ship
+both side-effect-free ESM and an optional auto-start browser entry. Keep Swifty
+on the compatibility adapter while consumers migrate to `morpheus:*` events and
+`data-morpheus-*` controls.
 
-### Related Content
-`<%= related_pages %>` based on shared tags. "You might also like..." suggestions at the bottom of posts.
+## Performance and Developer Experience
 
-### Shortcodes
-Embed YouTube videos, tweets, and other rich content with simple syntax like `<%= youtube: VIDEO_ID %>` or `<%= gist: GIST_ID %>`.
+- Compute word count and reading time once from normalized rendered page content
+  so rendered partial/data text is included where appropriate and code and
+  template syntax are excluded consistently.
+## Deferred
 
-## Maybe Someday
-
-- **Image galleries**: Special handling for image-heavy pages
-- **i18n support**: Multi-language sites with automatic linking
+- **Shortcodes**: Eta and partials already cover most shortcode use cases.
+- **i18n routing**: Valuable, but it adds routing and content-model complexity
+  that needs a separate design before it fits Swifty's conventions.
+- **Image galleries**: Revisit after the core blog and documentation workflows
+  are complete.
+- **Multi-site library contexts**: The programmatic API is intentionally
+  one-site-per-process until module-level configuration, indexes, caches, and
+  incremental state move behind an explicit site context.
 
 ## Want Something?
 

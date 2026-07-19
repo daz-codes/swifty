@@ -30,11 +30,18 @@ responsive_image_widths:
   - 800
 responsive_image_sizes: 100vw
 default_og_image: ""
+highlight_theme: monokai-sublime
 minify: true
 morphing: true
 prefetching: true
 search: true
+search_content_limit: 5000
+search_results_limit: 10
+summary_length: 200
+related_pages_limit: 3
 morph_target: main
+date_locale: en-GB
+timezone: UTC
 
 dateFormat:
   weekday: short

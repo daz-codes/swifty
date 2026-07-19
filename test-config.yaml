@@ -5,4 +5,6 @@ image_quality: 60
 livereload_port: 40000
 watcher_delay: 200
 watcher_interval: 1000
-default_page_count: 3
+watcher_use_polling: false
+highlight_theme: monokai-sublime
+search_content_limit: 5000

@@ -2,6 +2,9 @@ import fs from "fs/promises";
 import fsExtra from "fs-extra";
 import path from "path";
 import { defaultConfig } from "./config.js";
+import { normalizeContentText } from "./content.js";
+import { marked } from "./markdown.js";
+import { replacePlaceholders } from "./partials.js";
 import { withBasePath } from "./urls.js";
 
 // Escape XML special characters
@@ -15,26 +18,47 @@ const escapeXml = (str) => {
     .replace(/'/g, "&apos;");
 };
 
-// Strip HTML tags for description
-const stripHtml = (html) => {
-  if (!html) return "";
-  return html.replace(/<[^>]*>/g, "").trim();
-};
-
 // Truncate text for description
 const truncate = (text, maxLength = 200) => {
   if (!text || text.length <= maxLength) return text;
   return text.substring(0, maxLength).trim() + "...";
 };
 
-// Convert date to RFC 822 format for RSS
-const toRfc822 = (date) => {
-  const d = date instanceof Date ? date : new Date(date);
-  return d.toUTCString();
+const validDate = (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+// Prefer machine-readable page dates. Display dates are locale-dependent and
+// must not be parsed back into dates for feeds or sorting.
+const getPageDate = (page) => {
+  const candidates = [
+    page.dateObj,
+    page.date_iso,
+    page.meta?.date_iso,
+    page.updatedAtObj,
+    page.updated_at_iso,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null || candidate === "") continue;
+    const date = validDate(candidate);
+    if (date) return date;
+  }
+
+  return null;
+};
+
+// Convert a valid date to RFC 822 format for RSS
+const toRfc822 = (date) => validDate(date)?.toUTCString() || null;
+
+const normalizeRssDescription = async (page) => {
+  const rendered = await replacePlaceholders(String(page.content || ""), page);
+  return truncate(normalizeContentText(marked.parse(rendered)), 300);
 };
 
 // Generate RSS XML for a set of pages
-const generateRssFeed = (feedConfig, pages, siteUrl) => {
+const generateRssFeed = async (feedConfig, pages, siteUrl) => {
   const {
     title = defaultConfig.sitename || "RSS Feed",
     description = `Latest updates from ${title}`,
@@ -46,23 +70,22 @@ const generateRssFeed = (feedConfig, pages, siteUrl) => {
 
   // Sort pages by date (newest first)
   const sortedPages = [...pages].sort((a, b) => {
-    const dateA = new Date(a.data?.date || a.updated_at || 0);
-    const dateB = new Date(b.data?.date || b.updated_at || 0);
+    const dateA = getPageDate(a)?.getTime() || 0;
+    const dateB = getPageDate(b)?.getTime() || 0;
     return dateB - dateA;
   });
 
   // Limit to most recent items (default 20)
   const maxItems = defaultConfig.rss_max_items || 20;
   const feedPages = sortedPages.slice(0, maxItems);
+  const feedDate = feedPages.map(getPageDate).find(Boolean) || new Date();
 
-  const items = feedPages
-    .map((page) => {
+  const items = (
+    await Promise.all(feedPages.map(async (page) => {
       const itemUrl = `${siteUrl}${page.url}`;
       const itemTitle = escapeXml(page.meta?.title || page.title || page.name);
-      const itemDate = toRfc822(page.meta?.date || page.updated_at || new Date());
-      const itemDescription = escapeXml(
-        truncate(stripHtml(page.content), 300)
-      );
+      const itemDate = toRfc822(getPageDate(page) || feedDate);
+      const itemDescription = escapeXml(await normalizeRssDescription(page));
 
       return `    <item>
       <title>${itemTitle}</title>
@@ -71,7 +94,7 @@ const generateRssFeed = (feedConfig, pages, siteUrl) => {
       <pubDate>${itemDate}</pubDate>
       <description>${itemDescription}</description>
     </item>`;
-    })
+    })))
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -81,7 +104,7 @@ const generateRssFeed = (feedConfig, pages, siteUrl) => {
     <link>${feedLink}</link>
     <description>${escapeXml(description)}</description>
     <language>${defaultConfig.language || "en"}</language>
-    <lastBuildDate>${toRfc822(new Date())}</lastBuildDate>
+    <lastBuildDate>${toRfc822(feedDate)}</lastBuildDate>
     <atom:link href="${feedUrl}" rel="self" type="application/rss+xml"/>
 ${items}
   </channel>
@@ -136,7 +159,7 @@ const generateRssFeeds = async (pages, outputDir) => {
       continue;
     }
 
-    const feedXml = generateRssFeed(feedConfig, folderPages, siteUrl);
+    const feedXml = await generateRssFeed(feedConfig, folderPages, siteUrl);
     const feedPath = path.join(outputDir, folder, "rss.xml");
 
     await fsExtra.ensureDir(path.dirname(feedPath));
@@ -145,4 +168,11 @@ const generateRssFeeds = async (pages, outputDir) => {
   }
 };
 
-export { generateRssFeeds, generateRssFeed, findPagesInFolder };
+export {
+  generateRssFeeds,
+  generateRssFeed,
+  findPagesInFolder,
+  getPageDate,
+  normalizeRssDescription,
+  toRfc822,
+};

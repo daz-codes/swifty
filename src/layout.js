@@ -8,10 +8,13 @@ import {
   getCssPreloads,
   getJsPreloads,
   getNavigationScriptSrc,
+  getHighlightThemeSrc,
 } from "./assets.js";
 
 const layoutCache = new Map();
 let template = null;
+const templateVariants = new Map();
+const highlightThemeToken = "__SWIFTY_HIGHLIGHT_THEME_STYLESHEET__";
 
 const escapeAttr = (value) =>
   String(value || "")
@@ -46,12 +49,6 @@ const createTemplate = async () => {
     });
   }
 
-  // Preconnect hints for external CDNs (improves connection setup time)
-  const preconnectHints = [
-    '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>',
-    '<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">',
-  ].join('\n');
-
   const navigationScriptSrc = await getNavigationScriptSrc();
   const navigationScript = navigationScriptSrc
     ? `<script type="module" src="${navigationScriptSrc}" data-swifty-navigation data-target="${escapeAttr(defaultConfig.morph_target || "main")}" data-prefetching="${defaultConfig.prefetching === false ? "off" : "intent"}" data-cache-size="${escapeAttr(defaultConfig.navigation_cache_size || 20)}" data-cache-ttl="${escapeAttr(defaultConfig.navigation_cache_ttl || 15)}"></script>`
@@ -68,10 +65,9 @@ const createTemplate = async () => {
   const css = await getCssImports();
   const js = await getJsImports();
   const imports = css + js;
-  const highlightCSS = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css">`;
-
-  // Order: preconnect hints -> preloads -> actual assets -> scripts
-  const template = templateContent.replace('</head>', `${preconnectHints}\n${preloads}\n${navigationScript}\n${highlightCSS}\n${imports}\n${livereloadScript}\n</head>`);
+  // The highlight theme token is resolved per page so code-free pages do not
+  // load syntax-highlighting CSS.
+  const template = templateContent.replace('</head>', `${preloads}\n${navigationScript}\n${highlightThemeToken}\n${imports}\n${livereloadScript}\n</head>`);
   return template;
 };
 
@@ -82,15 +78,26 @@ const applyLayoutAndWrapContent = async (page,content) => {
     return layoutContent.replace(/<%=\s*content\s*%>/g, () => content);
   };
 
-const getTemplate = async () => {
+const getTemplate = async ({ highlighted = false } = {}) => {
   if (!template) {
     template = await createTemplate();
   }
-  return template;
+  const variant = highlighted ? "highlighted" : "plain";
+  if (!templateVariants.has(variant)) {
+    const highlightStylesheet = highlighted
+      ? `<link rel="stylesheet" href="${await getHighlightThemeSrc()}">`
+      : "";
+    templateVariants.set(
+      variant,
+      template.replace(highlightThemeToken, highlightStylesheet),
+    );
+  }
+  return templateVariants.get(variant);
 };
 
 const resetCaches = async () => {
   layoutCache.clear();
+  templateVariants.clear();
   template = await createTemplate();
 };
 
