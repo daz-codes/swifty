@@ -1,13 +1,20 @@
 <div class="page-hero">
-  <div class="container">
+  <div class="shell">
     <div class="breadcrumbs"><%= breadcrumbs %></div>
     <h1><%= title %></h1>
     <div class="tags"><%= links_to_tags %></div>
     <p class="page-summary"><%= summary %></p>
   </div>
 </div>
-<div class="page-body container">
-  <div class="serif-font">
+<div class="page-body shell docs-layout">
+  <article class="prose">
     <%= content %>
-  </div>
+  </article>
+  <aside class="docs-aside" aria-label="Documentation tools">
+    <div class="docs-aside-card">
+      <p class="docs-aside-label">On this page</p>
+      <%= toc %>
+    </div>
+    <a class="aside-action" href="/search">Search all documentation →</a>
+  </aside>
 </div>

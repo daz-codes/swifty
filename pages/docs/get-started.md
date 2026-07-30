@@ -24,7 +24,9 @@ Swifty comes with a handy command that sets up a fresh project with all the fold
 npx swifty new my-site
 ```
 
-This creates a `my-site/` folder with a starter structure including example pages, layouts, and styles to play with. Replace `my-site` with whatever you want to call your project. Think of it as your creative sandbox.
+This creates a `my-site/` folder with a starter page, default layout, responsive
+stylesheet, and a tiny `js/hello-swifty.js` script to show where browser code
+lives. Replace `my-site` with whatever you want to call your project.
 
 ## Start Developing
 

@@ -1,23 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <%=  og_tags %>
-
-  <title><%= sitename %></title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#791343">
+  <%= og_tags %>
+  <title><%= title %> · <%= sitename %></title>
 </head>
 <body>
-  <header class="sticky dropshadow opacity-9 align-vertical space-between">
-      <a href="/" class="logo">S</a>
-      <nav class="tabs"><%= nav_links %></nav>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="site-nav shell">
+      <a class="brand" href="/" aria-label="Swifty home">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span>Swifty</span>
+      </a>
+      <nav class="site-navigation" aria-label="Primary navigation">
+        <ul><%= nav_links %></ul>
+      </nav>
+      <a class="header-action" href="/search">Search</a>
+    </div>
   </header>
-    <main>
+  <main id="main">
     <%= content %>
   </main>
-    <footer>
-    <p>This site was built with Swifty, the super speedy static site generator.</p>
-    <p><a href="/tags">All Tags</a></p>
+  <footer class="site-footer">
+    <div class="footer-inner shell">
+      <p>Built with Swifty—small, fast, and dependency-free in the browser.</p>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="/docs">Documentation</a>
+        <a href="/roadmap">Roadmap</a>
+        <a href="/tags">All tags</a>
+        <a href="https://github.com/daz-codes/swifty">GitHub</a>
+      </nav>
+    </div>
   </footer>
 </body>
 </html>

@@ -7,6 +7,7 @@ import { Eta } from "eta";
 
 import { dirs, defaultConfig } from "./config.js";
 import { marked } from "./markdown.js";
+import { loadExtensions } from "./extensions.js";
 import { loadData } from "./data.js";
 import { getResponsiveImage, getSearchScriptSrc } from "./assets.js";
 import { withBasePath, withoutBasePath } from "./urls.js";
@@ -19,6 +20,7 @@ const builtInSearchPartial = path.join(
 );
 const imageExtensionRegex = /\.(png|jpe?g|webp)(?=([?#]|$))/i;
 const rewriteableImageTags = new Set(["a", "img", "source"]);
+const extensionConfig = await loadExtensions();
 
 // Helper to escape HTML attribute values
 const escapeAttr = (str) => {
@@ -344,6 +346,8 @@ const replacePlaceholders = async (template, values, renderContext = {}) => {
   // Build the data object for Eta
   // Merge defaults, config values, page metadata, and computed values
   const templateData = {
+    ...extensionConfig.globals,
+    ...extensionConfig.helpers,
     ...defaults,
     ...values,
     ...(values.meta || {}),

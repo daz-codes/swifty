@@ -514,6 +514,48 @@ ${'This is a sample paragraph with multiple words to test word counting. '.repea
 ${'Here is more content to increase the word count further. '.repeat(20)}`
     );
 
+    await fs.writeFile(
+      path.join(testDir, "pages", "extensions.md"),
+      `---
+title: Extension Hooks
+nav: false
+---
+# Extension Hooks
+
+<%= shout("hello") %> from <%= releaseChannel %>.
+
+==Marked extension==`,
+    );
+
+    await fs.writeFile(
+      path.join(testDir, "swifty.config.js"),
+      `export default {
+  globals: { releaseChannel: "the extension config" },
+  helpers: {
+    shout(value) {
+      return String(value).toUpperCase();
+    },
+  },
+  markedExtensions: [{
+    extensions: [{
+      name: "swiftyMark",
+      level: "inline",
+      start(source) {
+        return source.indexOf("==");
+      },
+      tokenizer(source) {
+        const match = /^==([^=]+)==/.exec(source);
+        if (match) return { type: "swiftyMark", raw: match[0], text: match[1] };
+      },
+      renderer(token) {
+        return \`<mark data-extension="true">\${token.text}</mark>\`;
+      },
+    }],
+  }],
+};
+`,
+    );
+
 
     // Create config with RSS feeds
     await fs.writeFile(
@@ -1103,6 +1145,16 @@ rss_feeds:
     it("should replace sitename in page content", async () => {
       const content = await fs.readFile(path.join(distDir, "index.html"), "utf-8");
       assert.ok(content.includes("Welcome to Test Site"), "should replace sitename in content");
+    });
+
+    it("should load template globals, helpers, and Marked extensions", async () => {
+      const content = await fs.readFile(
+        path.join(distDir, "extensions", "index.html"),
+        "utf-8",
+      );
+
+      assert.ok(content.includes("HELLO from the extension config."));
+      assert.ok(content.includes('<mark data-extension="true">Marked extension</mark>'));
     });
 
     it("should reload root configuration without restarting the process", async () => {
@@ -2176,9 +2228,14 @@ rss_feeds:
 
       assert.ok(await fsExtra.pathExists(path.join(site, "layouts", "default.html")));
       assert.ok(await fsExtra.pathExists(path.join(site, "css", "style.css")));
+      assert.ok(await fsExtra.pathExists(path.join(site, "js", "hello-swifty.js")));
       assert.match(
         await fs.readFile(path.join(site, "css", "style.css"), "utf-8"),
         /\.site-header/,
+      );
+      assert.match(
+        await fs.readFile(path.join(site, "js", "hello-swifty.js"), "utf-8"),
+        /Hello from Swifty/,
       );
       await fs.writeFile(
         path.join(site, "pages", "draft.md"),

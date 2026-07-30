@@ -43,11 +43,15 @@ search_content_limit: 5000
 search_results_limit: 10
 summary_length: 200
 related_pages_limit: 3
+words_per_minute: 200
+build_concurrency: 16
 server_port: 3000
 livereload_port: 35729
 watcher_delay: 100
 watcher_interval: 500
 watcher_use_polling: false
+navigation_cache_size: 20
+navigation_cache_ttl: 15
 
 # Pagination (disabled until page_count is set)
 # page_count: 10
@@ -100,11 +104,15 @@ dateFormat:
 | `search_results_limit` | Maximum results shown by the built-in search partial |
 | `summary_length` | Maximum length of automatically generated page summaries |
 | `related_pages_limit` | Maximum related pages selected for each tagged page |
+| `words_per_minute` | Reading speed used for estimates; fenced code is excluded |
+| `build_concurrency` | Maximum concurrent page and asset work during a build |
 | `server_port` | Port used by the local development server |
 | `livereload_port` | Port used by the LiveReload server |
 | `watcher_delay` | Delay used to debounce writes before rebuilding |
 | `watcher_interval` | Filesystem polling interval when polling is enabled |
 | `watcher_use_polling` | Use polling for both Chokidar and LiveReload instead of native events |
+| `navigation_cache_size` | Maximum pages retained by the browser navigation cache |
+| `navigation_cache_ttl` | Browser navigation cache lifetime in seconds |
 | `page_count` | Optional number of items per page; pagination is disabled when omitted |
 | `pagination_class` | CSS class for the pagination container |
 | `pagination_link_class` | CSS class for pagination links |
@@ -167,6 +175,55 @@ Written by <%= author %>.
 ```
 
 Simple as that.
+
+## JavaScript Extension Hooks
+
+Most customization belongs in layouts, partials, data files, and Eta expressions.
+When a site needs a small reusable helper or Markdown rule, add an optional
+`swifty.config.js` at the project root:
+
+```javascript
+module.exports = {
+  globals: {
+    productName: "Sweet Crumbs",
+  },
+  helpers: {
+    uppercase(value) {
+      return String(value).toUpperCase();
+    },
+  },
+  markedExtensions: [{
+    extensions: [{
+      name: "highlightText",
+      level: "inline",
+      start(source) {
+        return source.indexOf("==");
+      },
+      tokenizer(source) {
+        const match = /^==([^=]+)==/.exec(source);
+        if (match) {
+          return { type: "highlightText", raw: match[0], text: match[1] };
+        }
+      },
+      renderer(token) {
+        return `<mark>${token.text}</mark>`;
+      },
+    }],
+  }],
+};
+```
+
+Globals and helpers are available directly in Eta expressions:
+
+```html
+<h2><%= uppercase(productName) %></h2>
+```
+
+`markedExtensions` accepts the same extension objects passed to `marked.use()`.
+If the site's `package.json` sets `"type": "module"`, use `export default { ... }`
+instead of `module.exports`. Extension configuration is loaded when Swifty starts;
+restart `swifty start` after editing it. Core config and page values take precedence
+over extension globals with the same name.
 
 ## Base Path Deployments
 

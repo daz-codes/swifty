@@ -90,6 +90,7 @@ const getValidStats = async (filePath) => {
 - Use Eta templating engine with EJS-compatible syntax
 - Protect code blocks from template variable replacement
 - Markdown processing with `marked` and syntax highlighting
+- Optional `swifty.config.js` exposes `globals`, `helpers`, and `markedExtensions`
 - Front matter parsing with `gray-matter`
 
 ### Testing Patterns

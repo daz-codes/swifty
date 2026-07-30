@@ -1,109 +1,307 @@
-# Swifty ![swiftyy-logo-pink-s png](https://github.com/user-attachments/assets/22fde975-7e2d-48e3-a253-41ea464d27f4)
+# Swifty
 
-## Super Speedy Static Site Generator
+Swifty is a convention-first static site generator for documentation, blogs,
+brochure sites, and other content-focused websites. Put Markdown in `pages/`,
+add layouts when you need them, and get fast, deployable HTML without assembling
+a plugin stack first.
 
-Swifty uses convention over configuration to make it super simple to build blazingly fast static sites.
+It requires Node.js 22 or newer.
 
-## Features
+## Why Swifty?
 
-- **Markdown pages** with YAML front matter
-- **Automatic image optimization** to responsive WebP images with `srcset`
-- **HTML, CSS, and JS minification** during production builds
-- **Layouts and partials** for reusable templates
-- **Auto-injected CSS/JS** from your css/ and js/ folders
-- **Self-hosted code syntax highlighting** via configurable highlight.js themes
-- **Tags and navigation** generated automatically
-- **RSS feed generation** for blogs and content folders
-- **Draft mode** for work-in-progress pages (visible in dev, hidden in production)
-- **Scheduled publishing** via future dates in front matter
-- **Contact forms** via third-party services (Formspree, Netlify Forms, etc.)
-- **Pagination** for folders with many pages
-- **Data files** - Load JSON/YAML data and use in templates
-- **Open Graph tags** - Auto-generated social sharing meta tags
-- **404 page convention** - `pages/404.md` builds to `dist/404.html`
-- **Word count & reading time** - Auto-calculated for blog posts
-- **Previous/next navigation** - Auto-generated links between sibling pages
-- **[Eta templating](https://eta.js.org/)** - Full JavaScript in templates with EJS syntax
-- **Morpheus navigation** powered by Idiomorph, with intent prefetching and SPA-like transitions
-- **Custom permalinks and base paths** for flexible deployment URLs
-- **Public asset passthrough** for files that should be copied unchanged
-- **Site validation** for duplicate routes, broken links, missing assets, and invalid configuration
-- **Automatic summaries and related content** ranked by shared tags
-- **Drop-in client-side search** backed by the generated `/search.json` index
-- **Incremental page rebuilds** for safe body-only edits during development
-- **Heading anchors and table of contents** generated from Markdown headings
+- **A useful starter, not an empty directory.** New sites include a responsive
+  stylesheet, default layout, page template, and tiny JavaScript example.
+- **Content structure is site structure.** Folders become routes and drive
+  layouts, navigation, breadcrumbs, sibling links, and feeds.
+- **Documentation features are built in.** Stable heading anchors, generated
+  tables of contents, syntax highlighting, search, and link validation work
+  without external services.
+- **Publishing has sensible controls.** Drafts, scheduled pages, deterministic
+  dates, summaries, related content, pagination, RSS, sitemaps, and social tags
+  share the same content model.
+- **The browser runtime stays local.** Search, Morpheus navigation, Idiomorph,
+  and highlight.js themes are copied into the generated site rather than loaded
+  from a CDN.
+- **There is a small escape hatch.** Optional `swifty.config.js` can expose Eta
+  globals/helpers or register Marked extensions when conventions are not enough.
 
-Requires Node.js 22 or newer. See [Migrating to Swifty 4](MIGRATION.md) when upgrading an existing site.
-
-## Quickstart
+## Quick Start
 
 ```bash
 npm install -g @daz4126/swifty
 swifty new my-site
 cd my-site
-npx swifty start
+swifty start
 ```
 
-Then visit [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000). The development server
+rebuilds and refreshes the browser as files change.
 
-## Project Structure
+The scaffold looks like this:
 
+```text
+my-site/
+├── pages/
+│   └── index.md
+├── layouts/
+│   └── default.html
+├── partials/
+├── css/
+│   └── style.css
+├── js/
+│   └── hello-swifty.js
+├── images/
+├── data/
+├── public/
+├── template.html
+├── swifty.config.js  # Optional; add only when needed
+└── config.yaml
 ```
-your-site/
-├── pages/          # Markdown content (folder structure = URLs)
-├── layouts/        # HTML layout templates
-├── partials/       # Reusable content snippets
-├── data/           # JSON/YAML data files
-├── css/            # Stylesheets (auto-injected)
-├── js/             # JavaScript (auto-injected)
-├── images/         # Images (auto-optimized to responsive WebP)
-├── public/         # Files copied unchanged to the output root
-├── template.html   # Base HTML template
-└── config.yaml     # Site configuration
+
+## Pages Become Routes
+
+```text
+pages/
+├── index.md                 → /
+├── about.md                 → /about
+├── 404.md                   → /404.html
+└── docs/
+    ├── index.md             → /docs
+    └── getting-started.md   → /docs/getting-started
 ```
+
+A page is Markdown with optional YAML front matter:
+
+```markdown
+---
+title: Getting Started
+summary: Install and configure the project.
+tags: [docs, setup]
+---
+
+# Getting Started
+
+Write normal **Markdown** here.
+```
+
+Folder names select matching layouts and link partials by convention. A page in
+`pages/docs/` uses `layouts/docs.html` when it exists; a `partials/docs.md`
+customizes generated child and sibling links for that section.
+
+## Templates, Layouts, and Partials
+
+Swifty uses Eta syntax in `template.html`, layouts, partials, and Markdown:
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · <%= sitename %></title>
+  <%= og_tags %>
+</head>
+<body>
+  <nav><%= nav_links %></nav>
+  <main><%= content %></main>
+</body>
+</html>
+```
+
+Include project partials with `<%= partial: name %>`. CSS and JavaScript files
+in their respective folders are minified, cache-busted with modification times,
+and injected automatically.
+
+Useful page variables include:
+
+| Variable | Purpose |
+| --- | --- |
+| `<%= breadcrumbs %>` | Folder-aware breadcrumb links |
+| `<%= links_to_children %>` | Child pages for a folder index |
+| `<%= links_to_siblings %>` | Other pages in the current section |
+| `<%= links_to_tags %>` | Canonical generated tag links |
+| `<%= prev_page %>` / `<%= next_page %>` | Ordered sibling navigation |
+| `<%= summary %>` | Authored or automatically extracted summary |
+| `<%= related_pages %>` | Pages ranked by shared tags |
+| `<%= word_count %>` / `<%= reading_time %>` | Prose metrics; fenced code is excluded |
+| `<%= toc %>` | Nested links to generated heading IDs |
+| `pages` / `collections.pages` | Immutable authored-page metadata collection |
+
+## Search, TOC, and Collections
+
+Add the self-hosted search interface anywhere:
+
+```html
+<%= partial: search %>
+```
+
+Swifty generates `/search.json`; `search_content_limit` bounds normalized body
+text per entry while titles, URLs, summaries, and tags remain complete.
+
+Every Markdown heading gets a stable ID. Put `<%= toc %>` in a long-form layout
+to render an accessible outline, and use ordinary links such as
+`[Configuration](#configuration)` for deep linking.
+
+Build recent-post lists, archives, or custom homepages from the page collection:
+
+```html
+<% for (const post of collections.pages.filter((page) => page.tags.includes("news")).slice(0, 5)) { %>
+  <article>
+    <h2><a href="<%= post.url %>"><%= post.title %></a></h2>
+    <p><%= post.summary %></p>
+  </article>
+<% } %>
+```
+
+Collection entries include title, URL, summary, tags, and display and ISO dates.
+Generated routes, 404 pages, drafts, and future pages are excluded from
+production collections.
+
+## Drafts and Scheduled Pages
+
+```yaml
+---
+title: Work in Progress
+draft: true
+---
+```
+
+Draft and future-dated pages appear during `swifty start`. Preview them in a
+standalone build with:
+
+```bash
+swifty build --drafts --out preview
+```
+
+A normal production build excludes them. Future pages publish on the first
+build after their configured date; use scheduled deployments when publication
+must happen without a content commit.
+
+## Configuration
+
+Defaults are intentionally usable. A typical `config.yaml` might contain:
+
+```yaml
+sitename: My Site
+site_url: https://example.com
+base_path: ""
+
+highlight_theme: monokai-sublime
+search: true
+search_content_limit: 5000
+search_results_limit: 10
+
+morphing: true
+prefetching: true
+morph_target: main
+navigation_cache_size: 20
+navigation_cache_ttl: 15
+
+date_locale: en-GB
+timezone: UTC
+words_per_minute: 200
+
+watcher_use_polling: false
+build_concurrency: 16
+```
+
+Native filesystem events are the default. Enable `watcher_use_polling` only for
+cloud folders, network mounts, container volumes, or filesystems that miss
+events. Pagination is also explicit: set `page_count` globally or in a folder's
+`config.yaml` when that section needs it.
+
+See the [configuration guide](https://swifty-oo3v.onrender.com/docs/configuration)
+for every option, including RSS feeds, responsive images, minification, date
+formatting, and base-path deployments.
+
+## Minimal Extension Point
+
+Most sites only need layouts, partials, and data files. For small reusable hooks,
+add `swifty.config.js`:
+
+```javascript
+module.exports = {
+  globals: {
+    productName: "My Site",
+  },
+  helpers: {
+    uppercase(value) {
+      return String(value).toUpperCase();
+    },
+  },
+  markedExtensions: [],
+};
+```
+
+Then use `<%= uppercase(productName) %>` in any Eta template. Projects with
+`"type": "module"` use `export default { ... }`. Restart `swifty start` after
+editing the extension file because it loads when the process starts.
 
 ## Commands
 
+| Command | What it does |
+| --- | --- |
+| `swifty new <name>` | Create a styled starter site |
+| `swifty start [--out dir]` | Build, serve, watch, and live reload |
+| `swifty build [--out dir]` | Create a clean production build |
+| `swifty build --drafts` | Include draft and scheduled pages in a preview |
+| `swifty check` | Validate config, templates, routes, links, anchors, and assets |
+| `swifty deploy ["message"]` | Build, commit only generated output, and push |
+| `swifty --help` | Show CLI usage |
+| `swifty --version` | Show the installed version |
+
+Unknown commands fail safely; they never create directories implicitly.
+
+## Validation and Production Builds
+
+Run this before deployment:
+
 ```bash
-npx swifty new my-site      # Create new site in my-site/ folder
-npx swifty build            # Build static site to dist/ (for production)
-npx swifty build --drafts   # Preview draft and scheduled pages
-npx swifty check            # Validate routes, links, images, templates, and config
-npx swifty start            # Build, watch, and serve at localhost:3000 (for development)
-npx swifty build --out dir  # Build to custom output directory
-npx swifty deploy "message" # Build, commit the output folder, and push
-npx swifty --help           # Show command help
-npx swifty --version        # Show the installed version
+swifty check
+swifty build
 ```
 
-### Site Validation
+`swifty check` renders into a temporary directory without changing `dist/`. It
+reports malformed configuration or front matter, duplicate routes, broken
+internal links and heading anchors, missing images, partials and layouts, and
+invalid canonical/social metadata.
 
-Run `npx swifty check` before deploying. It renders every page, including drafts
-and scheduled pages, into a temporary directory and reports duplicate routes,
-broken internal links and anchors, missing images, partials or explicitly requested
-layouts, invalid canonical URLs, and malformed root or folder configuration.
+Production builds minify HTML, CSS, and JavaScript; optimize local raster images
+to responsive WebP output; generate search, RSS, sitemap, and robots files; and
+omit development scripts. The result is ordinary static files deployable to any
+static host.
 
-The command does not change `dist/` and exits with a non-zero status when it finds
-an issue. External URLs are not fetched.
+## Programmatic API
 
-### Programmatic API Scope
+Swifty also exports its build and check functions as ESM:
 
-The exported Node API currently keeps configuration, page indexes, tag state,
-template caches, and incremental-build state at module scope. Rebuilding one
-site repeatedly in a process is supported; building multiple independent site
-roots in one process is not. Use a separate worker or child process per site
-until the build pipeline gains an explicit site-context object.
+```javascript
+import build, { checkSite } from "@daz4126/swifty";
 
-### Development vs Production
+await build();
+const report = await checkSite();
+```
 
-- **`swifty start`** - For development. Includes live reload and incremental rebuilds for assets and safe body-only page edits; metadata or structural changes trigger a full build.
-- **`swifty build`** - For production deployment. Produces clean output without any development scripts.
-- **`swifty deploy "message"`** - Builds the site, commits only the generated output folder, and pushes it to git.
-
-Native filesystem events are used by default. Set `watcher_use_polling: true`
-when developing on a cloud folder, network mount, container volume, or another
-filesystem that does not reliably emit change events.
+The current API is intentionally one-site-per-process because configuration,
+indexes, and caches are module-scoped. Use a separate process per independent
+site.
 
 ## Documentation
 
-See the [full documentation](https://swifty-oo3v.onrender.com/docs) for details on configuration, layouts, partials, and more.
+- [Getting started](https://swifty-oo3v.onrender.com/docs/get-started)
+- [Complete tutorial](https://swifty-oo3v.onrender.com/docs/tutorial)
+- [Configuration](https://swifty-oo3v.onrender.com/docs/configuration)
+- [Pages and template variables](https://swifty-oo3v.onrender.com/docs/pages)
+- [Migration guide](MIGRATION.md)
+- [Roadmap](https://swifty-oo3v.onrender.com/roadmap)
+
+## Development
+
+```bash
+npm install
+npm test
+npm run test:package
+npm run build
+```
+
+Swifty is released under the [MIT License](LICENSE).

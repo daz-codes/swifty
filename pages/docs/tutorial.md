@@ -8,7 +8,7 @@ position: 8
 summary: Step-by-step guide to building a complete site.
 ---
 
-Let's build a website from scratch! We'll create a brochure site for a fictional bakery called **Sweet Crumbs**. By the end, you'll have used every major Swifty feature.
+Let's build a website from scratch! We'll create a brochure site for a fictional bakery called **Sweet Crumbs**. By the end, you'll have used the core Swifty workflow and its approachable publishing, discovery, and extension features.
 
 ## What We're Building
 
@@ -19,6 +19,11 @@ A small business site with:
 - Contact page
 - Consistent header/footer across all pages
 - Custom styling
+- Search, heading anchors, and a table of contents
+- A collection-powered menu preview
+- Draft and scheduled-content previews
+- A small custom template helper
+- Self-hosted syntax highlighting
 
 Ready? Let's bake!
 
@@ -30,11 +35,15 @@ First, install Swifty and create a new site:
 
 ```bash
 npm install -g @daz4126/swifty
-swifty sweet-crumbs
+swifty new sweet-crumbs
 cd sweet-crumbs
 ```
 
 This creates a `sweet-crumbs` folder with the starter structure. Let's clear it out and start fresh. Delete the contents of `pages/` (keep the folder) and we'll build our own.
+
+The starter also includes a responsive stylesheet, default layout, and
+`js/hello-swifty.js`. Keep or replace them as you work. Run `swifty --help` at
+any point to see the available commands.
 
 ---
 
@@ -90,9 +99,23 @@ breadcrumb_separator: " > "
 link_class: nav-link
 morphing: true
 prefetching: true
+morph_target: main
+navigation_cache_size: 20
+navigation_cache_ttl: 15
+search: true
+search_content_limit: 5000
+search_results_limit: 10
+highlight_theme: monokai-sublime
+watcher_use_polling: false
+date_locale: en-GB
+timezone: Europe/London
 ```
 
-We've added custom properties (`tagline`, `address`) that we can use anywhere on the site.
+We've added custom properties (`tagline`, `address`) that we can use anywhere on
+the site. Morphing and intent prefetching make navigation feel immediate while
+keeping every route as ordinary static HTML. The bounded navigation and search
+caches prevent those conveniences from growing without limit. Dates display
+consistently in local development and deployment builds.
 
 ---
 
@@ -442,7 +465,7 @@ Create `partials/footer.md`:
 <div class="container footer-content">
   <p><strong><%= sitename %></strong></p>
   <p><%= address %></p>
-  <p>&copy; 2025 <%= sitename %>. Baked with love.</p>
+  <p>&copy; <%= sitename %>. Baked with love.</p>
 </div>
 ```
 
@@ -769,13 +792,250 @@ npx swifty start
 
 Visit [localhost:3000](http://localhost:3000) and explore your bakery site!
 
-Try editing a file - the browser refreshes automatically. Make some CSS tweaks and watch them appear instantly.
+Try editing a file - the browser refreshes automatically. Safe body-only page
+edits rebuild that page and derived indexes incrementally; metadata, layout, and
+structural changes fall back to a full build. Make some CSS tweaks and watch them
+appear instantly.
+
+Swifty uses native filesystem events by default, which is efficient on normal
+local disks. If saves are missed on a cloud-synced folder, network mount, or
+container volume, change this setting and restart the server:
+
+```yaml
+watcher_use_polling: true
+watcher_interval: 500
+```
 
 ---
 
-## Step 14: Build for Production
+## Step 14: Add Heading Links and a Table of Contents
 
-Happy with your site? Build the production version:
+Every Markdown heading already receives a stable ID. For example, the **Our
+Promise** heading on the About page can be linked directly:
+
+```markdown
+[Read our promise](/about#our-promise)
+```
+
+Expose those headings as a table of contents by updating
+`layouts/default.html`:
+
+```html
+<article class="page container">
+  <nav class="breadcrumbs"><%= breadcrumbs %></nav>
+
+  <aside class="page-toc" aria-label="On this page">
+    <%= toc %>
+  </aside>
+
+  <div class="page-content">
+    <%= content %>
+  </div>
+</article>
+```
+
+`<%= toc %>` renders a nested list linked to the generated heading IDs. Pages
+without headings simply receive an empty value. Add a little styling:
+
+```css
+.page-toc {
+  margin-bottom: 30px;
+  padding: 18px;
+  border-radius: 8px;
+  background: #f9f5f0;
+}
+
+.page-toc ul {
+  margin: 0;
+  padding-left: 20px;
+}
+```
+
+---
+
+## Step 15: Add Self-Hosted Search
+
+Create `pages/search.md`:
+
+```markdown
+---
+title: Search
+nav: true
+summary: Search the Sweet Crumbs website.
+---
+
+# Find Something Delicious
+
+<%= partial: search %>
+```
+
+Swifty generates `/search.json` and supplies the form and search client. The
+JavaScript and index are hosted with your site; no search service or CDN is
+needed. The `search_content_limit: 5000` setting from Step 3 keeps each indexed
+page body bounded while titles, summaries, tags, and URLs stay complete.
+
+Add basic form styling:
+
+```css
+.swifty-search input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.swifty-search__results {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+```
+
+---
+
+## Step 16: Build a Menu Preview from the Page Collection
+
+Templates receive an immutable collection of authored pages. Add this block near
+the bottom of `pages/index.md`:
+
+```html
+<section class="container">
+<h2>Explore the Menu</h2>
+<div class="collection-grid">
+<% const menuPages = collections.pages.filter((page) => page.url.startsWith("/menu/")); %>
+<% for (const page of menuPages) { %>
+<article class="menu-card">
+<h3><a href="<%= page.url %>"><%= page.title %></a></h3>
+<p><%= page.summary %></p>
+</article>
+<% } %>
+</div>
+</section>
+```
+
+Keep the loop and generated HTML at the start of their lines as shown. That
+prevents Markdown from interpreting the repeated HTML as an indented code block.
+
+Each item contains its title, URL, summary, tags, and display and ISO dates.
+Generated tag/pagination routes, 404 pages, drafts, and scheduled pages are not
+included in production collections. `pages` is a shorter alias for
+`collections.pages`.
+
+```css
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+```
+
+---
+
+## Step 17: Preview Draft and Scheduled Content
+
+Create `pages/summer-preview.md`:
+
+```markdown
+---
+title: Summer Menu Preview
+draft: true
+nav: false
+---
+
+# A First Look at Summer
+
+We're testing peach pastries, berry tarts, and a new iced coffee menu.
+```
+
+Drafts and future-dated pages appear during `swifty start`. You can also create
+a shareable preview build without enabling the watcher:
+
+```bash
+npx swifty build --drafts --out preview
+```
+
+Change `draft: true` to a future publication date when the page is ready to be
+scheduled:
+
+```yaml
+date: 2099-06-15
+```
+
+A normal `swifty build` excludes both drafts and future pages. Scheduled pages
+appear on the first production build after their publication time—Swifty does
+not start deployment jobs, so configure a scheduled build with your host when
+automatic publication matters.
+
+---
+
+## Step 18: Add a Small Template Extension
+
+Layouts and partials cover most customization. For a reusable value or function,
+create optional `swifty.config.js` in the project root:
+
+```javascript
+module.exports = {
+  globals: {
+    orderPhone: "01234 567890",
+  },
+  helpers: {
+    uppercase(value) {
+      return String(value).toUpperCase();
+    },
+  },
+};
+```
+
+Use both values directly in a page, layout, or partial:
+
+```html
+<p><%= uppercase("Order ahead") %>: <%= orderPhone %></p>
+```
+
+Restart `swifty start` after changing `swifty.config.js`; it is loaded when the
+process starts. Projects with `"type": "module"` use `export default { ... }`
+instead. The same extension file can register Marked extensions, but that is an
+advanced option covered in [Configuration](/docs/configuration#javascript-extension-hooks).
+
+---
+
+## Step 19: See Local Syntax Highlighting
+
+Create `pages/developer-notes.md` to keep a small integration example out of the
+main navigation:
+
+````markdown
+---
+title: Developer Notes
+nav: false
+---
+
+# Online Order Handoff
+
+```javascript
+const collectionMessage = (name, time) =>
+  `${name}, your order will be ready at ${time}.`;
+```
+````
+
+Only this page loads the configured `monokai-sublime` highlight.js theme. Swifty
+copies and fingerprints that stylesheet locally; code-free pages do not load it.
+Fenced code is also excluded from `reading_time`, so technical posts are not
+inflated by long examples.
+
+---
+
+## Step 20: Check and Build for Production
+
+Before building, validate routes, internal links and heading anchors, images,
+layouts, partials, templates, and configuration:
+
+```bash
+npx swifty check
+```
+
+Then create the production version:
 
 ```bash
 npx swifty build
@@ -805,6 +1065,7 @@ Create `pages/news/spring-menu.md`:
 ---
 title: Spring Menu Now Available!
 description: Announcing our new spring menu with seasonal treats.
+tags: [news, seasonal]
 ---
 
 We're excited to announce our new spring menu featuring fresh strawberry tarts, lavender shortbread, and our famous lemon drizzle cake. Stop by and taste the season!
@@ -818,6 +1079,7 @@ Create `pages/news/holiday-hours.md`:
 ---
 title: Holiday Hours Update
 description: Our hours for the upcoming holiday weekend.
+tags: [news, seasonal]
 ---
 
 We'll be closed on Easter Sunday but open extended hours the rest of the holiday weekend. Pre-orders for Easter treats are now open!
@@ -841,6 +1103,9 @@ Now create a layout for news posts. Create `layouts/news.html`:
     <%= content %>
   </div>
 
+  <div class="tags"><%= links_to_tags %></div>
+  <aside class="related-pages"><%= related_pages %></aside>
+
   <nav class="post-nav">
     <div class="prev"><%= prev_page %></div>
     <div class="next"><%= next_page %></div>
@@ -848,7 +1113,7 @@ Now create a layout for news posts. Create `layouts/news.html`:
 </article>
 ```
 
-The `<%= reading_time %>` shows something like "2 min read", and `<%= prev_page %>` / `<%= next_page %>` automatically link to sibling posts!
+The `<%= reading_time %>` shows something like "2 min read", and `<%= prev_page %>` / `<%= next_page %>` automatically link to sibling posts. Shared tags power `<%= related_pages %>`, while the authored `description` becomes the page summary.
 
 Now update your `config.yaml` to enable RSS:
 
@@ -868,6 +1133,17 @@ rss_feeds:
 Rebuild and you'll find `/news/rss.xml` in your dist folder - a valid RSS feed that customers can subscribe to in their favorite feed reader!
 
 You can add feeds for any folder. Running a recipe blog section? Just add `- blog` to the `rss_feeds` list.
+
+When the section grows, opt into pagination with
+`pages/news/config.yaml`:
+
+```yaml
+page_count: 5
+```
+
+Swifty then keeps `/news` as page one and generates `/news/page/2` as needed.
+RSS still contains the configured number of newest posts rather than only the
+current HTML page.
 
 ---
 
@@ -946,10 +1222,19 @@ Congratulations! You just built a complete website using:
 - **Reading time** - Auto-calculated for blog posts
 - **Previous/next links** - Auto-generated navigation between posts
 - **Open Graph tags** - Social sharing meta tags
+- **Heading anchors and TOC** - Stable deep links and generated page outlines
+- **Self-hosted search** - A bounded local index and accessible search partial
+- **Page collections** - Custom lists built from authored metadata
+- **Draft previews and scheduling** - Development and `--drafts` workflows
+- **Extension hooks** - Small Eta globals/helpers without a plugin system
+- **Local syntax highlighting** - Fingerprinted themes loaded only when needed
+- **Site validation** - Route, link, asset, template, and config checks
+- **Related pages and summaries** - Tag-ranked discovery and useful excerpts
+- **Pagination** - Explicit per-section page sizing
 - **Development server** - Live reload for fast iteration
 - **Production build** - Clean output for deployment
 
-Not bad for a few files and zero configuration!
+Not bad for a small set of files and one readable configuration file!
 
 ---
 
@@ -961,6 +1246,9 @@ Now that you've got the basics, try:
 - Creating more complex layouts with sidebars or grids
 - Using tags to categorize content
 - Tuning morph navigation for SPA-like transitions
-- Adding JavaScript for interactive features
+- Adding optimized local images and responsive `srcset` output
+- Deploying below a domain path with `base_path`
+- Customizing the search partial or related-page partial
+- Trying a different bundled `highlight_theme`
 
 Most importantly: build something real! Swifty gets out of your way so you can focus on content. Happy building!

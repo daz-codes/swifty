@@ -6,7 +6,10 @@ import { Marked, marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
 
-marked.use(
+import { loadExtensions } from "./extensions.js";
+
+const { markedExtensions } = await loadExtensions();
+const createHighlightExtension = () =>
   markedHighlight({
     emptyLangClass: "hljs",
     langPrefix: "hljs language-",
@@ -14,8 +17,9 @@ marked.use(
       const language = hljs.getLanguage(lang) ? lang : "plaintext";
       return hljs.highlight(code, { language }).value;
     },
-  }),
-);
+  });
+
+marked.use(createHighlightExtension(), ...markedExtensions);
 
 const createSlugger = () => {
   const slugs = new Map();
@@ -77,14 +81,8 @@ const collectMarkdownHeadings = (source) => {
 const renderMarkdown = (source) => {
   const slug = createSlugger();
   const parser = new Marked(
-    markedHighlight({
-      emptyLangClass: "hljs",
-      langPrefix: "hljs language-",
-      highlight(code, lang) {
-        const language = hljs.getLanguage(lang) ? lang : "plaintext";
-        return hljs.highlight(code, { language }).value;
-      },
-    }),
+    createHighlightExtension(),
+    ...markedExtensions,
     {
       renderer: {
         heading({ tokens, depth }) {

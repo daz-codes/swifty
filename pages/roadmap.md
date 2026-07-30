@@ -23,8 +23,12 @@ recent-post lists, archives, and custom navigation without filesystem work.
 Fenced code blocks no longer inflate page word counts or reading-time estimates.
 
 ### Styled Starter Site
-New projects include a minimal responsive stylesheet and default content layout
-instead of empty presentation directories.
+New projects include a minimal responsive stylesheet, default content layout,
+and starter JavaScript instead of empty presentation directories.
+
+### JavaScript Extension Hooks
+An optional `swifty.config.js` can expose Eta globals and helpers or register
+Marked extensions without expanding Swifty's core configuration surface.
 
 ### Bounded Search Index Entries
 `search_content_limit` caps normalized leading page content at 5,000 characters
@@ -131,7 +135,8 @@ Pages with `draft: true` in front matter are visible during development but hidd
 Set a future `date` in front matter and the page stays hidden until that date arrives. Write content ahead of time and publish on schedule.
 
 ### Full Tutorial
-A complete [step-by-step guide](/docs/tutorial) building a bakery brochure site from scratch, using every Swifty feature along the way.
+A complete [step-by-step guide](/docs/tutorial) builds a bakery brochure site
+from scratch and introduces Swifty's core and approachable extension features.
 
 ### Live Reload
 Dev server now auto-refreshes your browser when you save changes. No more manual refreshing!
@@ -187,9 +192,6 @@ on the compatibility adapter while consumers migrate to `morpheus:*` events and
 - **HTML parser migration**: Keep the token-protected regex pipeline while its
   tests remain effective, but move rewriting and attribute inspection to a real
   HTML parser if valid edge cases begin escaping the current grammar.
-- **JavaScript configuration hooks**: Design an optional `swifty.config.js`
-  context for Eta globals/helpers and marked extensions after the multi-site
-  context defines clear ownership and cache invalidation boundaries.
 
 ## Want Something?
 

@@ -35,7 +35,7 @@ Create a `template.html` in your project root:
   </main>
 
   <footer>
-    <p>&copy; 2025 <%= sitename %></p>
+    <p>&copy; <%= sitename %></p>
   </footer>
 </body>
 </html>

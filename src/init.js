@@ -46,7 +46,8 @@ a { color: var(--accent); }
 pre { overflow-x: auto; border-radius: .5rem; }
 .site-footer { padding-block: 2rem; color: color-mix(in srgb, CanvasText 70%, transparent); }
 `,
-    "js/": null,
+    "js/hello-swifty.js": `console.log("Hello from Swifty! 👋");
+`,
     "images/": null,
     "data/": null,
     "public/": null,
@@ -77,6 +78,9 @@ search_results_limit: 10
 summary_length: 200
 related_pages_limit: 3
 morph_target: main
+navigation_cache_size: 20
+navigation_cache_ttl: 15
+build_concurrency: 16
 date_locale: en-GB
 timezone: UTC
 

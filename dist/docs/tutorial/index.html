@@ -1,11 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta property="og:title" content="Build a Brochure Site"><meta property="og:site_name" content="Swifty"><meta property="og:type" content="article"><meta property="og:description" content="Step-by-step guide to building a complete site."><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Build a Brochure Site"><meta name="twitter:description" content="Step-by-step guide to building a complete site."><meta property="article:tag" content="swifty"><meta property="article:tag" content="docs"><meta property="article:tag" content="tutorial"><title>Swifty</title><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin><link rel="dns-prefetch" href="https://cdnjs.cloudflare.com"><link rel="preload" href="/css/custom.css?v=1770203770378" as="style" /><link rel="preload" href="/css/simple.css?v=1769554614320" as="style" />
-<script type="module" src="/swifty/swifty-navigation.68f407b862.js" data-swifty-navigation data-target="main" data-prefetching="intent" data-cache-size="20" data-cache-ttl="15"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css"><link rel="stylesheet" href="/css/custom.css?v=1770203770378" /><link rel="stylesheet" href="/css/simple.css?v=1769554614320" /></head><body><header class="sticky dropshadow opacity-9 align-vertical space-between"><a href="/" class="logo">S</a><nav class="tabs"><li><a href="/about" class="swifty_link">About Swifty</a></li><li><a href="/roadmap" class="swifty_link">Swifty Roadmap</a></li><li><a href="/docs" class="swifty_link">Docs</a></li></nav></header><main><div class="page-hero"><div class="container"><div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/tutorial">Build a Brochure Site</a></div><h1>Build a Brochure Site</h1><div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/tutorial">tutorial</a></div><p class="page-summary">Step-by-step guide to building a complete site.</p></div></div><div class="page-body container"><div class="serif-font"><p>Let&#39;s build a website from scratch! We&#39;ll create a brochure site for a fictional bakery called <strong>Sweet Crumbs</strong>. By the end, you&#39;ll have used every major Swifty feature.</p><h2>What We&#39;re Building</h2><p>A small business site with:</p><ul><li>Homepage with hero section</li><li>About page</li><li>Menu section with subpages for different categories</li><li>Contact page</li><li>Consistent header/footer across all pages</li><li>Custom styling</li></ul><p>Ready? Let&#39;s bake!</p><hr><h2>Step 1: Project Setup</h2><p>First, install Swifty and create a new site:</p>
-<pre><code class="hljs language-bash">npm install -g @daz4126/swifty
-swifty sweet-crumbs
+<!doctype html> <html lang="en"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width,initial-scale=1"> <meta name="theme-color" content="#791343"> <meta property="og:title" content="Build a Brochure Site"> <meta property="og:site_name" content="Swifty"> <meta property="og:type" content="article"> <meta property="og:description" content="Step-by-step guide to building a complete site."> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Build a Brochure Site"> <meta name="twitter:description" content="Step-by-step guide to building a complete site."> <meta property="article:tag" content="swifty"> <meta property="article:tag" content="docs"> <meta property="article:tag" content="tutorial"> <title>Build a Brochure Site · Swifty</title> <link rel="preload" href="/css/site.css?v=1784479672012" as="style"/> <link rel="preload" href="/js/hello-swifty.js?v=1784479156810" as="script"/> <script type="module" src="/swifty/swifty-navigation.35a80ed306.js" data-swifty-navigation data-target="main" data-prefetching="intent" data-cache-size="20" data-cache-ttl="15"></script> <link rel="stylesheet" href="/swifty/highlight-monokai-sublime.e0c1c5cd8d.css"> <link rel="stylesheet" href="/css/site.css?v=1784479672012"/><script src="/js/hello-swifty.js?v=1784479156810"></script> <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script> </head> <body> <a class="skip-link" href="#main">Skip to content</a> <header class="site-header"> <div class="site-nav shell"> <a class="brand" href="/" aria-label="Swifty home"> <span class="brand-mark" aria-hidden="true">S</span> <span>Swifty</span> </a> <nav class="site-navigation" aria-label="Primary navigation"> <ul><li><a href="/docs" class="swifty_link">Docs</a></li> <li><a href="/roadmap" class="swifty_link">Swifty Roadmap</a></li> <li><a href="/about" class="swifty_link">About Swifty</a></li></ul> </nav> <a class="header-action" href="/search">Search</a> </div> </header> <main id="main"> <div class="page-hero"> <div class="shell"> <div class="breadcrumbs"><a class="swifty_breadcrumb" href="/">Home</a> &raquo; <a class="swifty_breadcrumb" href="/docs">Docs</a> &raquo; <a class="swifty_breadcrumb" href="/docs/tutorial">Build a Brochure Site</a></div> <h1>Build a Brochure Site</h1> <div class="tags"><a class="tag" href="/tags/swifty">swifty</a><a class="tag" href="/tags/docs">docs</a><a class="tag" href="/tags/tutorial">tutorial</a></div> <p class="page-summary">Step-by-step guide to building a complete site.</p> </div> </div> <div class="page-body shell docs-layout"> <article class="prose"> <p>Let&#39;s build a website from scratch! We&#39;ll create a brochure site for a fictional bakery called <strong>Sweet Crumbs</strong>. By the end, you&#39;ll have used the core Swifty workflow and its approachable publishing, discovery, and extension features.</p> <h2 id="what-were-building">What We&#39;re Building</h2> <p>A small business site with:</p> <ul> <li>Homepage with hero section</li> <li>About page</li> <li>Menu section with subpages for different categories</li> <li>Contact page</li> <li>Consistent header/footer across all pages</li> <li>Custom styling</li> <li>Search, heading anchors, and a table of contents</li> <li>A collection-powered menu preview</li> <li>Draft and scheduled-content previews</li> <li>A small custom template helper</li> <li>Self-hosted syntax highlighting</li> </ul> <p>Ready? Let&#39;s bake!</p> <hr> <h2 id="step-1-project-setup">Step 1: Project Setup</h2> <p>First, install Swifty and create a new site:</p> <pre><code class="hljs language-bash">npm install -g @daz4126/swifty
+swifty new sweet-crumbs
 <span class="hljs-built_in">cd</span> sweet-crumbs
-</code></pre><p>This creates a <code>sweet-crumbs</code> folder with the starter structure. Let&#39;s clear it out and start fresh. Delete the contents of <code>pages/</code> (keep the folder) and we&#39;ll build our own.</p><hr><h2>Step 2: The Template</h2><p>Open <code>template.html</code> and replace it with our site skeleton:</p>
-<pre><code class="hljs language-html"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span>
+</code></pre><p>This creates a <code>sweet-crumbs</code> folder with the starter structure. Let&#39;s clear it out and start fresh. Delete the contents of <code>pages/</code> (keep the folder) and we&#39;ll build our own.</p> <p>The starter also includes a responsive stylesheet, default layout, and <code>js/hello-swifty.js</code>. Keep or replace them as you work. Run <code>swifty --help</code> at any point to see the available commands.</p> <hr> <h2 id="step-2-the-template">Step 2: The Template</h2> <p>Open <code>template.html</code> and replace it with our site skeleton:</p> <pre><code class="hljs language-html"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;en&quot;</span>&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;UTF-8&quot;</span>&gt;</span>
@@ -32,8 +28,7 @@ swifty sweet-crumbs
   <span class="hljs-tag">&lt;/<span class="hljs-name">footer</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
-</code></pre><p>Notice we&#39;re using <code>&lt;%= partial: footer %&gt;</code> - we&#39;ll create that partial soon.</p><hr><h2>Step 3: Configuration</h2><p>Open <code>config.yaml</code> and set up our site:</p>
-<pre><code class="hljs language-yaml"><span class="hljs-attr">sitename:</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">Bakery</span>
+</code></pre><p>Notice we&#39;re using <code>&lt;%= partial: footer %&gt;</code> - we&#39;ll create that partial soon.</p> <hr> <h2 id="step-3-configuration">Step 3: Configuration</h2> <p>Open <code>config.yaml</code> and set up our site:</p> <pre><code class="hljs language-yaml"><span class="hljs-attr">sitename:</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">Bakery</span>
 <span class="hljs-attr">author:</span> <span class="hljs-string">The</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">Team</span>
 <span class="hljs-attr">tagline:</span> <span class="hljs-string">Freshly</span> <span class="hljs-string">baked</span> <span class="hljs-string">happiness</span> <span class="hljs-string">since</span> <span class="hljs-number">2020</span>
 <span class="hljs-attr">address:</span> <span class="hljs-number">123</span> <span class="hljs-string">Baker</span> <span class="hljs-string">Street,</span> <span class="hljs-string">Tastyville</span>
@@ -42,8 +37,17 @@ swifty sweet-crumbs
 <span class="hljs-attr">link_class:</span> <span class="hljs-string">nav-link</span>
 <span class="hljs-attr">morphing:</span> <span class="hljs-literal">true</span>
 <span class="hljs-attr">prefetching:</span> <span class="hljs-literal">true</span>
-</code></pre><p>We&#39;ve added custom properties (<code>tagline</code>, <code>address</code>) that we can use anywhere on the site.</p><hr><h2>Step 4: The Homepage</h2><p>Create <code>pages/index.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+<span class="hljs-attr">morph_target:</span> <span class="hljs-string">main</span>
+<span class="hljs-attr">navigation_cache_size:</span> <span class="hljs-number">20</span>
+<span class="hljs-attr">navigation_cache_ttl:</span> <span class="hljs-number">15</span>
+<span class="hljs-attr">search:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">search_content_limit:</span> <span class="hljs-number">5000</span>
+<span class="hljs-attr">search_results_limit:</span> <span class="hljs-number">10</span>
+<span class="hljs-attr">highlight_theme:</span> <span class="hljs-string">monokai-sublime</span>
+<span class="hljs-attr">watcher_use_polling:</span> <span class="hljs-literal">false</span>
+<span class="hljs-attr">date_locale:</span> <span class="hljs-string">en-GB</span>
+<span class="hljs-attr">timezone:</span> <span class="hljs-string">Europe/London</span>
+</code></pre><p>We&#39;ve added custom properties (<code>tagline</code>, <code>address</code>) that we can use anywhere on the site. Morphing and intent prefetching make navigation feel immediate while keeping every route as ordinary static HTML. The bounded navigation and search caches prevent those conveniences from growing without limit. Dates display consistently in local development and deployment builds.</p> <hr> <h2 id="step-4-the-homepage">Step 4: The Homepage</h2> <p>Create <code>pages/index.md</code>:</p> <pre><code class="hljs language-markdown">---
 layout: false
 <span class="hljs-section">title: Home
 ---</span>
@@ -80,8 +84,7 @@ We&#x27;re a family-run bakery crafting delicious treats with love and the fines
     &lt;/div&gt;
   &lt;/div&gt;
 &lt;/section&gt;</span>
-</code></pre><p>We&#39;re using <code>layout: false</code> because the homepage has a custom structure. Notice how we use config values like <code>&lt;%= sitename %&gt;</code> and <code>&lt;%= tagline %&gt;</code>.</p><hr><h2>Step 5: The About Page</h2><p>Create <code>pages/about.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>We&#39;re using <code>layout: false</code> because the homepage has a custom structure. Notice how we use config values like <code>&lt;%= sitename %&gt;</code> and <code>&lt;%= tagline %&gt;</code>.</p> <hr> <h2 id="step-5-the-about-page">Step 5: The About Page</h2> <p>Create <code>pages/about.md</code>:</p> <pre><code class="hljs language-markdown">---
 <span class="hljs-section">title: About Us
 ---</span>
 
@@ -106,8 +109,7 @@ We never use preservatives or artificial flavours. Just real ingredients, real s
 Find us at <span class="hljs-strong">**&lt;%= address %&gt;**</span>. We&#x27;re open Tuesday through Sunday, 7am to 6pm.
 
 Pop in for a coffee and a pastry - we&#x27;d love to meet you!
-</code></pre><p>This page will automatically use <code>layouts/default.html</code> (which we&#39;ll create next).</p><hr><h2>Step 6: Create the Default Layout</h2><p>Create <code>layouts/default.html</code>:</p>
-<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;page container&quot;</span>&gt;</span>
+</code></pre><p>This page will automatically use <code>layouts/default.html</code> (which we&#39;ll create next).</p> <hr> <h2 id="step-6-create-the-default-layout">Step 6: Create the Default Layout</h2> <p>Create <code>layouts/default.html</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;page container&quot;</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-name">nav</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;breadcrumbs&quot;</span>&gt;</span>
     &lt;%= breadcrumbs %&gt;
   <span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
@@ -116,8 +118,7 @@ Pop in for a coffee and a pastry - we&#x27;d love to meet you!
     &lt;%= content %&gt;
   <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">article</span>&gt;</span>
-</code></pre><p>Simple! This wraps our content pages with breadcrumb navigation.</p><hr><h2>Step 7: The Menu Section</h2><p>Now for something more interesting - a section with subpages.</p><p>Create <code>pages/menu/index.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>Simple! This wraps our content pages with breadcrumb navigation.</p> <hr> <h2 id="step-7-the-menu-section">Step 7: The Menu Section</h2> <p>Now for something more interesting - a section with subpages.</p> <p>Create <code>pages/menu/index.md</code>:</p> <pre><code class="hljs language-markdown">---
 <span class="hljs-section">title: Our Menu
 ---</span>
 
@@ -128,8 +129,7 @@ We offer a delicious range of freshly baked goods. Browse our categories below t
 &lt;%= links<span class="hljs-emphasis">_to_</span>children %&gt;
 
 <span class="hljs-emphasis">*Prices may vary. Some items are seasonal or made to order.*</span>
-</code></pre><p>The <code>&lt;%= links_to_children %&gt;</code> variable automatically lists all pages in this folder!</p><p>Now create some menu category pages:</p><p><strong>pages/menu/breads.md</strong></p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>The <code>&lt;%= links_to_children %&gt;</code> variable automatically lists all pages in this folder!</p> <p>Now create some menu category pages:</p> <p><strong>pages/menu/breads.md</strong></p> <pre><code class="hljs language-markdown">---
 title: Artisan Breads
 <span class="hljs-section">position: 1
 ---</span>
@@ -147,8 +147,7 @@ Our breads are made with long fermentation times for better flavour and texture.
 | Olive Focaccia | $9 |
 
 All breads are best enjoyed on the day of purchase, but can be frozen for up to a month.
-</code></pre><p><strong>pages/menu/pastries.md</strong></p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p><strong>pages/menu/pastries.md</strong></p> <pre><code class="hljs language-markdown">---
 title: Pastries
 <span class="hljs-section">position: 2
 ---</span>
@@ -166,8 +165,7 @@ Flaky, buttery, and utterly irresistible.
 | Cinnamon Roll | $5 |
 
 <span class="hljs-emphasis">*Croissants are best enjoyed warm - ask us to heat one up!*</span>
-</code></pre><p><strong>pages/menu/cakes.md</strong></p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p><strong>pages/menu/cakes.md</strong></p> <pre><code class="hljs language-markdown">---
 title: Cakes &amp; Treats
 <span class="hljs-section">position: 3
 ---</span>
@@ -185,33 +183,28 @@ For celebrations or just because.
 | Macarons (box of 6) | $18 |
 
 <span class="hljs-strong">**Custom cakes available!**</span> Order at least 3 days in advance. Ask at the counter for details.
-</code></pre><hr><h2>Step 7b: Customize Menu Links with a Partial</h2><p>By default, <code>&lt;%= links_to_children %&gt;</code> outputs a simple list of links. But what if you want richer previews with descriptions? Create a partial that matches the folder name!</p><p>Create <code>partials/menu.md</code>:</p>
-<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;menu-card&quot;</span>&gt;</span>
+</code></pre><hr> <h2 id="step-7b-customize-menu-links-with-a-partial">Step 7b: Customize Menu Links with a Partial</h2> <p>By default, <code>&lt;%= links_to_children %&gt;</code> outputs a simple list of links. But what if you want richer previews with descriptions? Create a partial that matches the folder name!</p> <p>Create <code>partials/menu.md</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;menu-card&quot;</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&lt;%= url %&gt;&quot;</span>&gt;</span>&lt;%= title %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
   &lt;% if (summary) { %&gt;
     <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>&lt;%= summary %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
   &lt;% } %&gt;
 <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-</code></pre><p><strong>The magic:</strong> When Swifty generates the index page for any folder, it looks for a partial with the same name as the folder. Since this partial is named <code>menu.md</code>, it automatically applies to the <code>pages/menu/</code> folder. Each child page is rendered through this template.</p><p>Now let&#39;s add summaries to our menu pages. Update the front matter:</p><p><strong>pages/menu/breads.md</strong></p>
-<pre><code class="hljs language-yaml"><span class="hljs-meta">---</span>
+</code></pre><p><strong>The magic:</strong> When Swifty generates the index page for any folder, it looks for a partial with the same name as the folder. Since this partial is named <code>menu.md</code>, it automatically applies to the <code>pages/menu/</code> folder. Each child page is rendered through this template.</p> <p>Now let&#39;s add summaries to our menu pages. Update the front matter:</p> <p><strong>pages/menu/breads.md</strong></p> <pre><code class="hljs language-yaml"><span class="hljs-meta">---</span>
 <span class="hljs-attr">title:</span> <span class="hljs-string">Artisan</span> <span class="hljs-string">Breads</span>
 <span class="hljs-attr">position:</span> <span class="hljs-number">1</span>
 <span class="hljs-attr">summary:</span> <span class="hljs-string">Sourdough,</span> <span class="hljs-string">baguettes,</span> <span class="hljs-string">focaccia</span> <span class="hljs-string">and</span> <span class="hljs-string">more</span> <span class="hljs-bullet">-</span> <span class="hljs-string">baked</span> <span class="hljs-string">fresh</span> <span class="hljs-string">every</span> <span class="hljs-string">morning.</span>
 <span class="hljs-meta">---</span>
-</code></pre><p><strong>pages/menu/pastries.md</strong></p>
-<pre><code class="hljs language-yaml"><span class="hljs-meta">---</span>
+</code></pre><p><strong>pages/menu/pastries.md</strong></p> <pre><code class="hljs language-yaml"><span class="hljs-meta">---</span>
 <span class="hljs-attr">title:</span> <span class="hljs-string">Pastries</span>
 <span class="hljs-attr">position:</span> <span class="hljs-number">2</span>
 <span class="hljs-attr">summary:</span> <span class="hljs-string">Flaky</span> <span class="hljs-string">croissants,</span> <span class="hljs-string">pain</span> <span class="hljs-string">au</span> <span class="hljs-string">chocolat,</span> <span class="hljs-string">and</span> <span class="hljs-string">sweet</span> <span class="hljs-string">Danish</span> <span class="hljs-string">treats.</span>
 <span class="hljs-meta">---</span>
-</code></pre><p><strong>pages/menu/cakes.md</strong></p>
-<pre><code class="hljs language-yaml"><span class="hljs-meta">---</span>
+</code></pre><p><strong>pages/menu/cakes.md</strong></p> <pre><code class="hljs language-yaml"><span class="hljs-meta">---</span>
 <span class="hljs-attr">title:</span> <span class="hljs-string">Cakes</span> <span class="hljs-string">&amp;</span> <span class="hljs-string">Treats</span>
 <span class="hljs-attr">position:</span> <span class="hljs-number">3</span>
 <span class="hljs-attr">summary:</span> <span class="hljs-string">Celebration</span> <span class="hljs-string">cakes,</span> <span class="hljs-string">brownies,</span> <span class="hljs-string">cookies,</span> <span class="hljs-string">and</span> <span class="hljs-string">French</span> <span class="hljs-string">macarons.</span>
 <span class="hljs-meta">---</span>
-</code></pre><p>Now instead of plain links, your menu index shows styled cards with descriptions!</p><p>This pattern works for any folder - create <code>partials/news.md</code> to customize how news items appear, <code>partials/blog.md</code> for blog posts, etc. If no matching partial exists, Swifty falls back to the default <code>links</code> partial or simple HTML links.</p><hr><h2>Step 8: Menu Layout</h2><p>Let&#39;s give menu pages their own look. Create <code>layouts/menu.html</code>:</p>
-<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;menu-page container&quot;</span>&gt;</span>
+</code></pre><p>Now instead of plain links, your menu index shows styled cards with descriptions!</p> <p>This pattern works for any folder - create <code>partials/news.md</code> to customize how news items appear, <code>partials/blog.md</code> for blog posts, etc. If no matching partial exists, Swifty falls back to the default <code>links</code> partial or simple HTML links.</p> <hr> <h2 id="step-8-menu-layout">Step 8: Menu Layout</h2> <p>Let&#39;s give menu pages their own look. Create <code>layouts/menu.html</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;menu-page container&quot;</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-name">nav</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;breadcrumbs&quot;</span>&gt;</span>
     &lt;%= breadcrumbs %&gt;
   <span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
@@ -225,8 +218,7 @@ For celebrations or just because.
     &lt;%= links_to_siblings %&gt;
   <span class="hljs-tag">&lt;/<span class="hljs-name">aside</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">article</span>&gt;</span>
-</code></pre><p>Because this layout is named <code>menu.html</code>, it automatically applies to all pages inside <code>pages/menu/</code>. The sidebar shows links to sibling pages so visitors can easily browse between categories.</p><hr><h2>Step 9: Contact Page</h2><p>Create <code>pages/contact.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>Because this layout is named <code>menu.html</code>, it automatically applies to all pages inside <code>pages/menu/</code>. The sidebar shows links to sibling pages so visitors can easily browse between categories.</p> <hr> <h2 id="step-9-contact-page">Step 9: Contact Page</h2> <p>Create <code>pages/contact.md</code>:</p> <pre><code class="hljs language-markdown">---
 <span class="hljs-section">title: Contact Us
 ---</span>
 
@@ -267,18 +259,14 @@ We&#x27;d love to hear from you!
 For custom cake orders or large catering requests, please call us at <span class="hljs-strong">**(555) 123-4567**</span> or email <span class="hljs-strong">**hello@sweetcrumbs.com**</span>.
 
 We recommend ordering custom cakes at least 3 days in advance, and catering orders at least 1 week ahead.
-</code></pre><h3>Adding a Contact Form</h3><p>Since Swifty generates static sites, you&#39;ll need a third-party service to handle form submissions. <a href="https://formspree.io">Formspree</a> is a popular choice - just sign up, create a form, and replace <code>YOUR_FORM_ID</code> with your actual form ID. The free tier includes 50 submissions per month, which is plenty for most small sites.</p><p>Other options include:</p><ul><li><strong>Netlify Forms</strong> - If you deploy to Netlify, just add the <code>netlify</code> attribute to your form tag</li><li><strong>Web3Forms</strong> - Free tier with 250 submissions/month</li><li><strong>Basin</strong>, <strong>Getform</strong>, <strong>FormKeep</strong> - Various pricing options</li></ul><p>You can also skip forms entirely and use a simple <code>mailto:</code> link instead:</p>
-<pre><code class="hljs language-markdown">[<span class="hljs-string">Email us</span>](<span class="hljs-link">mailto:hello@sweetcrumbs.com?subject=Website%20Inquiry</span>)
-</code></pre><hr><h2>Step 10: Create the Footer Partial</h2><p>Create <code>partials/footer.md</code>:</p>
-<pre><code class="hljs language-markdown"><span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;container footer-content&quot;</span>&gt;</span></span>
+</code></pre><h3 id="adding-a-contact-form">Adding a Contact Form</h3> <p>Since Swifty generates static sites, you&#39;ll need a third-party service to handle form submissions. <a href="https://formspree.io">Formspree</a> is a popular choice - just sign up, create a form, and replace <code>YOUR_FORM_ID</code> with your actual form ID. The free tier includes 50 submissions per month, which is plenty for most small sites.</p> <p>Other options include:</p> <ul> <li><strong>Netlify Forms</strong> - If you deploy to Netlify, just add the <code>netlify</code> attribute to your form tag</li> <li><strong>Web3Forms</strong> - Free tier with 250 submissions/month</li> <li><strong>Basin</strong>, <strong>Getform</strong>, <strong>FormKeep</strong> - Various pricing options</li> </ul> <p>You can also skip forms entirely and use a simple <code>mailto:</code> link instead:</p> <pre><code class="hljs language-markdown">[<span class="hljs-string">Email us</span>](<span class="hljs-link">mailto:hello@sweetcrumbs.com?subject=Website%20Inquiry</span>)
+</code></pre><hr> <h2 id="step-10-create-the-footer-partial">Step 10: Create the Footer Partial</h2> <p>Create <code>partials/footer.md</code>:</p> <pre><code class="hljs language-markdown"><span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;container footer-content&quot;</span>&gt;</span></span>
   <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span></span><span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">strong</span>&gt;</span></span>&lt;%= sitename %&gt;<span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">strong</span>&gt;</span></span><span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span></span>
   <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span></span>&lt;%= address %&gt;<span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span></span>
-  <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span></span><span class="hljs-literal">&amp;copy;</span> 2025 &lt;%= sitename %&gt;. Baked with love.<span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span></span>
+  <span class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span></span><span class="hljs-literal">&amp;copy;</span> &lt;%= sitename %&gt;. Baked with love.<span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span></span>
 <span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-</code></pre><p>This appears on every page thanks to <code>&lt;%= partial: footer %&gt;</code> in our template.</p><hr><h2>Step 11: Navigation Partial</h2><p>Let&#39;s customize how nav links look. Create <code>partials/nav.md</code>:</p>
-<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&lt;%= url %&gt;&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;nav-link&quot;</span>&gt;</span>&lt;%= title %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
-</code></pre><p>Swifty uses this partial when generating <code>&lt;%= nav_links %&gt;</code>.</p><h3>Controlling Navigation</h3><p>By default, top-level pages (direct children of <code>pages/</code>) appear in the main navigation, while nested pages don&#39;t. You can override this with front matter.</p><p><strong>Hide a top-level page from nav:</strong></p><p>Say we want a &quot;Terms &amp; Conditions&quot; page that shouldn&#39;t clutter the main menu. Create <code>pages/terms.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>This appears on every page thanks to <code>&lt;%= partial: footer %&gt;</code> in our template.</p> <hr> <h2 id="step-11-navigation-partial">Step 11: Navigation Partial</h2> <p>Let&#39;s customize how nav links look. Create <code>partials/nav.md</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&lt;%= url %&gt;&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;nav-link&quot;</span>&gt;</span>&lt;%= title %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
+</code></pre><p>Swifty uses this partial when generating <code>&lt;%= nav_links %&gt;</code>.</p> <h3 id="controlling-navigation">Controlling Navigation</h3> <p>By default, top-level pages (direct children of <code>pages/</code>) appear in the main navigation, while nested pages don&#39;t. You can override this with front matter.</p> <p><strong>Hide a top-level page from nav:</strong></p> <p>Say we want a &quot;Terms &amp; Conditions&quot; page that shouldn&#39;t clutter the main menu. Create <code>pages/terms.md</code>:</p> <pre><code class="hljs language-markdown">---
 title: Terms &amp; Conditions
 <span class="hljs-section">nav: false
 ---</span>
@@ -286,13 +274,11 @@ title: Terms &amp; Conditions
 <span class="hljs-section"># Terms &amp; Conditions</span>
 
 Standard legal stuff here...
-</code></pre><p>The page exists at <code>/terms/</code> but won&#39;t appear in <code>&lt;%= nav_links %&gt;</code>.</p><p><strong>Add a nested page to nav:</strong></p><p>Want your News section in the main menu? Update <code>pages/news/index.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>The page exists at <code>/terms/</code> but won&#39;t appear in <code>&lt;%= nav_links %&gt;</code>.</p> <p><strong>Add a nested page to nav:</strong></p> <p>Want your News section in the main menu? Update <code>pages/news/index.md</code>:</p> <pre><code class="hljs language-markdown">---
 title: News
 <span class="hljs-section">nav: true
 ---</span>
-</code></pre><p>Now the News link appears alongside About, Menu, and Contact in the main navigation.</p><hr><h2>Step 12: Add Some Style</h2><p>Create <code>css/styles.css</code>:</p>
-<pre><code class="hljs language-css"><span class="hljs-comment">/* Reset &amp; Base */</span>
+</code></pre><p>Now the News link appears alongside About, Menu, and Contact in the main navigation.</p> <hr> <h2 id="step-12-add-some-style">Step 12: Add Some Style</h2> <p>Create <code>css/styles.css</code>:</p> <pre><code class="hljs language-css"><span class="hljs-comment">/* Reset &amp; Base */</span>
 * {
   <span class="hljs-attribute">margin</span>: <span class="hljs-number">0</span>;
   <span class="hljs-attribute">padding</span>: <span class="hljs-number">0</span>;
@@ -546,30 +532,124 @@ title: News
     <span class="hljs-attribute">font-size</span>: <span class="hljs-number">2rem</span>;
   }
 }
-</code></pre><hr><h2>Step 13: Fire It Up!</h2><p>Start the development server:</p>
-<pre><code class="hljs language-bash">npx swifty start
-</code></pre><p>Visit <a href="http://localhost:3000">localhost:3000</a> and explore your bakery site!</p><p>Try editing a file - the browser refreshes automatically. Make some CSS tweaks and watch them appear instantly.</p><hr><h2>Step 14: Build for Production</h2><p>Happy with your site? Build the production version:</p>
-<pre><code class="hljs language-bash">npx swifty build
-</code></pre><p>Your optimized site is now in the <code>dist/</code> folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.</p><h3>Quick Deploy with Git</h3><p>If your site is in a git repo, you can build and deploy in one command:</p>
-<pre><code class="hljs language-bash">npx swifty deploy <span class="hljs-string">&quot;Updated menu prices&quot;</span>
-</code></pre><p>This runs <code>swifty build</code>, then <code>git add .</code>, <code>git commit</code>, and <code>git push</code> - perfect for quick updates.</p><hr><h2>Bonus: Add a News Section with Reading Time</h2><p>Let&#39;s add a news/blog section that shows reading time and previous/next navigation.</p><p>Create <code>pages/news/spring-menu.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><hr> <h2 id="step-13-fire-it-up">Step 13: Fire It Up!</h2> <p>Start the development server:</p> <pre><code class="hljs language-bash">npx swifty start
+</code></pre><p>Visit <a href="http://localhost:3000">localhost:3000</a> and explore your bakery site!</p> <p>Try editing a file - the browser refreshes automatically. Safe body-only page edits rebuild that page and derived indexes incrementally; metadata, layout, and structural changes fall back to a full build. Make some CSS tweaks and watch them appear instantly.</p> <p>Swifty uses native filesystem events by default, which is efficient on normal local disks. If saves are missed on a cloud-synced folder, network mount, or container volume, change this setting and restart the server:</p> <pre><code class="hljs language-yaml"><span class="hljs-attr">watcher_use_polling:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">watcher_interval:</span> <span class="hljs-number">500</span>
+</code></pre><hr> <h2 id="step-14-add-heading-links-and-a-table-of-contents">Step 14: Add Heading Links and a Table of Contents</h2> <p>Every Markdown heading already receives a stable ID. For example, the <strong>Our Promise</strong> heading on the About page can be linked directly:</p> <pre><code class="hljs language-markdown">[<span class="hljs-string">Read our promise</span>](<span class="hljs-link">/about#our-promise</span>)
+</code></pre><p>Expose those headings as a table of contents by updating <code>layouts/default.html</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;page container&quot;</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">nav</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;breadcrumbs&quot;</span>&gt;</span>&lt;%= breadcrumbs %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
+
+  <span class="hljs-tag">&lt;<span class="hljs-name">aside</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;page-toc&quot;</span> <span class="hljs-attr">aria-label</span>=<span class="hljs-string">&quot;On this page&quot;</span>&gt;</span>
+    &lt;%= toc %&gt;
+  <span class="hljs-tag">&lt;/<span class="hljs-name">aside</span>&gt;</span>
+
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;page-content&quot;</span>&gt;</span>
+    &lt;%= content %&gt;
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">article</span>&gt;</span>
+</code></pre><p><code>&lt;%= toc %&gt;</code> renders a nested list linked to the generated heading IDs. Pages without headings simply receive an empty value. Add a little styling:</p> <pre><code class="hljs language-css"><span class="hljs-selector-class">.page-toc</span> {
+  <span class="hljs-attribute">margin-bottom</span>: <span class="hljs-number">30px</span>;
+  <span class="hljs-attribute">padding</span>: <span class="hljs-number">18px</span>;
+  <span class="hljs-attribute">border-radius</span>: <span class="hljs-number">8px</span>;
+  <span class="hljs-attribute">background</span>: <span class="hljs-number">#f9f5f0</span>;
+}
+
+<span class="hljs-selector-class">.page-toc</span> <span class="hljs-selector-tag">ul</span> {
+  <span class="hljs-attribute">margin</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attribute">padding-left</span>: <span class="hljs-number">20px</span>;
+}
+</code></pre><hr> <h2 id="step-15-add-self-hosted-search">Step 15: Add Self-Hosted Search</h2> <p>Create <code>pages/search.md</code>:</p> <pre><code class="hljs language-markdown">---
+title: Search
+nav: true
+<span class="hljs-section">summary: Search the Sweet Crumbs website.
+---</span>
+
+<span class="hljs-section"># Find Something Delicious</span>
+
+&lt;%= partial: search %&gt;
+</code></pre><p>Swifty generates <code>/search.json</code> and supplies the form and search client. The JavaScript and index are hosted with your site; no search service or CDN is needed. The <code>search_content_limit: 5000</code> setting from Step 3 keeps each indexed page body bounded while titles, summaries, tags, and URLs stay complete.</p> <p>Add basic form styling:</p> <pre><code class="hljs language-css"><span class="hljs-selector-class">.swifty-search</span> <span class="hljs-selector-tag">input</span> {
+  <span class="hljs-attribute">width</span>: <span class="hljs-number">100%</span>;
+  <span class="hljs-attribute">padding</span>: <span class="hljs-number">12px</span>;
+  <span class="hljs-attribute">border</span>: <span class="hljs-number">1px</span> solid <span class="hljs-number">#ddd</span>;
+  <span class="hljs-attribute">border-radius</span>: <span class="hljs-number">6px</span>;
+}
+
+<span class="hljs-selector-class">.swifty-search__results</span> {
+  <span class="hljs-attribute">display</span>: grid;
+  <span class="hljs-attribute">gap</span>: <span class="hljs-number">12px</span>;
+  <span class="hljs-attribute">padding</span>: <span class="hljs-number">0</span>;
+  <span class="hljs-attribute">list-style</span>: none;
+}
+</code></pre><hr> <h2 id="step-16-build-a-menu-preview-from-the-page-collection">Step 16: Build a Menu Preview from the Page Collection</h2> <p>Templates receive an immutable collection of authored pages. Add this block near the bottom of <code>pages/index.md</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">section</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;container&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>Explore the Menu<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;collection-grid&quot;</span>&gt;</span>
+&lt;% const menuPages = collections.pages.filter((page) =&gt; page.url.startsWith(&quot;/menu/&quot;)); %&gt;
+&lt;% for (const page of menuPages) { %&gt;
+<span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;menu-card&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&lt;%= page.url %&gt;&quot;</span>&gt;</span>&lt;%= page.title %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>&lt;%= page.summary %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">article</span>&gt;</span>
+&lt;% } %&gt;
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">section</span>&gt;</span>
+</code></pre><p>Keep the loop and generated HTML at the start of their lines as shown. That prevents Markdown from interpreting the repeated HTML as an indented code block.</p> <p>Each item contains its title, URL, summary, tags, and display and ISO dates. Generated tag/pagination routes, 404 pages, drafts, and scheduled pages are not included in production collections. <code>pages</code> is a shorter alias for <code>collections.pages</code>.</p> <pre><code class="hljs language-css"><span class="hljs-selector-class">.collection-grid</span> {
+  <span class="hljs-attribute">display</span>: grid;
+  <span class="hljs-attribute">grid-template-columns</span>: <span class="hljs-built_in">repeat</span>(auto-fit, <span class="hljs-built_in">minmax</span>(<span class="hljs-number">220px</span>, <span class="hljs-number">1</span>fr));
+  <span class="hljs-attribute">gap</span>: <span class="hljs-number">20px</span>;
+}
+</code></pre><hr> <h2 id="step-17-preview-draft-and-scheduled-content">Step 17: Preview Draft and Scheduled Content</h2> <p>Create <code>pages/summer-preview.md</code>:</p> <pre><code class="hljs language-markdown">---
+title: Summer Menu Preview
+draft: true
+<span class="hljs-section">nav: false
+---</span>
+
+<span class="hljs-section"># A First Look at Summer</span>
+
+We&#x27;re testing peach pastries, berry tarts, and a new iced coffee menu.
+</code></pre><p>Drafts and future-dated pages appear during <code>swifty start</code>. You can also create a shareable preview build without enabling the watcher:</p> <pre><code class="hljs language-bash">npx swifty build --drafts --out preview
+</code></pre><p>Change <code>draft: true</code> to a future publication date when the page is ready to be scheduled:</p> <pre><code class="hljs language-yaml"><span class="hljs-attr">date:</span> <span class="hljs-number">2099-06-15</span>
+</code></pre><p>A normal <code>swifty build</code> excludes both drafts and future pages. Scheduled pages appear on the first production build after their publication time—Swifty does not start deployment jobs, so configure a scheduled build with your host when automatic publication matters.</p> <hr> <h2 id="step-18-add-a-small-template-extension">Step 18: Add a Small Template Extension</h2> <p>Layouts and partials cover most customization. For a reusable value or function, create optional <code>swifty.config.js</code> in the project root:</p> <pre><code class="hljs language-javascript"><span class="hljs-variable language_">module</span>.<span class="hljs-property">exports</span> = {
+  <span class="hljs-attr">globals</span>: {
+    <span class="hljs-attr">orderPhone</span>: <span class="hljs-string">&quot;01234 567890&quot;</span>,
+  },
+  <span class="hljs-attr">helpers</span>: {
+    <span class="hljs-title function_">uppercase</span>(<span class="hljs-params">value</span>) {
+      <span class="hljs-keyword">return</span> <span class="hljs-title class_">String</span>(value).<span class="hljs-title function_">toUpperCase</span>();
+    },
+  },
+};
+</code></pre><p>Use both values directly in a page, layout, or partial:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>&lt;%= uppercase(&quot;Order ahead&quot;) %&gt;: &lt;%= orderPhone %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+</code></pre><p>Restart <code>swifty start</code> after changing <code>swifty.config.js</code>; it is loaded when the process starts. Projects with <code>&quot;type&quot;: &quot;module&quot;</code> use <code>export default { ... }</code> instead. The same extension file can register Marked extensions, but that is an advanced option covered in <a href="/docs/configuration#javascript-extension-hooks">Configuration</a>.</p> <hr> <h2 id="step-19-see-local-syntax-highlighting">Step 19: See Local Syntax Highlighting</h2> <p>Create <code>pages/developer-notes.md</code> to keep a small integration example out of the main navigation:</p> <pre><code class="hljs language-markdown">---
+title: Developer Notes
+<span class="hljs-section">nav: false
+---</span>
+
+<span class="hljs-section"># Online Order Handoff</span>
+
+<span class="hljs-code">```javascript
+const collectionMessage = (name, time) =&gt;
+  `${name}, your order will be ready at ${time}.`;
+```</span>
+</code></pre><p>Only this page loads the configured <code>monokai-sublime</code> highlight.js theme. Swifty copies and fingerprints that stylesheet locally; code-free pages do not load it. Fenced code is also excluded from <code>reading_time</code>, so technical posts are not inflated by long examples.</p> <hr> <h2 id="step-20-check-and-build-for-production">Step 20: Check and Build for Production</h2> <p>Before building, validate routes, internal links and heading anchors, images, layouts, partials, templates, and configuration:</p> <pre><code class="hljs language-bash">npx swifty check
+</code></pre><p>Then create the production version:</p> <pre><code class="hljs language-bash">npx swifty build
+</code></pre><p>Your optimized site is now in the <code>dist/</code> folder, ready to deploy anywhere that hosts static files - Netlify, Vercel, GitHub Pages, or your own server.</p> <h3 id="quick-deploy-with-git">Quick Deploy with Git</h3> <p>If your site is in a git repo, you can build and deploy in one command:</p> <pre><code class="hljs language-bash">npx swifty deploy <span class="hljs-string">&quot;Updated menu prices&quot;</span>
+</code></pre><p>This runs <code>swifty build</code>, stages only the generated <code>dist/</code> folder, commits it, and pushes it. Other working-tree changes are not included.</p> <hr> <h2 id="bonus-add-a-news-section-with-reading-time">Bonus: Add a News Section with Reading Time</h2> <p>Let&#39;s add a news/blog section that shows reading time and previous/next navigation.</p> <p>Create <code>pages/news/spring-menu.md</code>:</p> <pre><code class="hljs language-markdown">---
 title: Spring Menu Now Available!
-<span class="hljs-section">description: Announcing our new spring menu with seasonal treats.
+description: Announcing our new spring menu with seasonal treats.
+<span class="hljs-section">tags: [news, seasonal]
 ---</span>
 
 We&#x27;re excited to announce our new spring menu featuring fresh strawberry tarts, lavender shortbread, and our famous lemon drizzle cake. Stop by and taste the season!
 
 Our pastry chef Maria has been working on these recipes all winter, testing and perfecting each one. The strawberry tarts use locally-sourced berries from Sunny Farm just down the road.
-</code></pre><p>Create <code>pages/news/holiday-hours.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>Create <code>pages/news/holiday-hours.md</code>:</p> <pre><code class="hljs language-markdown">---
 title: Holiday Hours Update
-<span class="hljs-section">description: Our hours for the upcoming holiday weekend.
+description: Our hours for the upcoming holiday weekend.
+<span class="hljs-section">tags: [news, seasonal]
 ---</span>
 
 We&#x27;ll be closed on Easter Sunday but open extended hours the rest of the holiday weekend. Pre-orders for Easter treats are now open!
-</code></pre><p>Now create a layout for news posts. Create <code>layouts/news.html</code>:</p>
-<pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;news-post container&quot;</span>&gt;</span>
+</code></pre><p>Now create a layout for news posts. Create <code>layouts/news.html</code>:</p> <pre><code class="hljs language-html"><span class="hljs-tag">&lt;<span class="hljs-name">article</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;news-post container&quot;</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-name">nav</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;breadcrumbs&quot;</span>&gt;</span>&lt;%= breadcrumbs %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
 
   <span class="hljs-tag">&lt;<span class="hljs-name">header</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;post-header&quot;</span>&gt;</span>
@@ -584,13 +664,15 @@ We&#x27;ll be closed on Easter Sunday but open extended hours the rest of the ho
     &lt;%= content %&gt;
   <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
 
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;tags&quot;</span>&gt;</span>&lt;%= links_to_tags %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">aside</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;related-pages&quot;</span>&gt;</span>&lt;%= related_pages %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">aside</span>&gt;</span>
+
   <span class="hljs-tag">&lt;<span class="hljs-name">nav</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;post-nav&quot;</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;prev&quot;</span>&gt;</span>&lt;%= prev_page %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;next&quot;</span>&gt;</span>&lt;%= next_page %&gt;<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
   <span class="hljs-tag">&lt;/<span class="hljs-name">nav</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">article</span>&gt;</span>
-</code></pre><p>The <code>&lt;%= reading_time %&gt;</code> shows something like &quot;2 min read&quot;, and <code>&lt;%= prev_page %&gt;</code> / <code>&lt;%= next_page %&gt;</code> automatically link to sibling posts!</p><p>Now update your <code>config.yaml</code> to enable RSS:</p>
-<pre><code class="hljs language-yaml"><span class="hljs-attr">sitename:</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">Bakery</span>
+</code></pre><p>The <code>&lt;%= reading_time %&gt;</code> shows something like &quot;2 min read&quot;, and <code>&lt;%= prev_page %&gt;</code> / <code>&lt;%= next_page %&gt;</code> automatically link to sibling posts. Shared tags power <code>&lt;%= related_pages %&gt;</code>, while the authored <code>description</code> becomes the page summary.</p> <p>Now update your <code>config.yaml</code> to enable RSS:</p> <pre><code class="hljs language-yaml"><span class="hljs-attr">sitename:</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">Bakery</span>
 <span class="hljs-attr">site_url:</span> <span class="hljs-string">https://sweetcrumbs.com</span>
 <span class="hljs-attr">author:</span> <span class="hljs-string">The</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">Team</span>
 <span class="hljs-attr">tagline:</span> <span class="hljs-string">Freshly</span> <span class="hljs-string">baked</span> <span class="hljs-string">happiness</span> <span class="hljs-string">since</span> <span class="hljs-number">2020</span>
@@ -600,8 +682,8 @@ We&#x27;ll be closed on Easter Sunday but open extended hours the rest of the ho
   <span class="hljs-bullet">-</span> <span class="hljs-attr">folder:</span> <span class="hljs-string">news</span>
     <span class="hljs-attr">title:</span> <span class="hljs-string">Sweet</span> <span class="hljs-string">Crumbs</span> <span class="hljs-string">News</span>
     <span class="hljs-attr">description:</span> <span class="hljs-string">Updates</span> <span class="hljs-string">from</span> <span class="hljs-string">your</span> <span class="hljs-string">favorite</span> <span class="hljs-string">bakery</span>
-</code></pre><p>Rebuild and you&#39;ll find <code>/news/rss.xml</code> in your dist folder - a valid RSS feed that customers can subscribe to in their favorite feed reader!</p><p>You can add feeds for any folder. Running a recipe blog section? Just add <code>- blog</code> to the <code>rss_feeds</code> list.</p><hr><h2>Bonus: Use Data Files for Team Members</h2><p>Instead of creating a page for each team member, you can store structured data in the <code>data/</code> folder and loop through it in your templates.</p><p>Create <code>data/team.json</code>:</p>
-<pre><code class="hljs language-json"><span class="hljs-punctuation">[</span>
+</code></pre><p>Rebuild and you&#39;ll find <code>/news/rss.xml</code> in your dist folder - a valid RSS feed that customers can subscribe to in their favorite feed reader!</p> <p>You can add feeds for any folder. Running a recipe blog section? Just add <code>- blog</code> to the <code>rss_feeds</code> list.</p> <p>When the section grows, opt into pagination with <code>pages/news/config.yaml</code>:</p> <pre><code class="hljs language-yaml"><span class="hljs-attr">page_count:</span> <span class="hljs-number">5</span>
+</code></pre><p>Swifty then keeps <code>/news</code> as page one and generates <code>/news/page/2</code> as needed. RSS still contains the configured number of newest posts rather than only the current HTML page.</p> <hr> <h2 id="bonus-use-data-files-for-team-members">Bonus: Use Data Files for Team Members</h2> <p>Instead of creating a page for each team member, you can store structured data in the <code>data/</code> folder and loop through it in your templates.</p> <p>Create <code>data/team.json</code>:</p> <pre><code class="hljs language-json"><span class="hljs-punctuation">[</span>
   <span class="hljs-punctuation">{</span>
     <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Maria Santos&quot;</span><span class="hljs-punctuation">,</span>
     <span class="hljs-attr">&quot;role&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Head Baker&quot;</span><span class="hljs-punctuation">,</span>
@@ -618,8 +700,7 @@ We&#x27;ll be closed on Easter Sunday but open extended hours the rest of the ho
     <span class="hljs-attr">&quot;bio&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Sophie keeps everything running smoothly and knows all our regulars by name.&quot;</span>
   <span class="hljs-punctuation">}</span>
 <span class="hljs-punctuation">]</span>
-</code></pre><p>Now create <code>pages/team.md</code>:</p>
-<pre><code class="hljs language-markdown">---
+</code></pre><p>Now create <code>pages/team.md</code>:</p> <pre><code class="hljs language-markdown">---
 <span class="hljs-section">title: Meet Our Team
 ---</span>
 
@@ -634,4 +715,4 @@ We&#x27;ll be closed on Easter Sunday but open extended hours the rest of the ho
   &lt;/div&gt;
 &lt;% } %&gt;
 &lt;/div&gt;</span>
-</code></pre><p>The <code>data.team</code> variable automatically loads from <code>data/team.json</code>. You can use JSON or YAML files - the filename becomes the variable name.</p><p>This is great for:</p><ul><li>Team members</li><li>Testimonials</li><li>Product catalogs</li><li>Any structured data you want to display without creating individual pages</li></ul><hr><h2>What We Covered</h2><p>Congratulations! You just built a complete website using:</p><ul><li><strong>Template</strong> - The site-wide HTML wrapper</li><li><strong>Config</strong> - Site settings and custom variables</li><li><strong>Pages</strong> - Markdown content with front matter</li><li><strong>Layouts</strong> - Different wrappers for different sections</li><li><strong>Partials</strong> - Reusable content snippets</li><li><strong>Folder-matching partials</strong> - Partials named after folders customize index pages</li><li><strong>Auto-generated links</strong> - Navigation, breadcrumbs, child/sibling links</li><li><strong>Navigation control</strong> - Opt pages in or out of the main nav with front matter</li><li><strong>Convention over configuration</strong> - Layouts and partials matching folder names</li><li><strong>CSS</strong> - Automatically injected stylesheets</li><li><strong>RSS feeds</strong> - Auto-generated feeds for content sections</li><li><strong>Data files</strong> - JSON/YAML data for structured content</li><li><strong>Reading time</strong> - Auto-calculated for blog posts</li><li><strong>Previous/next links</strong> - Auto-generated navigation between posts</li><li><strong>Open Graph tags</strong> - Social sharing meta tags</li><li><strong>Development server</strong> - Live reload for fast iteration</li><li><strong>Production build</strong> - Clean output for deployment</li></ul><p>Not bad for a few files and zero configuration!</p><hr><h2>Next Steps</h2><p>Now that you&#39;ve got the basics, try:</p><ul><li>Adding images to <code>images/</code> and referencing them in pages</li><li>Creating more complex layouts with sidebars or grids</li><li>Using tags to categorize content</li><li>Tuning morph navigation for SPA-like transitions</li><li>Adding JavaScript for interactive features</li></ul><p>Most importantly: build something real! Swifty gets out of your way so you can focus on content. Happy building!</p></div></div></main><footer><p>This site was built with Swifty, the super speedy static site generator.</p><p><a href="/tags.html">All Tags</a></p></footer></body></html>
+</code></pre><p>The <code>data.team</code> variable automatically loads from <code>data/team.json</code>. You can use JSON or YAML files - the filename becomes the variable name.</p> <p>This is great for:</p> <ul> <li>Team members</li> <li>Testimonials</li> <li>Product catalogs</li> <li>Any structured data you want to display without creating individual pages</li> </ul> <hr> <h2 id="what-we-covered">What We Covered</h2> <p>Congratulations! You just built a complete website using:</p> <ul> <li><strong>Template</strong> - The site-wide HTML wrapper</li> <li><strong>Config</strong> - Site settings and custom variables</li> <li><strong>Pages</strong> - Markdown content with front matter</li> <li><strong>Layouts</strong> - Different wrappers for different sections</li> <li><strong>Partials</strong> - Reusable content snippets</li> <li><strong>Folder-matching partials</strong> - Partials named after folders customize index pages</li> <li><strong>Auto-generated links</strong> - Navigation, breadcrumbs, child/sibling links</li> <li><strong>Navigation control</strong> - Opt pages in or out of the main nav with front matter</li> <li><strong>Convention over configuration</strong> - Layouts and partials matching folder names</li> <li><strong>CSS</strong> - Automatically injected stylesheets</li> <li><strong>RSS feeds</strong> - Auto-generated feeds for content sections</li> <li><strong>Data files</strong> - JSON/YAML data for structured content</li> <li><strong>Reading time</strong> - Auto-calculated for blog posts</li> <li><strong>Previous/next links</strong> - Auto-generated navigation between posts</li> <li><strong>Open Graph tags</strong> - Social sharing meta tags</li> <li><strong>Heading anchors and TOC</strong> - Stable deep links and generated page outlines</li> <li><strong>Self-hosted search</strong> - A bounded local index and accessible search partial</li> <li><strong>Page collections</strong> - Custom lists built from authored metadata</li> <li><strong>Draft previews and scheduling</strong> - Development and <code>--drafts</code> workflows</li> <li><strong>Extension hooks</strong> - Small Eta globals/helpers without a plugin system</li> <li><strong>Local syntax highlighting</strong> - Fingerprinted themes loaded only when needed</li> <li><strong>Site validation</strong> - Route, link, asset, template, and config checks</li> <li><strong>Related pages and summaries</strong> - Tag-ranked discovery and useful excerpts</li> <li><strong>Pagination</strong> - Explicit per-section page sizing</li> <li><strong>Development server</strong> - Live reload for fast iteration</li> <li><strong>Production build</strong> - Clean output for deployment</li> </ul> <p>Not bad for a small set of files and one readable configuration file!</p> <hr> <h2 id="next-steps">Next Steps</h2> <p>Now that you&#39;ve got the basics, try:</p> <ul> <li>Adding images to <code>images/</code> and referencing them in pages</li> <li>Creating more complex layouts with sidebars or grids</li> <li>Using tags to categorize content</li> <li>Tuning morph navigation for SPA-like transitions</li> <li>Adding optimized local images and responsive <code>srcset</code> output</li> <li>Deploying below a domain path with <code>base_path</code></li> <li>Customizing the search partial or related-page partial</li> <li>Trying a different bundled <code>highlight_theme</code></li> </ul> <p>Most importantly: build something real! Swifty gets out of your way so you can focus on content. Happy building!</p> </article> <aside class="docs-aside" aria-label="Documentation tools"> <div class="docs-aside-card"> <p class="docs-aside-label">On this page</p> <nav class="swifty_toc" aria-label="Table of contents"> <ul> <li><a href="#what-were-building">What We're Building</a></li> <li><a href="#step-1-project-setup">Step 1: Project Setup</a></li> <li><a href="#step-2-the-template">Step 2: The Template</a></li> <li><a href="#step-3-configuration">Step 3: Configuration</a></li> <li><a href="#step-4-the-homepage">Step 4: The Homepage</a></li> <li><a href="#step-5-the-about-page">Step 5: The About Page</a></li> <li><a href="#step-6-create-the-default-layout">Step 6: Create the Default Layout</a></li> <li><a href="#step-7-the-menu-section">Step 7: The Menu Section</a></li> <li><a href="#step-7b-customize-menu-links-with-a-partial">Step 7b: Customize Menu Links with a Partial</a></li> <li><a href="#step-8-menu-layout">Step 8: Menu Layout</a></li> <li><a href="#step-9-contact-page">Step 9: Contact Page</a><ul> <li><a href="#adding-a-contact-form">Adding a Contact Form</a></li> </ul></li> <li><a href="#step-10-create-the-footer-partial">Step 10: Create the Footer Partial</a></li> <li><a href="#step-11-navigation-partial">Step 11: Navigation Partial</a><ul> <li><a href="#controlling-navigation">Controlling Navigation</a></li> </ul></li> <li><a href="#step-12-add-some-style">Step 12: Add Some Style</a></li> <li><a href="#step-13-fire-it-up">Step 13: Fire It Up!</a></li> <li><a href="#step-14-add-heading-links-and-a-table-of-contents">Step 14: Add Heading Links and a Table of Contents</a></li> <li><a href="#step-15-add-self-hosted-search">Step 15: Add Self-Hosted Search</a></li> <li><a href="#step-16-build-a-menu-preview-from-the-page-collection">Step 16: Build a Menu Preview from the Page Collection</a></li> <li><a href="#step-17-preview-draft-and-scheduled-content">Step 17: Preview Draft and Scheduled Content</a></li> <li><a href="#step-18-add-a-small-template-extension">Step 18: Add a Small Template Extension</a></li> <li><a href="#step-19-see-local-syntax-highlighting">Step 19: See Local Syntax Highlighting</a></li> <li><a href="#step-20-check-and-build-for-production">Step 20: Check and Build for Production</a><ul> <li><a href="#quick-deploy-with-git">Quick Deploy with Git</a></li> </ul></li> <li><a href="#bonus-add-a-news-section-with-reading-time">Bonus: Add a News Section with Reading Time</a></li> <li><a href="#bonus-use-data-files-for-team-members">Bonus: Use Data Files for Team Members</a></li> <li><a href="#what-we-covered">What We Covered</a></li> <li><a href="#next-steps">Next Steps</a></li> </ul> </nav> </div> <a class="aside-action" href="/search">Search all documentation →</a> </aside> </div> </main> <footer class="site-footer"> <div class="footer-inner shell"> <p>Built with Swifty—small, fast, and dependency-free in the browser.</p> <nav class="footer-links" aria-label="Footer navigation"> <a href="/docs">Documentation</a> <a href="/roadmap">Roadmap</a> <a href="/tags">All tags</a> <a href="https://github.com/daz-codes/swifty">GitHub</a> </nav> </div> </footer> </body> </html> 

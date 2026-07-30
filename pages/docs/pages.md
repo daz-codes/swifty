@@ -211,7 +211,7 @@ Want to publish a page at a future date? Just set the date in front matter:
 ```markdown
 ---
 title: Coming Soon
-date: 2025-06-15
+date: 2099-06-15
 ---
 ```
 

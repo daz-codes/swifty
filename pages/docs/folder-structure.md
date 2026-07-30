@@ -28,7 +28,7 @@ your-site/
 ├── css/             # Stylesheets (auto-injected)
 │   └── styles.css
 ├── js/              # Scripts (auto-injected)
-│   └── app.js
+│   └── hello-swifty.js
 ├── images/          # Images (auto-optimized)
 │   └── hero.jpg
 ├── data/            # JSON/YAML data files
@@ -37,6 +37,7 @@ your-site/
 │   └── manifest.webmanifest
 ├── template.html    # The master wrapper
 ├── config.yaml      # Site configuration
+├── swifty.config.js # Optional template/Markdown extension hooks
 ├── .swifty-cache/   # Generated image cache (ignored)
 └── dist/            # Built output (generated)
 ```
@@ -66,6 +67,11 @@ Store JSON or YAML data files here. The filename becomes the variable name: `dat
 
 ### public/
 Files in this directory are copied unchanged to the output root. Use it for fonts, manifests, verification files, downloads, and other assets that Swifty should not process.
+
+### swifty.config.js
+An optional JavaScript extension file for template globals, template helper
+functions, and Marked extensions. Most sites do not need it; see
+[JavaScript Extension Hooks](/docs/configuration#javascript-extension-hooks).
 
 ### dist/
 The output folder. Don't edit files here - they get overwritten on every build. This is what you deploy.

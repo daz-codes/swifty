@@ -1,7 +1,5 @@
 import { Idiomorph } from "./idiomorph.esm.js";
 
-if (typeof window !== "undefined") window.Idiomorph ||= Idiomorph;
-
 class NavigationFallback extends Error {
   constructor(url, message) {
     super(message);
@@ -9,12 +7,47 @@ class NavigationFallback extends Error {
   }
 }
 
-export class SwiftyNavigation {
+const positiveNumber = (value, fallback) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+};
+
+const nonNegativeNumber = (value, fallback) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : fallback;
+};
+
+const unique = (values) => [...new Set(values.filter(Boolean))];
+
+export class Morpheus {
   constructor(options = {}) {
     this.targetSelector = options.target || "main";
     this.prefetching = options.prefetching !== false;
-    this.cacheSize = Number(options.cacheSize || 20);
-    this.cacheTTL = Number(options.cacheTTL || 15) * 1000;
+    this.prefetchDelay = nonNegativeNumber(options.prefetchDelay, 75);
+    this.cacheSize = positiveNumber(options.cacheSize, 20);
+    this.cacheTTL = positiveNumber(options.cacheTTL, 15) * 1000;
+    this.eventPrefix = options.eventPrefix || "morpheus";
+    this.eventAliases = unique(options.eventAliases || []);
+    this.historyKey = options.historyKey || "morpheus";
+    this.historyAliases = unique(options.historyAliases || []);
+    this.navigationOffSelector = options.navigationOffSelector ||
+      '[data-morpheus-navigation="off"]';
+    this.prefetchOffSelector = options.prefetchOffSelector ||
+      '[data-morpheus-prefetch="off"]';
+    this.permanentSelector = options.permanentSelector || "[data-morpheus-permanent]";
+    this.loadingAttributes = unique(
+      options.loadingAttributes || ["data-morpheus-navigating"],
+    );
+    this.navigationHeaders = {
+      "X-Morpheus-Navigation": "true",
+      ...(options.navigationHeaders || {}),
+    };
+    this.prefetchHeaders = {
+      "X-Morpheus-Prefetch": "true",
+      ...(options.prefetchHeaders || {}),
+    };
+    this.logger = options.logger || globalThis.console;
+    this.morpher = options.morpher || Idiomorph;
     this.cache = new Map();
     this.sequence = 0;
     this.controller = null;
@@ -23,6 +56,14 @@ export class SwiftyNavigation {
     this.boundPopState = (event) => this.handlePopState(event);
     this.boundPrefetchIntent = (event) => this.handlePrefetchIntent(event);
     this.boundInvalidate = () => this.clearCache();
+  }
+
+  get eventPrefixes() {
+    return unique([this.eventPrefix, ...this.eventAliases]);
+  }
+
+  get historyKeys() {
+    return unique([this.historyKey, ...this.historyAliases]);
   }
 
   start() {
@@ -36,9 +77,11 @@ export class SwiftyNavigation {
     document.addEventListener("mouseover", this.boundPrefetchIntent);
     document.addEventListener("focusin", this.boundPrefetchIntent);
     document.addEventListener("touchstart", this.boundPrefetchIntent, { passive: true });
-    document.addEventListener("swifty:invalidate", this.boundInvalidate);
+    for (const prefix of this.eventPrefixes) {
+      document.addEventListener(`${prefix}:invalidate`, this.boundInvalidate);
+    }
     requestAnimationFrame(() => {
-      this.dispatch("swifty:load", {
+      this.dispatch("load", {
         url: window.location.href,
         navigationType: "initial",
         prefetched: false,
@@ -55,7 +98,9 @@ export class SwiftyNavigation {
     document.removeEventListener("mouseover", this.boundPrefetchIntent);
     document.removeEventListener("focusin", this.boundPrefetchIntent);
     document.removeEventListener("touchstart", this.boundPrefetchIntent);
-    document.removeEventListener("swifty:invalidate", this.boundInvalidate);
+    for (const prefix of this.eventPrefixes) {
+      document.removeEventListener(`${prefix}:invalidate`, this.boundInvalidate);
+    }
     clearTimeout(this.prefetchTimer);
     this.controller?.abort();
     this.started = false;
@@ -69,7 +114,7 @@ export class SwiftyNavigation {
     if (this.onlyChangesHash(url)) return;
 
     const detail = { url: url.href, link, navigationType: "link" };
-    if (!this.dispatch("swifty:before-navigate", detail, true)) return;
+    if (!this.dispatch("before-navigate", detail, true)) return;
 
     event.preventDefault();
     this.rememberScroll();
@@ -78,12 +123,14 @@ export class SwiftyNavigation {
 
   handlePopState(event) {
     const detail = { url: window.location.href, navigationType: "popstate" };
-    if (!this.dispatch("swifty:before-navigate", detail, true)) {
+    if (!this.dispatch("before-navigate", detail, true)) {
       window.location.reload();
       return;
     }
 
-    const scroll = event.state?.swifty?.scroll;
+    const scroll = this.historyKeys
+      .map((key) => event.state?.[key]?.scroll)
+      .find(Boolean);
     this.navigate(window.location.href, {
       historyMode: "pop",
       navigationType: "popstate",
@@ -96,11 +143,11 @@ export class SwiftyNavigation {
 
     const link = this.eligibleLink(event.target);
     if (!link || !this.eligibleURL(new URL(link.href, window.location.href))) return;
-    if (link.closest('[data-swifty-prefetch="off"]')) return;
+    if (link.closest(this.prefetchOffSelector)) return;
     if (event.type === "mouseover" && link.contains(event.relatedTarget)) return;
 
     clearTimeout(this.prefetchTimer);
-    const delay = event.type === "mouseover" ? 75 : 0;
+    const delay = event.type === "mouseover" ? this.prefetchDelay : 0;
     this.prefetchTimer = setTimeout(() => this.prefetch(link.href), delay);
   }
 
@@ -128,7 +175,7 @@ export class SwiftyNavigation {
         prefetched,
         newTarget: page.target,
       };
-      if (!this.dispatch("swifty:before-morph", beforeMorph, true)) {
+      if (!this.dispatch("before-morph", beforeMorph, true)) {
         throw new NavigationFallback(page.url, "morph was cancelled");
       }
 
@@ -139,7 +186,7 @@ export class SwiftyNavigation {
       this.restoreScroll(page.url, options);
       this.manageFocus(page.url, options.navigationType);
 
-      this.dispatch("swifty:load", {
+      this.dispatch("load", {
         url: page.url,
         navigationType: options.navigationType,
         prefetched,
@@ -149,7 +196,7 @@ export class SwiftyNavigation {
       if (error.name === "AbortError" || sequence !== this.sequence) return;
 
       const fallbackURL = error instanceof NavigationFallback ? error.url : url;
-      this.dispatch("swifty:navigation-error", { url: fallbackURL, error });
+      this.dispatch("navigation-error", { url: fallbackURL, error });
       this.fullLoad(fallbackURL, options.historyMode === "pop");
     } finally {
       if (sequence === this.sequence) {
@@ -166,8 +213,8 @@ export class SwiftyNavigation {
       signal,
       headers: {
         Accept: "text/html",
-        "X-Swifty-Navigation": "true",
-        ...(prefetch ? { "X-Swifty-Prefetch": "true" } : {}),
+        ...this.navigationHeaders,
+        ...(prefetch ? this.prefetchHeaders : {}),
       },
     });
 
@@ -200,12 +247,15 @@ export class SwiftyNavigation {
     const current = document.querySelector(this.targetSelector);
     if (!current) throw new NavigationFallback(page.url, "current navigation target is missing");
 
-    Idiomorph.morph(current, page.target, {
+    this.morpher.morph(current, page.target, {
       morphStyle: "outerHTML",
       restoreFocus: false,
       callbacks: {
         beforeNodeMorphed: (oldNode) => {
-          if (oldNode.nodeType === Node.ELEMENT_NODE && oldNode.hasAttribute("data-swifty-permanent")) {
+          if (
+            oldNode.nodeType === Node.ELEMENT_NODE &&
+            oldNode.matches(this.permanentSelector)
+          ) {
             return false;
           }
         },
@@ -228,7 +278,9 @@ export class SwiftyNavigation {
       })
       .catch((error) => {
         this.cache.delete(key);
-        if (!(error instanceof NavigationFallback)) console.debug("Swifty prefetch failed", error);
+        if (!(error instanceof NavigationFallback)) {
+          this.logger?.debug?.("Morpheus prefetch failed", error);
+        }
         return null;
       });
 
@@ -269,7 +321,7 @@ export class SwiftyNavigation {
   eligibleLink(node) {
     const link = node instanceof Element ? node.closest("a[href]") : null;
     if (!link || link.hasAttribute("download")) return null;
-    if (link.closest('[data-swifty-navigation="off"]')) return null;
+    if (link.closest(this.navigationOffSelector)) return null;
     if (link.relList.contains("external")) return null;
 
     const url = new URL(link.href, window.location.href);
@@ -302,20 +354,24 @@ export class SwiftyNavigation {
 
   rememberScroll() {
     const state = history.state || {};
-    history.replaceState({
-      ...state,
-      swifty: {
-        ...(state.swifty || {}),
-        url: window.location.href,
-        scroll: { x: window.scrollX, y: window.scrollY },
-      },
-    }, "", window.location.href);
+    const entry = {
+      url: window.location.href,
+      scroll: { x: window.scrollX, y: window.scrollY },
+    };
+    const nextState = { ...state };
+    for (const key of this.historyKeys) {
+      nextState[key] = { ...(state[key] || {}), ...entry };
+    }
+    history.replaceState(nextState, "", window.location.href);
   }
 
   updateHistory(url, mode) {
-    const state = { swifty: { url, scroll: { x: 0, y: 0 } } };
+    const entry = { url, scroll: { x: 0, y: 0 } };
+    const state = Object.fromEntries(this.historyKeys.map((key) => [key, entry]));
     if (mode === "push") history.pushState(state, "", url);
-    else if (mode === "pop" && url !== window.location.href) history.replaceState(state, "", url);
+    else if (mode === "pop" && url !== window.location.href) {
+      history.replaceState(state, "", url);
+    }
   }
 
   restoreScroll(url, options) {
@@ -339,10 +395,13 @@ export class SwiftyNavigation {
       document.querySelector(this.targetSelector);
     if (!target) return;
 
-    const addedTabIndex = !target.hasAttribute("tabindex") && !target.matches("a,button,input,select,textarea");
+    const addedTabIndex = !target.hasAttribute("tabindex") &&
+      !target.matches("a,button,input,select,textarea");
     if (addedTabIndex) target.setAttribute("tabindex", "-1");
     target.focus({ preventScroll: true });
-    if (addedTabIndex) target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
+    if (addedTabIndex) {
+      target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
+    }
   }
 
   anchorFor(hash) {
@@ -362,18 +421,23 @@ export class SwiftyNavigation {
     const root = document.documentElement;
     const target = document.querySelector(this.targetSelector);
     if (loading) {
-      root.setAttribute("data-swifty-navigating", "");
+      for (const attribute of this.loadingAttributes) root.setAttribute(attribute, "");
       target?.setAttribute("aria-busy", "true");
-      this.dispatch("swifty:navigation-start", detail);
+      this.dispatch("navigation-start", detail);
     } else {
-      root.removeAttribute("data-swifty-navigating");
+      for (const attribute of this.loadingAttributes) root.removeAttribute(attribute);
       target?.removeAttribute("aria-busy");
-      this.dispatch("swifty:navigation-end", detail);
+      this.dispatch("navigation-end", detail);
     }
   }
 
   dispatch(name, detail, cancelable = false) {
-    return document.dispatchEvent(new CustomEvent(name, { detail, cancelable }));
+    let accepted = true;
+    for (const prefix of this.eventPrefixes) {
+      const event = new CustomEvent(`${prefix}:${name}`, { detail, cancelable });
+      if (!document.dispatchEvent(event)) accepted = false;
+    }
+    return accepted;
   }
 
   fullLoad(url, replace = false) {
@@ -382,18 +446,4 @@ export class SwiftyNavigation {
   }
 }
 
-const script = document.querySelector("script[data-swifty-navigation]");
-if (script) {
-  const navigation = new SwiftyNavigation({
-    target: script.dataset.target,
-    prefetching: script.dataset.prefetching !== "off",
-    cacheSize: script.dataset.cacheSize,
-    cacheTTL: script.dataset.cacheTtl,
-  });
-  window.SwiftyNavigation = navigation;
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => navigation.start(), { once: true });
-  } else {
-    navigation.start();
-  }
-}
+export { NavigationFallback };
