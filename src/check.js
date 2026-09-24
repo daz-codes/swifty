@@ -18,9 +18,9 @@ import { parseFrontMatter } from "./frontmatter.js";
 import { generateRssFeeds } from "./rss.js";
 import { generateSeoFiles } from "./sitemap.js";
 import { generateSearchIndex } from "./search.js";
+import { collectRouteManifest, flattenPages } from "./routes.js";
 import {
   normalizePermalink,
-  routeToOutputPath,
   withBasePath,
   withoutBasePath,
 } from "./urls.js";
@@ -279,56 +279,6 @@ const collectSourceIssues = async (add) => {
   }
 
   return { configFiles: configFiles.length, pageFiles: pageFiles.length };
-};
-
-const flattenPages = (pages) => {
-  const result = [];
-  const visit = (items) => {
-    for (const page of items) {
-      result.push(page);
-      if (page.pages) visit(page.pages);
-      if (page.paginatedPages) visit(page.paginatedPages);
-    }
-  };
-  visit(pages);
-  return result;
-};
-
-const pageOutputPath = (page) =>
-  toPosix(page.notFound ? "404.html" : routeToOutputPath(page.route || page.url));
-
-const collectRouteManifest = (pages, add) => {
-  const manifest = new Map();
-  for (const page of flattenPages(pages)) {
-    let outputPath;
-    try {
-      outputPath = pageOutputPath(page);
-    } catch (error) {
-      add({
-        code: CHECK_CODES.CONTENT,
-        source: page.filePath ? displayPath(page.filePath) : page.url,
-        reference: page.route || page.url,
-        message: error.message,
-      });
-      continue;
-    }
-    const source = page.indexFilePath
-      ? displayPath(page.indexFilePath)
-      : page.filePath
-        ? displayPath(page.filePath)
-        : `generated ${page.url}`;
-    if (manifest.has(outputPath)) {
-      add({
-        code: CHECK_CODES.DUPLICATE_ROUTE,
-        source,
-        reference: page.route || page.url,
-        message: `Route writes ${outputPath}, which is already written by ${manifest.get(outputPath).source}`,
-      });
-      continue;
-    }
-    manifest.set(outputPath, { page, source });
-  }
-  return manifest;
 };
 
 const collectSocialImageIssues = (pages, add) => {
@@ -637,10 +587,13 @@ const checkSite = async () => {
     collectSocialImageIssues(pages, collector.add);
     report.counts.routes = manifest.size;
 
-    const hasMissingPartial = collector.issues.some(
-      (issue) => issue.code === CHECK_CODES.MISSING_PARTIAL,
+    const cannotRender = collector.issues.some(
+      (issue) =>
+        issue.code === CHECK_CODES.MISSING_PARTIAL ||
+        issue.code === CHECK_CODES.DUPLICATE_ROUTE ||
+        issue.code === CHECK_CODES.CONTENT,
     );
-    if (!hasMissingPartial) {
+    if (!cannotRender) {
       try {
         await createPages(pages, outputDir);
         await generateSearchIndex(pages, outputDir);

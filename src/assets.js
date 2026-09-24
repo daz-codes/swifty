@@ -22,6 +22,20 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientAssetsDir = path.join(__dirname, "client");
+const morpheusPackageDir = path.dirname(
+  fileURLToPath(import.meta.resolve("@daz4126/morpheus/package.json")),
+);
+const navigationClientPath = path.join(
+  morpheusPackageDir,
+  "dist",
+  "adapters",
+  "swifty.auto.js",
+);
+const morpheusLicensePath = path.join(
+  morpheusPackageDir,
+  "dist",
+  "IDIOMORPH-LICENSE.txt",
+);
 
 // Get file modification timestamp for cache busting
 const getFileMtime = async (filePath) => {
@@ -143,8 +157,8 @@ const getHashedAssetName = async (sourcePath, filename = path.basename(sourcePat
   return `${path.basename(filename, ext)}.${hash}${ext}`;
 };
 
-const getClientAssetName = (filename) =>
-  getHashedAssetName(path.join(clientAssetsDir, filename), filename);
+const getClientAssetName = (filename, sourcePath = path.join(clientAssetsDir, filename)) =>
+  getHashedAssetName(sourcePath, filename);
 
 const getHighlightThemeAsset = async () => {
   const theme = resolveHighlightTheme(defaultConfig.highlight_theme);
@@ -162,7 +176,9 @@ const getHighlightThemeSrc = async () => {
 
 const getNavigationScriptSrc = async () => {
   if (!navigationEnabled()) return "";
-  return withBasePath(`/swifty/${await getClientAssetName("swifty-navigation.js")}`);
+  return withBasePath(
+    `/swifty/${await getClientAssetName("swifty-navigation.js", navigationClientPath)}`,
+  );
 };
 
 const getSearchScriptSrc = async () => {
@@ -320,24 +336,31 @@ const copySwiftyAssets = async (outputDir = dirs.dist) => {
   const destination = path.join(outputDir, "swifty");
   await fsExtra.ensureDir(destination);
 
-  const navigationFiles = new Set([
-    "swifty-navigation.js",
-    "morpheus.js",
-    "idiomorph.esm.js",
-    "IDIOMORPH-LICENSE.txt",
-  ]);
-  const files = (await fs.readdir(clientAssetsDir)).filter(
-    (file) =>
-      (navigationEnabled() && navigationFiles.has(file)) ||
-      (searchEnabled() && file === "swifty-search.js"),
-  );
+  const files = [];
+  if (navigationEnabled()) {
+    files.push(
+      {
+        sourcePath: navigationClientPath,
+        destinationFilename: await getClientAssetName(
+          "swifty-navigation.js",
+          navigationClientPath,
+        ),
+      },
+      {
+        sourcePath: morpheusLicensePath,
+        destinationFilename: "IDIOMORPH-LICENSE.txt",
+      },
+    );
+  }
+  if (searchEnabled()) {
+    files.push({
+      sourcePath: path.join(clientAssetsDir, "swifty-search.js"),
+      destinationFilename: await getClientAssetName("swifty-search.js"),
+    });
+  }
   await mapLimit(
     files,
-    async (file) => {
-      const sourcePath = path.join(clientAssetsDir, file);
-      const destinationFilename = file.startsWith("swifty-") && file.endsWith(".js")
-        ? await getClientAssetName(file)
-        : file;
+    async ({ sourcePath, destinationFilename }) => {
       const destinationPath = path.join(destination, destinationFilename);
       const copied = await copyIfStale(sourcePath, destinationPath);
       if (copied) {

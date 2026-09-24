@@ -134,6 +134,18 @@ watcher_use_polling: true
 watcher_interval: 500
 ```
 
+The watcher detects nested `config.yaml`, `config.yml`, and `config.json`
+changes, including additions and deletions. Source directories and root config
+files created after startup are picked up automatically. Generated output,
+`.swifty-cache`, and unrelated directories such as `node_modules` are excluded.
+
+Rebuilds run one at a time. `watcher_delay` also controls how long to collect a
+burst of changes before rebuilding. Multiple pending changes produce one full
+build; an isolated page or image edit can still rebuild incrementally. Changes
+received during a build are handled afterward. A failed build is reported, and
+the next change triggers a full rebuild. The browser refreshes after a successful
+batch completes.
+
 ## Syntax Highlighting Themes
 
 Fenced code blocks are highlighted with a self-hosted highlight.js stylesheet.
@@ -238,9 +250,9 @@ Swifty prefixes generated and authored root-relative URLs, feeds, sitemap entrie
 
 ## Morph Navigation
 
-By default, Swifty's reusable Morpheus client fetches same-origin HTML links and
-morphs the configured page target with Idiomorph. It keeps the outer layout in
-place while updating the URL, title, focus, and scroll position. Existing
+By default, Swifty uses the `@daz4126/morpheus` package to fetch same-origin HTML
+links and morph the configured page target with Idiomorph. It keeps the outer
+layout in place while updating the URL, title, focus, and scroll position. Existing
 `swifty:*` browser events and `data-swifty-*` controls remain available as
 compatibility aliases for the generic `morpheus:*` API.
 
@@ -257,6 +269,26 @@ Set `prefetching: false` if you want morphing without hover/focus/touch prefetch
 ## Folder-Level Config
 
 Here's a neat trick: you can add a `config.yaml` inside any folder in `pages/` to set defaults for all pages in that folder. Great for giving a whole section its own author or layout without repeating yourself.
+
+For page settings, each folder starts with its inherited defaults, then applies
+its own config, then its `index.md` front matter. These resolved settings apply
+to the folder page and are inherited by its children. Individual page front
+matter takes priority; a deeper folder can override inherited settings with its
+own config and index front matter. `config.yml` and `config.json` are also
+supported. A config directly inside `pages/` also applies to the homepage.
+
+For example, global `page_count: 10` and `words_per_minute: 200` can be overridden
+by this `pages/blog/config.yaml`:
+
+```yaml
+page_count: 2
+words_per_minute: 100
+```
+
+The blog lists two children per pagination page and uses 100 words per minute
+for reading-time estimates on its index and posts. Setting `page_count: 1` in
+`pages/blog/index.md` takes priority over the folder config. Pagination remains
+disabled when no applicable config or front matter sets `page_count`.
 
 ## Client-Side Search
 

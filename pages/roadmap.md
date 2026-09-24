@@ -61,10 +61,10 @@ Chokidar and LiveReload now use native filesystem events by default. A validated
 containers, and other filesystems that require it.
 
 ### Reusable Morpheus Navigation Core
-Swifty's Idiomorph navigation and intent prefetching now live in a reusable,
-Node-import-safe `Morpheus` browser class. A small compatibility adapter keeps
-existing `swifty:*` events, data attributes, headers, history state, and globals
-working while the standalone npm package API is prepared.
+Swifty now consumes `@daz4126/morpheus` for Idiomorph navigation and intent
+prefetching. The package's Swifty adapter keeps existing `swifty:*` events,
+data attributes, headers, history state, and globals working while sharing the
+framework-neutral browser implementation with other projects.
 
 ### Site Checker
 `swifty check` catches duplicate routes, broken internal links, missing images,
@@ -163,14 +163,6 @@ Add `<%= og_tags %>` to your template and Swifty generates all the meta tags for
 `<%= prev_page %>` and `<%= next_page %>` auto-generate links to sibling pages in the same folder. Pages are linked based on their sort order (date or position). Perfect for blog series and multi-part tutorials.
 
 ## Next Features
-
-### 1. Standalone Morpheus Package
-
-Move the extracted browser core into its own package, add browser-level
-navigation, history, prefetch, cancellation, focus, and fallback tests, and ship
-both side-effect-free ESM and an optional auto-start browser entry. Keep Swifty
-on the compatibility adapter while consumers migrate to `morpheus:*` events and
-`data-morpheus-*` controls.
 
 ## Performance and Developer Experience
 

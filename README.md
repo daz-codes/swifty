@@ -304,4 +304,13 @@ npm run test:package
 npm run build
 ```
 
+Swifty normally installs `@daz4126/morpheus` from npm. When developing both
+projects as sibling checkouts, run `npm run morpheus:link` to use
+`../morpheus` without changing `package.json` or `package-lock.json`. Re-run
+`npm install` to return to the registry release.
+
+`npm run test:package` always installs dependencies from npm, even when a sibling
+Morpheus checkout exists. It verifies the packed CLI and API, scaffolds a site,
+builds Markdown and images, and runs `swifty check` against the installed package.
+
 Swifty is released under the [MIT License](LICENSE).

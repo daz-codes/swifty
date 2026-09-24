@@ -27,6 +27,7 @@ import {
   resolveFileDate,
 } from "./dates.js";
 import { extractSummary } from "./content.js";
+import { assertUniqueRoutes } from "./routes.js";
 import {
   createStandaloneTagSlug,
   createTagSlugBase,
@@ -373,7 +374,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
   }
 
   const pages = [];
-  const folderConfig = await loadConfig(sourceDir);
+  // A parent already includes this folder's config and index front matter.
+  // Reloading the config here would overwrite those explicit index overrides.
+  const folderConfig = parent ? {} : await loadConfig(sourceDir);
   const config = { ...defaultConfig, ...parent?.meta, ...folderConfig };
 
   try {
@@ -397,6 +400,9 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           ? "Home"
           : capitalize(file.name.replace(/\.md$/, "").replace(/-/g, " "));
         const isDirectory = stats.isDirectory();
+        const pageConfig = isDirectory
+          ? { ...config, ...await loadConfig(filePath) }
+          : { ...config };
         const layoutFileExists =
           parent &&
           (await fsExtra.pathExists(`${dirs.layouts}/${parent.filename}.html`));
@@ -404,7 +410,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           ? parent.filename
           : parent
             ? parent.layout
-            : config.default_layout_name;
+            : pageConfig.default_layout_name;
 
         const route = root ? "/" : notFound ? "/404.html" : finalPath;
         const page = {
@@ -426,7 +432,7 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
           folder: isDirectory,
           notFound,
           title: name,
-          meta: root ? { ...defaultConfig } : { ...config },
+          meta: pageConfig,
         };
         setFallbackDates(page, fallbackDate, page.meta);
 
@@ -460,22 +466,12 @@ const generatePages = async (sourceDir, baseDir = sourceDir, parent) => {
       if (isDirectory) {
         page.pages = await generatePages(page.filePath, baseDir, page);
 
-        // Load folder's own config for pagination settings
-        const dirConfig = await loadConfig(page.filePath);
-        const mergedConfig = {
-          ...dirConfig,
-          ...page.meta,
-          // Only set default page_count if explicitly specified in either page meta or dir config
-          page_count: page.meta.page_count ?? dirConfig.page_count,
-        };
-        page.meta = mergedConfig;
-
         page.pages.sort((a, b) =>
-          comparePages(a, b, mergedConfig.date_sort_order),
+          comparePages(a, b, page.meta.date_sort_order),
         );
 
         // Handle pagination if page_count is set
-        const pageCount = mergedConfig.page_count;
+        const pageCount = page.meta.page_count;
         if (pageCount && page.pages.length > pageCount) {
           page.allPages = page.pages;
           const chunks = chunkPages(page.pages, pageCount);
@@ -778,7 +774,7 @@ const render = async (page) => {
   }
 };
 
-const createPages = async (pages, distDir = dirs.dist) => {
+const writePageFiles = async (pages, distDir) => {
   await mapLimit(
     pages,
     async (page) => {
@@ -799,15 +795,21 @@ const createPages = async (pages, distDir = dirs.dist) => {
       await fsExtra.ensureDir(path.dirname(pagePath));
       await fs.writeFile(pagePath, html);
       if (page.folder) {
-        await createPages(page.pages, distDir);
+        await writePageFiles(page.pages, distDir);
         // Write pagination pages if they exist
         if (page.paginatedPages?.length) {
-          await createPages(page.paginatedPages, distDir);
+          await writePageFiles(page.paginatedPages, distDir);
         }
       }
     },
     getBuildConcurrency(),
   );
+};
+
+const createPages = async (pages, distDir = dirs.dist) => {
+  // Validate the complete tree before any concurrent page writes begin.
+  assertUniqueRoutes(pages);
+  await writePageFiles(pages, distDir);
 };
 
 const addLinks = async (pages, parent, linkCache = createLinkListCache()) => {

@@ -27,24 +27,56 @@ import { extractSummary } from "./content.js";
 
 let lastBuildState = null;
 
+// Resolve existing ancestors too: an output directory may not exist yet, while
+// one of its parents is a symlink into the site's source tree.
+const resolveRealPath = async (directory) => {
+  try {
+    return await fsPromises.realpath(directory);
+  } catch (error) {
+    const parent = path.dirname(directory);
+    if (error.code !== "ENOENT" || parent === directory) throw error;
+    return path.join(await resolveRealPath(parent), path.basename(directory));
+  }
+};
+
+const isSameOrInside = (candidate, directory) => {
+  const relativePath = path.relative(directory, candidate);
+  return (
+    relativePath === "" ||
+    (!path.isAbsolute(relativePath) &&
+      relativePath !== ".." &&
+      !relativePath.startsWith(`..${path.sep}`))
+  );
+};
+
+const isUnsafeOutputPath = (outputPath, projectPath, sourceDirectories) =>
+  isSameOrInside(projectPath, outputPath) ||
+  sourceDirectories.some(
+    (directory) =>
+      isSameOrInside(outputPath, directory) ||
+      isSameOrInside(directory, outputPath),
+  );
+
 const prepareOutputDirectory = async (outputDir) => {
   const projectPath = path.resolve(baseDir);
   const outputPath = path.resolve(baseDir, outputDir);
-  const outputContainsProject =
-    projectPath === outputPath || projectPath.startsWith(`${outputPath}${path.sep}`);
   const sourceDirectories = Object.entries(dirs)
     .filter(([name]) => name !== "dist")
     .map(([, directory]) => path.resolve(directory));
-  const outputOverlapsSource = sourceDirectories.some(
-    (directory) =>
-      outputPath === directory || outputPath.startsWith(`${directory}${path.sep}`),
-  );
 
-  if (outputContainsProject || outputOverlapsSource) {
+  if (isUnsafeOutputPath(outputPath, projectPath, sourceDirectories)) {
     throw new Error(`Refusing to empty unsafe output directory: ${outputPath}`);
   }
 
-  await fsExtra.emptyDir(outputPath);
+  const [realOutputPath, realProjectPath, ...realSourceDirectories] =
+    await Promise.all(
+      [outputPath, projectPath, ...sourceDirectories].map(resolveRealPath),
+    );
+  if (isUnsafeOutputPath(realOutputPath, realProjectPath, realSourceDirectories)) {
+    throw new Error(`Refusing to empty unsafe output directory: ${outputPath}`);
+  }
+
+  await fsExtra.emptyDir(realOutputPath);
   return outputPath;
 };
 

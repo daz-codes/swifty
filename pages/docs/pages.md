@@ -175,6 +175,13 @@ permalink: /company/about.html
 
 This writes `dist/company/about.html` and exposes `/company/about.html` as the page URL.
 
+Every page must write to a unique output file. For example, `/about` and
+`/about/index.html` both write `dist/about/index.html`, so they cannot belong to
+different pages. `swifty build` and `swifty deploy` reject these collisions before
+writing page HTML and report both sources and the conflicting output path. This
+also applies to generated tag and pagination pages. Draft and scheduled pages
+are checked when included in a preview build.
+
 ## Convention Over Configuration
 
 This is a concept borrowed from [Ruby on Rails](https://rubyonrails.org). Swifty makes smart assumptions so you don't have to configure everything:

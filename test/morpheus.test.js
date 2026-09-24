@@ -1,11 +1,10 @@
 import assert from "assert";
 
-import { Morpheus, NavigationFallback } from "../src/client/morpheus.js";
+import { Morpheus, NavigationFallback } from "@daz4126/morpheus";
 import {
   SwiftyNavigation,
   startSwiftyNavigation,
-} from "../src/client/swifty-navigation.js";
-import { startMorpheus } from "../src/client/morpheus-auto.js";
+} from "@daz4126/morpheus/adapters/swifty/auto";
 
 describe("Morpheus navigation", () => {
   it("is safe to import and configure without a browser environment", () => {
@@ -15,7 +14,6 @@ describe("Morpheus navigation", () => {
     assert.deepStrictEqual(navigation.eventPrefixes, ["morpheus"]);
     assert.deepStrictEqual(navigation.historyKeys, ["morpheus"]);
     assert.strictEqual(navigation.navigationHeaders["X-Morpheus-Navigation"], "true");
-    assert.strictEqual(startMorpheus(null), null);
     assert.strictEqual(startSwiftyNavigation(null), null);
     assert.ok(new NavigationFallback("/fallback", "failed") instanceof Error);
   });

@@ -395,10 +395,9 @@ console.log(message);`
       "public download",
     );
 
-    const png = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
-      "base64",
-    );
+    const png = await sharp({
+      create: { width: 1, height: 1, channels: 3, background: "#b4285a" },
+    }).png().toBuffer();
     await Promise.all([
       fs.writeFile(path.join(testDir, "images", "photo.png"), png),
       fs.writeFile(path.join(testDir, "images", "favicon.png"), png),
@@ -771,8 +770,6 @@ rss_feeds:
       const highlightTheme = files.find((file) =>
         /^highlight-github-dark\.[a-f0-9]{10}\.css$/.test(file),
       );
-      const morpheusExists = await fsExtra.pathExists(path.join(distDir, "swifty", "morpheus.js"));
-      const idiomorphExists = await fsExtra.pathExists(path.join(distDir, "swifty", "idiomorph.esm.js"));
       const licenseExists = await fsExtra.pathExists(path.join(distDir, "swifty", "IDIOMORPH-LICENSE.txt"));
       const highlightLicenseExists = await fsExtra.pathExists(
         path.join(distDir, "swifty", "HIGHLIGHT-LICENSE.txt"),
@@ -780,8 +777,6 @@ rss_feeds:
       assert.strictEqual(navigationExists, true, "fingerprinted swifty-navigation.js should exist");
       assert.strictEqual(searchExists, true, "fingerprinted swifty-search.js should exist");
       assert.ok(highlightTheme, "configured highlight.js theme should exist");
-      assert.strictEqual(morpheusExists, true, "reusable morpheus.js core should exist");
-      assert.strictEqual(idiomorphExists, true, "idiomorph.esm.js should exist");
       assert.strictEqual(licenseExists, true, "IDIOMORPH-LICENSE.txt should exist");
       assert.strictEqual(
         highlightLicenseExists,
@@ -796,16 +791,11 @@ rss_feeds:
         path.join(distDir, "swifty", navigationFile),
         "utf-8",
       );
-      const morpheusClient = await fs.readFile(
-        path.join(distDir, "swifty", "morpheus.js"),
-        "utf-8",
-      );
       const highlightCss = await fs.readFile(
         path.join(distDir, "swifty", highlightTheme),
         "utf-8",
       );
-      assert.ok(navigationClient.includes('from "./morpheus.js"'));
-      assert.ok(morpheusClient.includes("export class Morpheus"));
+      assert.ok(navigationClient.includes("data-swifty-navigation"));
       assert.ok(highlightCss.includes(".hljs"));
     });
 
@@ -881,10 +871,9 @@ rss_feeds:
         optimizeSingleImage,
       } = await import("../src/assets.js");
       const sourcePath = path.join(testDir, "images", "stale.png");
-      const png = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
-        "base64",
-      );
+      const png = await sharp({
+        create: { width: 1, height: 1, channels: 3, background: "#b4285a" },
+      }).png().toBuffer();
 
       await fs.writeFile(sourcePath, png);
       await optimizeSingleImage(sourcePath, distDir);
@@ -2468,6 +2457,8 @@ rss_feeds:
 
         assert.ok(issue, "duplicate route should be reported");
         assert.ok(issue.message.includes("about/index.html"));
+        assert.strictEqual(report.counts.htmlFiles, 0, "colliding pages should not be rendered");
+        assert.ok(!report.issues.some((candidate) => candidate.code === CHECK_CODES.BUILD));
       } finally {
         await fsExtra.remove(duplicatePath);
       }

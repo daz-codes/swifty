@@ -333,7 +333,7 @@ const replacePlaceholders = async (template, values, renderContext = {}) => {
       dataFiles,
       og_tags,
       word_count,
-      reading_time: calculateReadingTime(word_count),
+      reading_time: calculateReadingTime(word_count, values.meta?.words_per_minute),
     };
   });
   const {
